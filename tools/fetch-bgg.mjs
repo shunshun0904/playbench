@@ -69,7 +69,9 @@ async function get(pathq, tries = 6) {
     let res;
     if (!API) {
       res = await probe(pathq);
-      if (!res) throw new Error('どの宛先・名乗りでも BGG に届かない（データセンターからの遮断と思われる）');
+      if (!res) throw new Error(
+        'どの宛先・名乗りでも BGG に届かない。BGG はデータセンターからの要求を 401 で弾くので、' +
+        'CI やクラウド上では取得できない。ご自分の回線で実行してください: npm run bgg');
     } else {
       res = await hit(API, UA, pathq);
     }
@@ -156,7 +158,8 @@ for (const w of works) {
 
 const got = Object.keys(out.games).length;
 if (!got) {
-  console.error('\n❌ 1件も取れなかった。既存の data/bgg.js は残す');
+  console.error('\n❌ 1件も取れなかった。既存の data/bgg.js は残す。');
+  console.error('   手元の回線で `npm run bgg` を実行し、data/bgg.js をコミットしてください。');
   process.exit(1);
 }
 

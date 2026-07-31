@@ -6,7 +6,8 @@
   "scripts": {
     "build": "node build.js",
     "test": "node test/shots.js",
-    "serve": "python3 -m http.server 8080"
+    "serve": "python3 -m http.server 8080",
+    "bgg": "node tools/fetch-bgg.mjs"
   },
   "devDependencies": {
     "playwright": "^1.49.1"

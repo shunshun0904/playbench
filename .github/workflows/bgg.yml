@@ -1,8 +1,15 @@
 name: Refresh BGG data
 
+# 定期実行は付けていない。BGG はデータセンターからの要求を 401 で弾いており、
+# GitHub のランナーはまさにそれに当たるため、走らせても必ず失敗する
+# （api.geekdo.com / boardgamegeek.com / www. の3宛先 × 名乗り2種、いずれも 401 で実測済み）。
+#
+# 確実なのは手元で実行して data/bgg.js をコミットすること:
+#     npm run bgg && git add data/bgg.js && git commit
+#
+# 手動実行の口だけ残してある。BGG の方針が変われば、ここから通るようになる。
+
 on:
-  schedule:
-    - cron: '17 4 * * 1'      # 毎週月曜。BGG の値はゆっくりしか動かない
   workflow_dispatch:
 
 permissions:
@@ -35,5 +42,5 @@ jobs:
           git add data/bgg.js
           git commit \
             -m "BGG の重さと評価を更新" \
-            -m "出典は boardgamegeek.com。こちらの実測ではなく他人が付けた数字なので、取得日と評価人数を一緒に残している。tools/fetch-bgg.mjs が週次で取得する。"
+            -m "出典は boardgamegeek.com。こちらの実測ではなく他人が付けた数字なので、取得日と評価人数を一緒に残している。"
           git push
