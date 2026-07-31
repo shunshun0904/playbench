@@ -15,10 +15,79 @@ const OUT = path.join(ROOT, 'dist', 'shots');
 
 const MIME = { '.html': 'text/html', '.css': 'text/css', '.js': 'text/javascript', '.json': 'application/json' };
 
+/* Supabase の受け答えを真似る。SupabaseProvider が投げる要求の形と、
+   返ってきた誤りの扱いを、本物につながなくても確かめられるようにする。 */
+function mockSupabase(req, res, body) {
+  const url = new URL(req.url, 'http://x');
+  const json = (code, o) => {
+    res.writeHead(code, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+    res.end(o === undefined ? '' : JSON.stringify(o));
+  };
+  const store = mockSupabase.store || (mockSupabase.store = { users: {}, profiles: {} });
+  const session = uid => ({
+    access_token: 'tok_' + uid, refresh_token: 'ref_' + uid,
+    expires_in: 3600, token_type: 'bearer', user: { id: uid }
+  });
+
+  if (url.pathname === '/auth/v1/signup') {
+    const b = JSON.parse(body);
+    if (store.users[b.email]) return json(400, { msg: 'User already registered' });
+    const uid = 'uid-' + Object.keys(store.users).length;
+    store.users[b.email] = { id: uid, password: b.password };
+    const d = b.data || {};
+    store.profiles[uid] = {
+      id: uid, handle: d.handle, display: d.display || d.handle,
+      played: 0, won: 0, by_game: {}, created_at: new Date().toISOString()
+    };
+    return json(200, session(uid));
+  }
+
+  if (url.pathname === '/auth/v1/token') {
+    const b = JSON.parse(body);
+    if (url.searchParams.get('grant_type') === 'refresh_token') {
+      const uid = String(b.refresh_token).replace('ref_', '');
+      return json(200, session(uid));
+    }
+    const u = store.users[b.email];
+    if (!u || u.password !== b.password) return json(400, { error_description: 'Invalid login credentials' });
+    return json(200, session(u.id));
+  }
+
+  if (url.pathname === '/auth/v1/logout') return json(204);
+
+  if (url.pathname === '/rest/v1/profiles') {
+    const eq = k => {
+      const v = url.searchParams.get(k);
+      return v ? v.replace(/^eq\./, '') : null;
+    };
+    if (req.method === 'GET') {
+      const id = eq('id'), handle = eq('handle');
+      const rows = Object.values(store.profiles).filter(p =>
+        (id ? p.id === id : true) && (handle ? p.handle === handle : true));
+      return json(200, rows);
+    }
+    if (req.method === 'PATCH') {
+      const id = eq('id'), b = JSON.parse(body);
+      if (!store.profiles[id]) return json(404, { message: 'not found' });
+      Object.assign(store.profiles[id], b);
+      return json(200, [store.profiles[id]]);
+    }
+  }
+  return json(404, { message: 'no such endpoint' });
+}
+
 function serve() {
   return new Promise(resolve => {
     const srv = http.createServer((req, res) => {
       let p = decodeURIComponent(req.url.split('?')[0]);
+
+      if (p.startsWith('/auth/v1/') || p.startsWith('/rest/v1/')) {
+        let body = '';
+        req.on('data', c => { body += c; });
+        req.on('end', () => mockSupabase(req, res, body));
+        return;
+      }
+
       if (p === '/') p = '/index.html';
       const file = path.join(ROOT, p);
       if (!file.startsWith(ROOT) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) {
@@ -113,12 +182,12 @@ function serve() {
       const n = document.querySelector(s);
       return !!(n && n.getClientRects().length);
     }, sel);
-    if (await vis('[data-only="signup"]')) fail('ログイン欄に新規登録用の項目が出ている');
+    if (await vis('[data-field="display"]')) fail('ログイン欄に新規登録用の項目が出ている');
     await page.screenshot({ path: path.join(OUT, 'auth-signin.png') });
 
     await page.click('.tab[data-tab="signup"]');
     await page.waitForTimeout(150);
-    if (!(await vis('[data-only="signup"]'))) fail('新規登録欄に表示名が出ていない');
+    if (!(await vis('[data-field="display"]'))) fail('新規登録欄に表示名が出ていない');
     await page.click('.tab[data-tab="signin"]');
     await page.waitForTimeout(150);
 
@@ -209,6 +278,115 @@ function serve() {
     }));
     console.log('   ログアウト後 →', JSON.stringify(out));
     if (out.who || !out.invite) fail('ログアウトが画面に反映されていない');
+
+    if (errs.length) fail('例外: ' + errs.slice(0, 3).join(' | '));
+    await ctx.close();
+  }
+
+  /* --------------------------------------------- Supabase（模擬サーバ） */
+  {
+    const ctx = await browser.newContext({ viewport: { width: 1280, height: 1000 } });
+    const page = await ctx.newPage();
+    const errs = [];
+    page.on('pageerror', e => errs.push(String(e)));
+    // 実際の鍵は要らない。宛先だけ模擬サーバに向ける
+    await page.addInitScript(u => {
+      window.PB = { CONFIG: { supabase: { url: u, anonKey: 'anon-test-key' } } };
+    }, URL.replace(/\/$/, ''));
+    await page.goto(URL, { waitUntil: 'load' });
+    await page.waitForTimeout(300);
+
+    console.log('── Supabase（模擬）');
+    const kind = await page.evaluate(() => PB.auth.kind);
+    console.log('   プロバイダ →', kind);
+    if (kind !== 'supabase') fail('Supabase プロバイダに切り替わっていない');
+
+    // ログイン欄はメール＋パスワードだけ（ハンドル名は出ない）
+    await page.click('[data-auth-open="signin"]');
+    await page.waitForTimeout(200);
+    const shown = await page.evaluate(() =>
+      Array.from(document.querySelectorAll('[data-field]'))
+        .filter(n => n.getClientRects().length).map(n => n.dataset.field));
+    console.log('   ログイン欄 →', JSON.stringify(shown));
+    if (shown.join() !== 'email,pass') fail('ログイン欄がメール＋パスワードになっていない');
+
+    // 新規登録
+    await page.click('.tab[data-tab="signup"]');
+    await page.waitForTimeout(150);
+    const shown2 = await page.evaluate(() =>
+      Array.from(document.querySelectorAll('[data-field]'))
+        .filter(n => n.getClientRects().length).map(n => n.dataset.field));
+    console.log('   新規登録欄 →', JSON.stringify(shown2));
+    if (shown2.join() !== 'email,handle,display,pass') fail('新規登録欄が揃っていない');
+
+    await page.fill('#f-email', 'me@example.com');
+    await page.fill('#f-handle', 'shun');
+    await page.fill('#f-display', 'しゅん');
+    await page.fill('#f-pass', 'correct-horse');
+    await page.click('#auth-submit');
+    await page.waitForTimeout(700);
+    let who = await page.evaluate(() => document.querySelector('.who__n') && document.querySelector('.who__n').textContent);
+    const where = await page.evaluate(() => document.querySelector('.me__where') && document.querySelector('.me__where').textContent);
+    console.log('   登録後 →', JSON.stringify(who), JSON.stringify(where));
+    if (who !== 'しゅん') fail('Supabase 経由で登録できていない');
+    if (where !== 'Supabase') fail('接続先の表示が Supabase になっていない');
+    await page.screenshot({ path: path.join(OUT, 'account-supabase.png'), fullPage: true });
+
+    // 表示名の変更が PATCH で通るか
+    await page.fill('#me-display', 'シュン改');
+    await page.click('.me__form button[type="submit"]');
+    await page.waitForTimeout(600);
+    who = await page.evaluate(() => document.querySelector('.who__n') && document.querySelector('.who__n').textContent);
+    console.log('   表示名の変更 →', JSON.stringify(who));
+    if (who !== 'シュン改') fail('表示名の変更がサーバーに反映されていない');
+
+    // 退会はできない旨が出るか
+    page.on('dialog', d => d.accept());
+    await page.click('.btn--danger');
+    await page.waitForTimeout(400);
+    const delMsg = await page.evaluate(() => {
+      const n = document.querySelector('.me__msg--bad');
+      return n && n.getClientRects().length ? n.textContent : null;
+    });
+    console.log('   退会 →', JSON.stringify(delMsg));
+    if (!delMsg || !/Supabase/.test(delMsg)) fail('退会できない旨が伝わっていない');
+
+    // ログアウト → 誤ったパスワードで入れないこと
+    await page.evaluate(() => PB.auth.signOut());
+    await page.waitForTimeout(300);
+    await page.click('[data-auth-open="signin"]');
+    await page.fill('#f-email', 'me@example.com');
+    await page.fill('#f-pass', 'wrong-password');
+    await page.click('#auth-submit');
+    await page.waitForTimeout(600);
+    const e1 = await page.textContent('#auth-err');
+    console.log('   誤ったパスワード →', JSON.stringify(e1));
+    if (!/違います/.test(e1 || '')) fail('Supabase の誤りが訳されていない');
+
+    // 正しいパスワード → 再読み込みしても保持されるか
+    await page.fill('#f-pass', 'correct-horse');
+    await page.click('#auth-submit');
+    await page.waitForTimeout(700);
+    await page.reload({ waitUntil: 'load' });
+    await page.waitForTimeout(700);
+    const kept = await page.evaluate(() => document.querySelector('.who__n') && document.querySelector('.who__n').textContent);
+    console.log('   再読み込み後 →', JSON.stringify(kept));
+    if (kept !== 'シュン改') fail('Supabase のセッションが再読み込みで切れた');
+
+    // 使われているハンドル名は弾かれるか
+    await page.evaluate(() => PB.auth.signOut());
+    await page.waitForTimeout(300);
+    await page.click('[data-auth-open="signin"]');
+    await page.click('.tab[data-tab="signup"]');
+    await page.fill('#f-email', 'other@example.com');
+    await page.fill('#f-handle', 'shun');
+    await page.fill('#f-display', '別人');
+    await page.fill('#f-pass', 'correct-horse');
+    await page.click('#auth-submit');
+    await page.waitForTimeout(600);
+    const e2 = await page.textContent('#auth-err');
+    console.log('   使用済みハンドル名 →', JSON.stringify(e2));
+    if (!/すでに使われて/.test(e2 || '')) fail('ハンドル名の重複が弾かれていない');
 
     if (errs.length) fail('例外: ' + errs.slice(0, 3).join(' | '));
     await ctx.close();

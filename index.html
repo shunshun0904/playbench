@@ -143,40 +143,44 @@
       <button class="tab" type="button" role="tab" data-tab="signup" data-en="Create account">新規登録</button>
     </div>
 
-    <div class="field">
+    <div class="field" data-field="email">
+      <label class="field__k" for="f-email" data-en="Email">メールアドレス</label>
+      <input class="field__i" id="f-email" name="email" type="email"
+             autocomplete="email" autocapitalize="none" spellcheck="false">
+      <p class="field__note" data-en="Used to sign in. It is never shown to anyone else.">ログインに使います。他の人には見えません</p>
+    </div>
+
+    <div class="field" data-field="handle">
       <label class="field__k" for="f-handle" data-en="Handle">ハンドル名</label>
       <div class="field__wrap">
         <span class="field__at">@</span>
         <input class="field__i field__i--at" id="f-handle" name="handle" type="text"
-               autocomplete="username" autocapitalize="none" spellcheck="false"
-               inputmode="latin" required>
+               autocomplete="username" autocapitalize="none" spellcheck="false">
       </div>
       <p class="field__note" data-en="Lower-case letters, digits and _ — 3 to 20 characters.">半角の英小文字・数字・_ で 3〜20 文字</p>
     </div>
 
-    <div class="field" data-only="signup">
+    <div class="field" data-field="display">
       <label class="field__k" for="f-display" data-en="Display name">表示名</label>
       <input class="field__i" id="f-display" name="display" type="text" autocomplete="nickname" maxlength="24">
       <p class="field__note" data-en="Shown on the board and the ranking. Japanese is fine.">盤面やランキングに出る名前。日本語で構いません</p>
     </div>
 
-    <div class="field">
+    <div class="field" data-field="pass">
       <label class="field__k" for="f-pass" data-en="Password">パスワード</label>
-      <input class="field__i" id="f-pass" name="pass" type="password" required minlength="8">
-      <p class="field__note" data-only="signup" data-en="8 characters or more.">8文字以上</p>
+      <input class="field__i" id="f-pass" name="pass" type="password" minlength="8">
+      <p class="field__note" data-en="8 characters or more.">8文字以上</p>
     </div>
 
     <p class="modal__err" id="auth-err" role="alert" hidden></p>
 
     <button class="btn btn--go btn--wide" type="submit" id="auth-submit">ログイン</button>
 
-    <p class="modal__foot" data-en="Accounts live in this browser only — nothing is sent to a server, and there is nothing to recover if you clear your browser data. A real account system is coming.">
-      アカウントは<strong>いまのところこのブラウザの中だけ</strong>にあります。サーバーへは何も送っていません。
-      そのぶん、ブラウザのデータを消すと戻せません。サーバー側の仕組みはこれから入れます。
-    </p>
+    <p class="modal__foot" id="auth-foot"></p>
   </form>
 </dialog>
 
+<script src="assets/config.js"></script>
 <script src="data/works.js"></script>
 <script src="assets/auth.js"></script>
 <script src="assets/site.js"></script>

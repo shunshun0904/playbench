@@ -121,9 +121,7 @@ window.PB.WORKS = [
       'The rival coefficient — how much a rival\'s gain is disliked — was chosen by measurement ' +
       '(0.2→22.0% / 0.5→26.4% / 0.7→29.1% / 1.0→26.0% / 1.8→20.0%). 0.7 was adopted.',
 
-    play: null,
-    playNote: 'Pages 公開はこれから',
-    playNoteEn: 'Pages deployment pending',
+    play: 'https://shunshun0904.github.io/aquire/',
     repo: 'https://github.com/shunshun0904/aquire',
     figure: 'grid'
   },

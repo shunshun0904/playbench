@@ -15,7 +15,9 @@
 index.html          サイト本体
 assets/site.css     版面。色・書体・実測プレート
 assets/site.js      組版。ゲームデータから画面を組む
-assets/auth.js      アカウント（差し替え可能なプロバイダ方式）
+assets/auth.js      アカウント（Local / Supabase の差し替え式）
+assets/config.js    接続先。空なら「この端末だけ」で動く
+supabase/           スキーマ・RLS・立ち上げ手順
 data/works.js       ゲームの目録  ← ゲームを増やすときはここだけ
 games/              各ゲーム本体（取り込みはこれから）
 build.js            単一ファイルへの結合
@@ -46,36 +48,44 @@ test/shots.js       実ブラウザでの検査（見た目とアカウント）
 
 ## アカウントについて
 
-**いまは「この端末の中だけ」のアカウント**です。`assets/auth.js` の
-`LocalProvider` が localStorage に保存しているだけで、サーバーへは何も送りません。
+プロバイダを差し替えられる作りです。`assets/config.js` に Supabase の
+URL と anon キーが入っていれば Supabase、空なら「この端末だけ」に落ちます。
+画面側はどちらでも同じ呼び方で動きます。
 
-できること／できないこと:
+| | ログインに使うもの | 保存先 | 別の端末から |
+|---|---|---|---|
+| `LocalProvider` | ハンドル名 | この端末の localStorage | 入れない |
+| `SupabaseProvider` | メールアドレス | Supabase | 入れる |
 
-| | |
-|---|---|
-| できる | 登録・ログイン・表示名の変更・記録の書き出し・アカウント削除 |
-| できない | 別の端末から入る、パスワードの再発行、ランキングへの参加 |
+出す入力欄もプロバイダが決めます（`provider.fields`）。Supabase ではログインが
+メール＋パスワード、新規登録がメール＋ハンドル名＋表示名＋パスワードになります。
+
+```js
+PB.auth = {
+  kind, label, identKey, fields(),
+  start(),                       // 保存したセッションから復帰
+  user(),                        // 現在の利用者 or null
+  signUp({email, handle, display, pass}),
+  signIn({email, pass}),
+  signOut(), update(patch), remove(),
+  exportData(), onChange(fn), use(provider)
+}
+```
+
+Supabase 版はライブラリを使わず、REST を素の `fetch` で叩いています
+（`/auth/v1/signup`、`/auth/v1/token`、`/rest/v1/profiles`）。
+外部依存ゼロのまま本物のアカウントになります。
+
+立ち上げ方は [`supabase/README.md`](supabase/README.md)。スキーマと RLS は
+[`supabase/schema.sql`](supabase/schema.sql) にあります。**メールアドレスは
+`profiles` に置いていません** ── 公開読みを許すテーブルなので、置けば誰でも読めます。
+
+### 「この端末だけ」のほうの限界
 
 パスワードは PBKDF2（12万回・SHA-256・利用者ごとのソルト）で伸ばしてから
 保存しますが、**これは暗号的な保護ではありません**。同じ端末を使う人どうしの
 取り違えを防ぐためのもので、端末を触れる人は localStorage を読めます。
 画面にもそう書いてあります。
-
-`auth.js` は差し替え口として作ってあります。実サーバー（Supabase など）を
-使うことになったら、`LocalProvider` と同じ形の実装を足して
-`PB.auth.use(provider)` を呼べば、画面側は一切変えずに切り替わります。
-
-```js
-PB.auth = {
-  kind, label,
-  user(),                        // 現在の利用者 or null
-  signUp({handle, display, pass}),
-  signIn({handle, pass}),
-  signOut(), update(patch), remove(),
-  exportData(),
-  onChange(fn), use(provider)
-}
-```
 
 遊ぶのにアカウントは要りません。ここは最後まで動かさないつもりです。
 
@@ -120,6 +130,10 @@ python3 -m http.server 8080       # ローカルで開く
 - ログイン欄に新規登録用の項目が出ていないこと
 - 英語に切り替えても崩れないこと
 
+Supabase 版は**模擬サーバを立てて**検査します（`test/shots.js` の `mockSupabase`）。
+本物の鍵がなくても、要求の形・誤りの訳し方・セッションの復帰・ハンドル名の
+重複までひととおり通ります。
+
 明・暗・モバイルの3面と、ログイン画面・マイページを `dist/shots/` に撮ります。
 
 ## これから
@@ -140,7 +154,7 @@ python3 -m http.server 8080       # ローカルで開く
 | | ゲーム | 相手の作り | 実測（互角 .250） |
 |---|---|---|---|
 | 01 | [ビッグショット](https://shunshun0904.github.io/bigshot/) | 所有権の確率を厳密に数え上げ | 対 素人筋3人 **.855** |
-| 02 | [アクワイア](https://github.com/shunshun0904/aquire) | 期待ドルへの換算（ルールベース） | 4人戦 **.500** |
+| 02 | [アクワイア](https://shunshun0904.github.io/aquire/) | 期待ドルへの換算（ルールベース） | 4人戦 **.500** |
 | 03 | [ハイソサエティ](https://shunshun0904.github.io/highsociety/) | 自己対戦PPO＋先読み | 対 既存CPU3人 **.621** |
 
 ## 権利について

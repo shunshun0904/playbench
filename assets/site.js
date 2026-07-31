@@ -447,9 +447,15 @@
     del.type = 'button';
     del.addEventListener('click', function () {
       var ok = window.confirm(lang === 'en'
-        ? 'Delete this account and its record from this browser? This cannot be undone.'
-        : 'このブラウザから、このアカウントと記録を消します。元に戻せません。よろしいですか。');
-      if (ok) PB.auth.remove();
+        ? 'Delete this account and its record? This cannot be undone.'
+        : 'このアカウントと記録を消します。元に戻せません。よろしいですか。');
+      if (!ok) return;
+      PB.auth.remove().catch(function (e) {
+        msg.hidden = false;
+        msg.textContent = e.message;
+        msg.className = 'me__msg me__msg--bad';
+        msg.scrollIntoView({ block: 'nearest' });
+      });
     });
     foot.appendChild(del);
 
@@ -593,20 +599,39 @@
   /* ------------------------------------------------- ログイン／新規登録 */
   var modal, form, mode = 'signin';
 
+  /* 出す入力欄はプロバイダが決める。
+     Local はハンドル名でログイン、Supabase はメールでログインする。 */
   function setMode(m) {
     mode = m;
-    var title = document.getElementById('auth-title');
-    var submit = document.getElementById('auth-submit');
-    title.textContent = t(m === 'signup' ? 'signup' : 'signin');
-    submit.textContent = t(m === 'signup' ? 'signup' : 'signin');
-    modal.querySelectorAll('[data-only]').forEach(function (n) {
-      n.hidden = (n.dataset.only !== m);
+    var want = PB.auth.fields()[m] || [];
+    document.getElementById('auth-title').textContent = t(m === 'signup' ? 'signup' : 'signin');
+    document.getElementById('auth-submit').textContent = t(m === 'signup' ? 'signup' : 'signin');
+
+    modal.querySelectorAll('[data-field]').forEach(function (n) {
+      var on = want.indexOf(n.dataset.field) >= 0;
+      n.hidden = !on;
+      var input = n.querySelector('input');
+      if (input) input.disabled = !on;   // 隠した欄は検証にも送信にも入れない
     });
     modal.querySelectorAll('.tab').forEach(function (b) {
       var on = b.dataset.tab === m;
       b.classList.toggle('tab--on', on);
       b.setAttribute('aria-selected', on ? 'true' : 'false');
     });
+
+    var foot = document.getElementById('auth-foot');
+    if (foot) {
+      foot.innerHTML = '';
+      if (PB.auth.kind === 'local') {
+        foot.innerHTML = lang === 'en'
+          ? 'Accounts live in <strong>this browser only</strong> — nothing is sent to a server, and there is nothing to recover if you clear your browser data.'
+          : 'アカウントは<strong>いまのところこのブラウザの中だけ</strong>にあります。サーバーへは何も送っていません。そのぶん、ブラウザのデータを消すと戻せません。';
+      } else {
+        foot.innerHTML = lang === 'en'
+          ? 'Your email is used to sign in and is never shown to anyone. Your handle and display name are public.'
+          : 'メールアドレスはログインにだけ使い、誰にも表示しません。公開されるのはハンドル名と表示名です。';
+      }
+    }
     showErr(null);
   }
 
@@ -641,11 +666,10 @@
     form.addEventListener('submit', function (e) {
       e.preventDefault();
       var submit = document.getElementById('auth-submit');
-      var o = {
-        handle: form.handle.value,
-        display: form.display.value,
-        pass: form.pass.value
-      };
+      var o = {};
+      (PB.auth.fields()[mode] || []).forEach(function (k) {
+        if (form[k]) o[k] = form[k].value;
+      });
       submit.disabled = true;
       showErr(null);
 
@@ -720,6 +744,9 @@
       buildAccountSlot();
       buildAccountPanel();
     });
+
+    /* 保存してあるセッションから利用者を取り戻す（Supabase では通信が入る） */
+    PB.auth.start();
 
     var lb = document.getElementById('lang');
     if (lb) lb.addEventListener('click', function () { lang = (lang === 'ja' ? 'en' : 'ja'); applyLang(); });
