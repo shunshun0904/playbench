@@ -154,7 +154,7 @@ Supabase 版は**模擬サーバを立てて**検査します（`test/shots.js` 
 | | ゲーム | 相手の作り | 実測（互角 .250） |
 |---|---|---|---|
 | 01 | [ビッグショット](https://shunshun0904.github.io/bigshot/) | 所有権の確率を厳密に数え上げ | 対 素人筋3人 **.855** |
-| 02 | [アクワイア](https://github.com/shunshun0904/aquire)（公開準備中） | 期待ドルへの換算（ルールベース） | 4人戦 **.500** |
+| 02 | [アクワイア](https://shunshun0904.github.io/aquire/) | 期待ドルへの換算（ルールベース） | 4人戦 **.500** |
 | 03 | [ハイソサエティ](https://shunshun0904.github.io/highsociety/) | 自己対戦PPO＋先読み | 対 既存CPU3人 **.621** |
 
 ## 権利について
