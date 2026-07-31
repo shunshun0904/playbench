@@ -1,0 +1,14 @@
+{
+  "name": "playbench",
+  "version": "0.1.0",
+  "description": "盤上を、測る。ボードゲームと、その相手の強さを互角の線と並べて実測した図録",
+  "private": true,
+  "scripts": {
+    "build": "node build.js",
+    "test": "node test/shots.js",
+    "serve": "python3 -m http.server 8080"
+  },
+  "devDependencies": {
+    "playwright": "^1.49.1"
+  }
+}

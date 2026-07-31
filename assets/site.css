@@ -1,0 +1,634 @@
+/* ==========================================================================
+   PLAYBENCH ─ 製図シートとしての図録
+
+   明の地は製図用紙、暗の地は青焼き。同じ図面の2つの複製方式であって、
+   単純な明暗の反転ではない。色は2つだけ役割を持つ。
+     朱  ── 主張・朱入れ（この作品が言いたい一行、互角を超えた棒）
+     藍  ── 計測値（比較のための棒、目盛り、注記）
+   数値はすべて等幅・桁揃えで、互角の線と一緒に読む。
+   ========================================================================== */
+
+/* --------------------------------------------------------------- tokens */
+:root {
+  /* 明 ── 製図用紙 */
+  --paper:        #e8e9e3;
+  --sheet:        #f4f4f0;
+  --ink:          #1b2027;
+  --ink-mid:      #454e59;
+  --ink-mute:     #6b7480;
+  --rule:         #c5c8c0;
+  --rule-soft:    #d8dad3;
+  --grid-fine:    rgba(27, 32, 39, .045);
+  --grid-major:   rgba(27, 32, 39, .075);
+  --vermilion:    #b03a24;
+  --vermilion-dim:rgba(176, 58, 36, .13);
+  --indigo:       #2b4c6f;
+  --indigo-dim:   rgba(43, 76, 111, .15);
+  --bar-cmp:      rgba(43, 76, 111, .30);
+  --bar-lead:     rgba(176, 58, 36, .34);
+  --shadow:       0 1px 0 rgba(27, 32, 39, .05);
+
+  --serif: "Hiragino Mincho ProN", "HiraMinProN-W3", "Yu Mincho", YuMincho,
+           "Noto Serif JP", "Songti SC", "Source Han Serif", serif;
+  --mono:  ui-monospace, "SF Mono", SFMono-Regular, "Cascadia Mono", Menlo,
+           Consolas, "Noto Sans Mono", monospace;
+
+  --measure: 34rem;
+  --sheet-w: 62rem;
+
+  --s1: .35rem;  --s2: .7rem;   --s3: 1.1rem;  --s4: 1.7rem;
+  --s5: 2.6rem;  --s6: 4rem;    --s7: 6rem;    --s8: 9rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* 暗 ── 青焼き。線が白く抜ける */
+    --paper:        #0f151c;
+    --sheet:        #151d26;
+    --ink:          #dde5ea;
+    --ink-mid:      #a7b4bf;
+    --ink-mute:     #7d8b98;
+    --rule:         #28323e;
+    --rule-soft:    #1e2833;
+    --grid-fine:    rgba(180, 210, 235, .05);
+    --grid-major:   rgba(180, 210, 235, .085);
+    --vermilion:    #e8815f;
+    --vermilion-dim:rgba(232, 129, 95, .16);
+    --indigo:       #82b4da;
+    --indigo-dim:   rgba(130, 180, 218, .17);
+    --bar-cmp:      rgba(130, 180, 218, .30);
+    --bar-lead:     rgba(232, 129, 95, .34);
+    --shadow:       0 1px 0 rgba(0, 0, 0, .3);
+  }
+}
+
+/* 閲覧者のトグルは、どちらの向きにも media query に勝つ */
+:root[data-theme="dark"] {
+  --paper:        #0f151c;
+  --sheet:        #151d26;
+  --ink:          #dde5ea;
+  --ink-mid:      #a7b4bf;
+  --ink-mute:     #7d8b98;
+  --rule:         #28323e;
+  --rule-soft:    #1e2833;
+  --grid-fine:    rgba(180, 210, 235, .05);
+  --grid-major:   rgba(180, 210, 235, .085);
+  --vermilion:    #e8815f;
+  --vermilion-dim:rgba(232, 129, 95, .16);
+  --indigo:       #82b4da;
+  --indigo-dim:   rgba(130, 180, 218, .17);
+  --bar-cmp:      rgba(130, 180, 218, .30);
+  --bar-lead:     rgba(232, 129, 95, .34);
+  --shadow:       0 1px 0 rgba(0, 0, 0, .3);
+}
+:root[data-theme="light"] {
+  --paper:        #e8e9e3;
+  --sheet:        #f4f4f0;
+  --ink:          #1b2027;
+  --ink-mid:      #454e59;
+  --ink-mute:     #6b7480;
+  --rule:         #c5c8c0;
+  --rule-soft:    #d8dad3;
+  --grid-fine:    rgba(27, 32, 39, .045);
+  --grid-major:   rgba(27, 32, 39, .075);
+  --vermilion:    #b03a24;
+  --vermilion-dim:rgba(176, 58, 36, .13);
+  --indigo:       #2b4c6f;
+  --indigo-dim:   rgba(43, 76, 111, .15);
+  --bar-cmp:      rgba(43, 76, 111, .30);
+  --bar-lead:     rgba(176, 58, 36, .34);
+  --shadow:       0 1px 0 rgba(27, 32, 39, .05);
+}
+
+/* ----------------------------------------------------------------- base */
+*, *::before, *::after { box-sizing: border-box; }
+
+html { background-color: var(--paper); }
+
+body {
+  margin: 0;
+  color: var(--ink);
+  background-color: var(--paper);
+  /* 方眼。細目 24px に、5マスごとの主線を重ねる */
+  background-image:
+    linear-gradient(var(--grid-fine) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-fine) 1px, transparent 1px),
+    linear-gradient(var(--grid-major) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-major) 1px, transparent 1px);
+  background-size: 24px 24px, 24px 24px, 120px 120px, 120px 120px;
+  font-family: var(--serif);
+  font-size: 16px;
+  line-height: 1.85;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection { background: var(--vermilion-dim); }
+
+a { color: inherit; }
+
+:focus-visible {
+  outline: 2px solid var(--vermilion);
+  outline-offset: 3px;
+}
+
+/* --------------------------------------------------------------- 版面 */
+.sheet {
+  width: min(100% - 2.5rem, var(--sheet-w));
+  margin-inline: auto;
+}
+
+/* 製図シートの縁。内容はこの上に「描かれる」 */
+.leaf {
+  background: var(--sheet);
+  border: 1px solid var(--rule);
+  box-shadow: var(--shadow);
+}
+
+.rule       { border: 0; border-top: 1px solid var(--rule); margin: 0; }
+.rule--soft { border-top-color: var(--rule-soft); }
+
+/* ラベル。小さく、字間を開けた等幅 */
+.tag {
+  font-family: var(--mono);
+  font-size: .68rem;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  font-variant-numeric: tabular-nums;
+}
+.tag--ink { color: var(--ink-mid); }
+.tag--red { color: var(--vermilion); }
+
+.num {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.01em;
+}
+
+/* --------------------------------------------------------------- 天 */
+.masthead {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: color-mix(in srgb, var(--paper) 88%, transparent);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--rule);
+}
+.masthead__in {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  padding-block: .8rem;
+}
+.masthead__mark {
+  font-family: var(--mono);
+  font-size: .92rem;
+  font-weight: 600;
+  letter-spacing: .3em;
+  margin-right: auto;
+  text-decoration: none;
+}
+.masthead__mark span { color: var(--vermilion); }
+
+.ctl {
+  font-family: var(--mono);
+  font-size: .7rem;
+  letter-spacing: .1em;
+  color: var(--ink-mute);
+  background: transparent;
+  border: 1px solid var(--rule);
+  border-radius: 0;
+  padding: .32rem .62rem;
+  cursor: pointer;
+  text-decoration: none;
+  transition: color .15s, border-color .15s;
+}
+.ctl:hover { color: var(--ink); border-color: var(--ink-mute); }
+.ctl__on { color: var(--vermilion); }
+
+/* --------------------------------------------------------------- 表紙 */
+.cover { padding-block: var(--s7) var(--s6); }
+
+.cover__eyebrow {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  margin-bottom: var(--s5);
+}
+.cover__eyebrow::after {
+  content: "";
+  flex: 1;
+  border-top: 1px solid var(--rule);
+}
+
+.cover__title {
+  font-size: clamp(2.6rem, 7.5vw, 4.6rem);
+  line-height: 1.24;
+  font-weight: 500;
+  margin: 0 0 var(--s4);
+  letter-spacing: .02em;
+  text-wrap: balance;
+}
+.cover__title em {
+  font-style: normal;
+  color: var(--vermilion);
+}
+
+.cover__lead {
+  max-width: var(--measure);
+  font-size: 1.02rem;
+  color: var(--ink-mid);
+  margin: 0 0 var(--s5);
+}
+.cover__lead strong { font-weight: 600; color: var(--ink); }
+
+/* 升目に並べる区画。
+   罫は gap の下地ではなく outline で引く。outline は場所を取らないので
+   隣どうしがちょうど重なり、最終行が埋まらなくても余りが灰色に抜けない。 */
+.cells {
+  display: grid;
+  gap: 1px;
+  background: var(--sheet);
+  border: 1px solid var(--rule);
+}
+.cells > * { outline: 1px solid var(--rule); }
+
+/* 表紙の指標。3つめが、このサイトの読み方そのものを教える */
+.gauges { grid-template-columns: repeat(auto-fit, minmax(min(11rem, 100%), 1fr)); }
+.gauge {
+  background: var(--sheet);
+  padding: var(--s3);
+  display: flex;
+  flex-direction: column;
+  gap: .3rem;
+}
+.gauge__v {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 2.1rem;
+  line-height: 1;
+  color: var(--ink);
+}
+.gauge--key .gauge__v { color: var(--vermilion); }
+.gauge__k { font-size: .8rem; color: var(--ink-mid); }
+.gauge__note { font-size: .74rem; color: var(--ink-mute); line-height: 1.6; }
+
+/* --------------------------------------------------------------- 見出し */
+.band {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s3);
+  padding-top: var(--s7);
+  padding-bottom: var(--s4);
+}
+.band__t {
+  font-size: 1.45rem;
+  font-weight: 500;
+  margin: 0;
+  letter-spacing: .04em;
+}
+.band__n { flex: 1; border-top: 1px solid var(--rule); }
+
+/* --------------------------------------------------------------- 作品 */
+.works { display: flex; flex-direction: column; gap: var(--s6); }
+
+.work { position: relative; }
+
+.work__top {
+  display: grid;
+  grid-template-columns: 12.5rem 1fr;
+  gap: var(--s5);
+  padding: var(--s4);
+  border: 1px solid var(--rule);
+  background: var(--sheet);
+  align-items: start;
+}
+
+/* 図版 */
+.work__fig {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+}
+.work__fig svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  border: 1px solid var(--rule-soft);
+  background: var(--sheet);
+}
+.work__figcap { font-size: .7rem; color: var(--ink-mute); font-family: var(--mono); letter-spacing: .02em; }
+
+.work__head { min-width: 0; }
+
+.work__no {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  margin-bottom: var(--s2);
+}
+.work__no::after { content: ""; flex: 1; border-top: 1px solid var(--rule-soft); }
+
+.work__title {
+  font-size: 1.85rem;
+  font-weight: 500;
+  margin: 0 0 .2rem;
+  letter-spacing: .03em;
+  text-wrap: balance;
+}
+.work__latin {
+  font-family: var(--mono);
+  font-size: .74rem;
+  letter-spacing: .26em;
+  color: var(--ink-mute);
+  margin: 0 0 var(--s3);
+}
+.work__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .3rem var(--s3);
+  margin: 0 0 var(--s3);
+  padding: 0;
+  list-style: none;
+  font-size: .82rem;
+  color: var(--ink-mid);
+}
+.work__meta li { display: flex; gap: .5rem; }
+.work__meta b { font-weight: 400; color: var(--ink-mute); font-size: .74rem; letter-spacing: .08em; }
+
+.work__lead {
+  margin: 0 0 var(--s3);
+  max-width: var(--measure);
+  color: var(--ink-mid);
+}
+
+.work__acts { display: flex; flex-wrap: wrap; gap: var(--s2); align-items: center; }
+
+.act {
+  font-family: var(--mono);
+  font-size: .74rem;
+  letter-spacing: .1em;
+  padding: .46rem .9rem;
+  border: 1px solid var(--rule);
+  text-decoration: none;
+  color: var(--ink-mid);
+  transition: color .15s, border-color .15s, background .15s;
+}
+.act:hover { color: var(--ink); border-color: var(--ink-mute); }
+.act--play {
+  border-color: var(--vermilion);
+  color: var(--vermilion);
+}
+.act--play:hover { background: var(--vermilion-dim); color: var(--vermilion); border-color: var(--vermilion); }
+.act--off { border-style: dashed; color: var(--ink-mute); cursor: default; }
+.act--off:hover { color: var(--ink-mute); border-color: var(--rule); }
+
+/* --------------------------------------- 相手の作り／実測プレート の2段組 */
+.work__body {
+  display: grid;
+  grid-template-columns: 1fr 1.15fr;
+  gap: 1px;
+  background: var(--rule);
+  border: 1px solid var(--rule);
+  border-top: 0;
+}
+.cell { background: var(--sheet); padding: var(--s4); }
+
+.cell__k {
+  display: block;
+  margin-bottom: var(--s2);
+  padding-bottom: var(--s2);
+  border-bottom: 1px solid var(--rule-soft);
+}
+.cell__t { font-size: 1.02rem; font-weight: 500; margin: 0 0 var(--s2); }
+.cell__p { margin: 0; font-size: .88rem; color: var(--ink-mid); }
+
+/* --------------------------------------------------------- 実測プレート */
+.plate { margin: 0; }
+.plate__note { display: block; margin-top: .25rem; font-size: .72rem; color: var(--ink-mute); font-family: var(--mono); }
+
+/* 行と目盛りは同じ列組で並ぶ。互角の線はその座標系の上に1本だけ立つ。 */
+.scale {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: .42rem;
+  --lab: 9.4rem;
+  --val: 3.1rem;
+  --cgap: .7rem;
+  --base: .25;
+  --axis-h: 1.45rem;
+}
+
+/* 互角の線 ── この図録の物差し。全行を貫いて立つ */
+.scale__base {
+  position: absolute;
+  top: -.15rem;
+  height: calc(100% - var(--axis-h) + .3rem);
+  left: calc(var(--lab) + var(--cgap)
+        + (100% - var(--lab) - var(--val) - var(--cgap) * 2) * var(--base));
+  width: 0;
+  border-left: 1px dashed var(--ink);
+  opacity: .5;
+  pointer-events: none;
+  z-index: 3;
+}
+.scale__base::before {
+  content: "";
+  position: absolute;
+  top: -1px; left: -2.5px;
+  border-left: 2.5px solid transparent;
+  border-right: 2.5px solid transparent;
+  border-top: 3.5px solid var(--ink);
+}
+
+.srow, .axis {
+  display: grid;
+  grid-template-columns: minmax(0, var(--lab)) 1fr var(--val);
+  gap: var(--cgap);
+  align-items: center;
+}
+.srow__l {
+  font-size: .77rem;
+  color: var(--ink-mute);
+  line-height: 1.38;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+.srow--lead .srow__l { color: var(--ink); }
+
+.srow__track {
+  position: relative;
+  height: 1.1rem;
+  background: color-mix(in srgb, var(--paper) 75%, var(--sheet));
+  border: 1px solid var(--rule-soft);
+}
+
+.srow__bar {
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+  width: calc(var(--v) * 100%);
+  background: var(--bar-cmp);
+  border-right: 2px solid var(--indigo);
+}
+.srow--lead .srow__bar {
+  background: var(--bar-lead);
+  border-right-color: var(--vermilion);
+}
+
+.srow__v {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  font-size: .82rem;
+  text-align: right;
+  color: var(--ink-mid);
+}
+.srow--lead .srow__v { color: var(--vermilion); font-size: .92rem; }
+
+/* 目盛り。0 ／ 互角 ／ 1.000 の三点だけ */
+.axis { margin-top: .1rem; align-items: start; }
+.axis__t { grid-column: 2; position: relative; height: var(--axis-h); }
+.axis__tick {
+  position: absolute;
+  top: 0;
+  font-family: var(--mono);
+  font-size: .63rem;
+  line-height: 1.4;
+  color: var(--ink-mute);
+  padding-top: .28rem;
+  padding-left: .3rem;
+  border-left: 1px solid var(--rule);
+  white-space: nowrap;
+}
+.axis__tick--end {
+  border-left: 0;
+  border-right: 1px solid var(--rule);
+  padding-left: 0;
+  padding-right: .3rem;
+  transform: translateX(-100%);
+}
+.axis__tick--base {
+  color: var(--ink-mid);
+  border-left-style: dashed;
+  border-left-color: var(--ink);
+}
+
+/* 注記 */
+.remark {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--s2);
+  padding: var(--s3) var(--s4);
+  border: 1px solid var(--rule);
+  border-top: 0;
+  background: var(--sheet);
+  font-size: .82rem;
+  color: var(--ink-mid);
+}
+.remark__k { color: var(--vermilion); font-family: var(--mono); font-size: .68rem; letter-spacing: .14em; padding-top: .32rem; }
+.remark__b { margin: 0; }
+
+/* ------------------------------------------------------------- これから */
+.plan { grid-template-columns: repeat(auto-fit, minmax(min(15rem, 100%), 1fr)); }
+.step {
+  background: var(--sheet);
+  padding: var(--s4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+}
+.step__n {
+  font-size: 1.5rem;
+  color: var(--vermilion);
+  line-height: 1;
+}
+.step__t { font-size: 1rem; font-weight: 500; margin: 0; }
+.step__b { margin: 0; font-size: .84rem; color: var(--ink-mid); }
+.step__note {
+  margin: auto 0 0;
+  padding-top: var(--s2);
+  border-top: 1px solid var(--rule-soft);
+  font-size: .74rem;
+  color: var(--ink-mute);
+}
+.step__state {
+  font-family: var(--mono);
+  font-size: .62rem;
+  letter-spacing: .14em;
+  color: var(--ink-mute);
+  border: 1px solid var(--rule);
+  padding: .1rem .45rem;
+  align-self: flex-start;
+}
+
+/* 構成図 */
+.wire {
+  margin-top: var(--s4);
+  padding: var(--s4);
+  border: 1px solid var(--rule);
+  background: var(--sheet);
+  overflow-x: auto;
+}
+.wire svg { display: block; min-width: 40rem; width: 100%; height: auto; }
+
+/* ------------------------------------------------------------- 作法 */
+/* 4項なので 2×2 に組む。3列だと最終行が1つだけ残って締まらない */
+.tenets { grid-template-columns: repeat(auto-fit, minmax(min(24rem, 100%), 1fr)); }
+.tenet { background: var(--sheet); padding: var(--s4); }
+.tenet__t {
+  font-size: 1rem;
+  font-weight: 500;
+  margin: 0 0 var(--s2);
+  padding-bottom: var(--s2);
+  border-bottom: 1px solid var(--rule-soft);
+}
+.tenet__b { margin: 0; font-size: .85rem; color: var(--ink-mid); }
+
+/* ------------------------------------------------------------- 奥付 */
+.colophon {
+  margin-top: var(--s7);
+  padding-block: var(--s5) var(--s6);
+  border-top: 1px solid var(--rule);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(14rem, 100%), 1fr));
+  gap: var(--s4);
+  font-size: .8rem;
+  color: var(--ink-mute);
+}
+.colophon__t { color: var(--ink-mid); margin: 0 0 var(--s2); font-size: .84rem; }
+.colophon p { margin: 0 0 var(--s2); line-height: 1.75; }
+.colophon a { color: var(--ink-mid); text-decoration-color: var(--rule); text-underline-offset: .2em; }
+.colophon a:hover { color: var(--vermilion); }
+
+/* --------------------------------------------------------------- 動き */
+/* 棒は針が振れて止まるように伸びる。一度だけ。 */
+@media (prefers-reduced-motion: no-preference) {
+  .srow__bar {
+    width: 0;
+    transition: width .8s cubic-bezier(.16, .84, .34, 1);
+  }
+  .is-read .srow__bar { width: calc(var(--v) * 100%); }
+  .srow:nth-child(1) .srow__bar { transition-delay: .00s; }
+  .srow:nth-child(2) .srow__bar { transition-delay: .07s; }
+  .srow:nth-child(3) .srow__bar { transition-delay: .14s; }
+  .srow:nth-child(4) .srow__bar { transition-delay: .21s; }
+  .srow:nth-child(5) .srow__bar { transition-delay: .28s; }
+}
+
+/* --------------------------------------------------------------- 狭い幅 */
+@media (max-width: 62rem) {
+  .work__body { grid-template-columns: 1fr; }
+}
+@media (max-width: 46rem) {
+  body { font-size: 15px; }
+  .work__top { grid-template-columns: 1fr; gap: var(--s3); padding: var(--s3); }
+  .work__fig { max-width: 11rem; }
+  .cell, .remark { padding: var(--s3); }
+  .srow, .axis { grid-template-columns: minmax(0, 6.4rem) 1fr 2.6rem; }
+  .srow__l { font-size: .7rem; }
+  .cover { padding-block: var(--s5) var(--s4); }
+  .band { padding-top: var(--s5); }
+}
