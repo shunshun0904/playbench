@@ -135,6 +135,7 @@ function serve() {
 
     const overflow = await page.evaluate(() =>
       document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    /* 期待値は目録から取る。作品を増やしてもこの検査は直さなくてよい */
     const c = await page.evaluate(() => ({
       games: document.querySelectorAll('.game').length,
       play: document.querySelectorAll('.game .btn--go').length,
@@ -143,7 +144,11 @@ function serve() {
       steps: document.querySelectorAll('.step').length,
       tenets: document.querySelectorAll('.tenet').length,
       invite: document.querySelectorAll('.invite').length,
-      rank: document.querySelectorAll('.rank').length
+      rank: document.querySelectorAll('.rank').length,
+      wantGames: window.PB.WORKS.length,
+      wantBars: window.PB.WORKS.reduce((n, w) => n + w.plate.rows.length, 0),
+      wantSteps: window.PB.ROADMAP.length,
+      wantTenets: window.PB.PRINCIPLES.length
     }));
     const bar = await page.evaluate(() => {
       const b = document.querySelector('.srow__bar'), t = b.parentElement;
@@ -156,7 +161,12 @@ function serve() {
     console.log(`   棒幅の比 ${ratio.toFixed(3)} (--v=${bar.v})`);
     if (errs.length) fail('コンソール: ' + errs.slice(0, 3).join(' | '));
     if (overflow > 1) fail('横スクロールが出ている');
-    if (c.games !== 3 || c.chips !== 3 || c.steps !== 4 || c.tenets !== 4) fail('組めていない要素がある');
+    if (c.games !== c.wantGames || c.chips !== c.wantGames || c.play !== c.wantGames
+      || c.bars !== c.wantBars || c.steps !== c.wantSteps || c.tenets !== c.wantTenets) {
+      fail(`組めていない要素がある（ゲーム ${c.games}/${c.wantGames}・遊ぶ ${c.play}/${c.wantGames}`
+        + `・強さ ${c.chips}/${c.wantGames}・棒 ${c.bars}/${c.wantBars}`
+        + `・段階 ${c.steps}/${c.wantSteps}・作り ${c.tenets}/${c.wantTenets}）`);
+    }
     if (c.invite !== 1 || c.rank !== 1) fail('未ログインの勧誘またはランキング枠が出ていない');
     if (Math.abs(ratio - bar.v) > 0.02) fail('棒の幅が値と合っていない');
     await ctx.close();

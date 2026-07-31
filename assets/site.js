@@ -142,7 +142,44 @@
     return s;
   }
 
-  var FIGS = { blocks: figBlocks, grid: figGrid, cards: figCards };
+  /* ロンデル ── インペリアル */
+  function figRondel() {
+    var s = svg(100, 100), ink = 'currentColor';
+    var cx = 50, cy = 50, R = 40, r = 13, n = 8;
+    var pt = function (rad, ang) { return [cx + rad * Math.cos(ang), cy + rad * Math.sin(ang)]; };
+    /* 8つの扇形。時計回りに一周する */
+    for (var i = 0; i < n; i++) {
+      var a0 = (i * 360 / n - 90 - 180 / n) * Math.PI / 180;
+      var a1 = ((i + 1) * 360 / n - 90 - 180 / n) * Math.PI / 180;
+      var o0 = pt(R, a0), o1 = pt(R, a1), i1 = pt(r, a1), i0 = pt(r, a0);
+      sh(s, 'path', {
+        d: 'M' + o0[0].toFixed(2) + ' ' + o0[1].toFixed(2) +
+           ' A' + R + ' ' + R + ' 0 0 1 ' + o1[0].toFixed(2) + ' ' + o1[1].toFixed(2) +
+           ' L' + i1[0].toFixed(2) + ' ' + i1[1].toFixed(2) +
+           ' A' + r + ' ' + r + ' 0 0 0 ' + i0[0].toFixed(2) + ' ' + i0[1].toFixed(2) + ' Z',
+        fill: ink, 'fill-opacity': (i % 2 ? .05 : .12),
+        stroke: ink, 'stroke-width': .55, 'stroke-opacity': .7
+      });
+    }
+    sh(s, 'circle', { cx: cx, cy: cy, r: r, fill: 'none', stroke: ink, 'stroke-width': .7, 'stroke-opacity': .75 });
+    /* 国のマーカー。3国が別々のマスに止まっている */
+    [[1, 27], [3, 33], [6, 30]].forEach(function (d) {
+      var ang = (d[0] * 360 / n - 90) * Math.PI / 180;
+      var c = pt(d[1], ang);
+      sh(s, 'rect', {
+        x: c[0] - 3.4, y: c[1] - 3.4, width: 6.8, height: 6.8, rx: 1,
+        fill: ink, 'fill-opacity': .55, stroke: ink, 'stroke-width': .5, 'stroke-opacity': .8
+      });
+    });
+    /* 進む向き（時計回り）を示す破線 */
+    sh(s, 'path', {
+      d: 'M' + (cx + 46) + ' ' + (cy - 6) + ' A46 46 0 0 1 ' + (cx + 41) + ' ' + (cy + 16),
+      fill: 'none', stroke: ink, 'stroke-width': .5, 'stroke-opacity': .4, 'stroke-dasharray': '3 3'
+    });
+    return s;
+  }
+
+  var FIGS = { blocks: figBlocks, grid: figGrid, cards: figCards, rondel: figRondel };
 
   /* アバター。ハンドル名から決まる、左右対称の升目模様 */
   function identicon(handle, size) {
