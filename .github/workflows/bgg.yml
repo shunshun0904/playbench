@@ -33,8 +33,7 @@ jobs:
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add data/bgg.js
-          git commit -m "BGG の重さと評価を更新
-
-出典は boardgamegeek.com。こちらの実測ではなく他人が付けた数字なので、
-取得日と評価人数を一緒に残している。tools/fetch-bgg.mjs が週次で取得する。"
+          git commit \
+            -m "BGG の重さと評価を更新" \
+            -m "出典は boardgamegeek.com。こちらの実測ではなく他人が付けた数字なので、取得日と評価人数を一緒に残している。tools/fetch-bgg.mjs が週次で取得する。"
           git push
