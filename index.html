@@ -3,9 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>PLAYBENCH ── 盤上を、測る。</title>
-<meta name="description" content="ボードゲームをブラウザで遊べるようにして、その相手がどれだけ強いのかを実測して並べた図録。すべて単一ファイル・外部依存ゼロ。">
+<title>PLAYBENCH ── ボードゲームで遊ぶ</title>
+<meta name="description" content="名作ボードゲームをブラウザで。登録なしですぐ遊べます。相手はどれも本気です。">
 <meta name="color-scheme" content="light dark">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20fill%3D%22%231b2027%22%2F%3E%3Crect%20x%3D%225%22%20y%3D%2213%22%20width%3D%2222%22%20height%3D%226%22%20fill%3D%22%23e8e9e3%22%20fill-opacity%3D%22.22%22%2F%3E%3Crect%20x%3D%225%22%20y%3D%2213%22%20width%3D%2214%22%20height%3D%226%22%20fill%3D%22%23b03a24%22%2F%3E%3Crect%20x%3D%2210%22%20y%3D%227%22%20width%3D%221.4%22%20height%3D%2218%22%20fill%3D%22%23e8e9e3%22%2F%3E%3C%2Fsvg%3E">
 <link rel="stylesheet" href="assets/site.css">
 </head>
 <body>
@@ -14,9 +15,17 @@
 <header class="masthead">
   <div class="sheet masthead__in">
     <a class="masthead__mark" href="#">PLAY<span>BENCH</span></a>
-    <button class="ctl" id="lang" type="button"></button>
-    <button class="ctl" id="theme" type="button">地の色</button>
-    <a class="ctl" href="https://github.com/shunshun0904" rel="noopener">GITHUB</a>
+
+    <nav class="masthead__nav">
+      <a href="#games" data-en="Games">ゲーム</a>
+      <a href="#ranking" data-en="Ranking">ランキング</a>
+    </nav>
+
+    <div class="masthead__tools">
+      <button class="ctl" id="lang" type="button"></button>
+      <button class="ctl" id="theme" type="button">地の色</button>
+      <div id="account-slot"></div>
+    </div>
   </div>
 </header>
 
@@ -24,70 +33,73 @@
 
 <!-- ═══════════════════════════════════════════════════════════ 表紙 -->
 <section class="sheet cover">
-  <div class="cover__eyebrow">
-    <span class="tag" data-en="Catalogue of play &amp; measurement">遊びと計測の図録</span>
-  </div>
+  <h1 class="cover__title" data-en="Real board games.<br>Opponents that <em>actually try</em>.">
+    名作ボードゲームを、<br><em>手強い相手</em>と。
+  </h1>
 
-  <h1 class="cover__title" data-en="Play the board.<br><em>Measure</em> the opponent.">盤上を、<em>測る</em>。</h1>
-
-  <p class="cover__lead" data-en="Board games, rebuilt to run in a browser — and their opponents measured, plainly, against the line where an even game sits. Every title here is a single file with <strong>no libraries, no fonts, no images</strong>. In time this becomes the place where an agent trained on <strong>your own games</strong> takes a seat at the table.">
-    ボードゲームをブラウザで遊べるようにして、その相手がどれだけ強いのかを、
-    互角の線と並べて実測した図録です。収録作はいずれも単一ファイルで、
-    <strong>ライブラリもフォントも画像も読み込みません</strong>。
-    やがてここは、<strong>あなた自身の棋譜</strong>から鍛えたエージェントが席につく場所になります。
+  <p class="cover__lead" data-en="Three classics, rebuilt to run in your browser. <strong>No install, no sign-up, no ads.</strong> Press play and you are in. The computer players are not there to lose politely — each one has been measured, and the numbers are on this page.">
+    ブラウザで開くだけ。<strong>インストールも登録も広告もありません</strong>。
+    押せばもう始まります。相手のCPUは手加減しません。
+    どれくらい強いのかは実際に測ってあって、その数字もこのページに載せています。
   </p>
 
-  <div class="cells gauges">
-    <div class="gauge">
-      <span class="gauge__v num" id="gauge-works">3</span>
-      <span class="gauge__k" data-en="works in the catalogue">収録作品</span>
-      <span class="gauge__note" data-en="Each runs from one HTML file, offline.">どれも index.html ひとつで、オフラインでも動く</span>
-    </div>
-    <div class="gauge">
-      <span class="gauge__v num">0</span>
-      <span class="gauge__k" data-en="external dependencies">外部ライブラリ</span>
-      <span class="gauge__note" data-en="Boards and pieces are hand-written SVG and CSS.">盤も駒も手書きの SVG と CSS</span>
-    </div>
-    <div class="gauge gauge--key">
-      <span class="gauge__v num">.250</span>
-      <span class="gauge__k" data-en="the parity line">互角の線</span>
-      <span class="gauge__note" data-en="Four players. A win rate only means something once you can see this line beside it.">4人戦の互角はここ。勝率は、この線と一緒でなければ意味を持たない</span>
-    </div>
+  <div class="cover__acts">
+    <a class="btn btn--go" href="#games" data-en="Play now">▶ すぐ遊ぶ</a>
+    <button class="btn" type="button" data-auth-open="signup" data-en="Create an account">アカウントを作る</button>
+    <span class="cover__hint" data-en="An account keeps your results. Playing never requires one.">
+      アカウントがあると成績が残ります。遊ぶだけならいりません
+    </span>
   </div>
 </section>
 
-<!-- ═══════════════════════════════════════════════════════ 収録作品 -->
-<section class="sheet">
+<!-- ═══════════════════════════════════════════════════════ ゲーム -->
+<section class="sheet" id="games">
   <div class="band">
-    <h2 class="band__t" data-en="Works">収録作品</h2>
+    <h2 class="band__t" data-en="Games">遊ぶ</h2>
     <span class="band__n"></span>
-    <span class="tag" data-en="I">壱</span>
+    <span class="tag" id="games-count"></span>
   </div>
   <div class="works" id="works"></div>
 </section>
 
-<!-- ═══════════════════════════════════════════════════ これから作る -->
+<!-- ═══════════════════════════════════════════════════ あなたの記録 -->
+<section class="sheet" id="me">
+  <div class="band">
+    <h2 class="band__t" data-en="Your record">あなたの記録</h2>
+    <span class="band__n"></span>
+  </div>
+  <div id="account-panel"></div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════ ランキング -->
+<section class="sheet" id="ranking">
+  <div class="band">
+    <h2 class="band__t" data-en="Ranking">ランキング</h2>
+    <span class="band__n"></span>
+  </div>
+  <div id="ranking-panel"></div>
+</section>
+
+<!-- ═══════════════════════════════════════════════ これからできること -->
 <section class="sheet">
   <div class="band">
-    <h2 class="band__t" data-en="What comes next">これから作るもの</h2>
+    <h2 class="band__t" data-en="Coming next">これからできること</h2>
     <span class="band__n"></span>
-    <span class="tag" data-en="II">弐</span>
   </div>
 
-  <p class="cover__lead" data-en="The interesting opponent is not the strongest one — it is the one that knows how <em>you</em> play. Four steps, in order. None of it is built yet; what is written below is the design, not a claim.">
-    面白い相手とは、いちばん強い相手ではなく、<em>あなたの打ち方</em>を知っている相手です。
-    順に4段階。<strong>まだどれも実装していません</strong>。以下は設計であって、出来ている話ではありません。
+  <p class="cover__lead" data-en="The most interesting opponent is not the strongest one — it is the one that has watched you play. Four steps. <strong>None of it is built yet</strong>; this is the plan, not a promise kept.">
+    いちばん面白い相手は、最強の相手ではなく、<strong>あなたの打ち方を見てきた相手</strong>です。
+    順に4段階。<strong>まだどれも実装していません</strong>。これは予定であって、できている話ではありません。
   </p>
 
   <div id="plan"></div>
 </section>
 
-<!-- ═════════════════════════════════════════════════════ 設計の作法 -->
+<!-- ═════════════════════════════════════════════════════ 作りについて -->
 <section class="sheet">
   <div class="band">
-    <h2 class="band__t" data-en="How these are built">設計の作法</h2>
+    <h2 class="band__t band__t--sub" data-en="About the build">作りについて</h2>
     <span class="band__n"></span>
-    <span class="tag" data-en="III">参</span>
   </div>
   <div id="tenets"></div>
 </section>
@@ -97,28 +109,76 @@
 <!-- ═════════════════════════════════════════════════════════ 奥付 -->
 <footer class="sheet colophon">
   <div>
-    <p class="colophon__t" data-en="Colophon">奥付</p>
-    <p data-en="PLAYBENCH is a personal, non-commercial catalogue. Nothing here is sold, and nothing is tracked.">
-      PLAYBENCH は個人による非商用の図録です。何も販売せず、何も追跡しません。
+    <p class="colophon__t" data-en="About">このサイトについて</p>
+    <p data-en="PLAYBENCH is personal and non-commercial. Nothing is sold, nothing is tracked, and there are no ads.">
+      PLAYBENCH は個人による非商用のサイトです。何も販売せず、何も追跡せず、広告も出しません。
     </p>
   </div>
   <div>
     <p class="colophon__t" data-en="Rights">権利について</p>
     <p data-en="Big Shot is a game by Alex Randolph; Acquire by Sid Sackson; High Society by Reiner Knizia. These are unofficial fan implementations built for study. They contain no trademarks and no original artwork.">
       Big Shot はアレックス・ランドルフ、Acquire はシド・サクソン、High Society はライナー・クニツィアによるゲームです。
-      本図録の実装はいずれも学習目的の非公式なファンメイドで、商標もアートワークも含みません。
+      本サイトの実装はいずれも学習目的の非公式なファンメイドで、商標もアートワークも含みません。
     </p>
   </div>
   <div>
     <p class="colophon__t" data-en="Source">実装</p>
-    <p data-en="Every line, including the measurements behind each bar, is public.">
+    <p data-en="Everything is public, including the measurements behind every bar.">
       すべて公開しています。棒グラフの裏にある実測も含めて。
     </p>
     <p><a href="https://github.com/shunshun0904" rel="noopener">github.com/shunshun0904</a></p>
   </div>
 </footer>
 
+<!-- ══════════════════════════════════════════════ ログイン／新規登録 -->
+<dialog class="modal" id="auth-modal" aria-labelledby="auth-title">
+  <form class="modal__in" id="auth-form" method="dialog" novalidate>
+    <div class="modal__head">
+      <h2 class="modal__t" id="auth-title">ログイン</h2>
+      <button class="modal__x" type="button" id="auth-close" aria-label="閉じる">×</button>
+    </div>
+
+    <div class="tabs" role="tablist">
+      <button class="tab" type="button" role="tab" data-tab="signin" data-en="Sign in">ログイン</button>
+      <button class="tab" type="button" role="tab" data-tab="signup" data-en="Create account">新規登録</button>
+    </div>
+
+    <div class="field">
+      <label class="field__k" for="f-handle" data-en="Handle">ハンドル名</label>
+      <div class="field__wrap">
+        <span class="field__at">@</span>
+        <input class="field__i field__i--at" id="f-handle" name="handle" type="text"
+               autocomplete="username" autocapitalize="none" spellcheck="false"
+               inputmode="latin" required>
+      </div>
+      <p class="field__note" data-en="Lower-case letters, digits and _ — 3 to 20 characters.">半角の英小文字・数字・_ で 3〜20 文字</p>
+    </div>
+
+    <div class="field" data-only="signup">
+      <label class="field__k" for="f-display" data-en="Display name">表示名</label>
+      <input class="field__i" id="f-display" name="display" type="text" autocomplete="nickname" maxlength="24">
+      <p class="field__note" data-en="Shown on the board and the ranking. Japanese is fine.">盤面やランキングに出る名前。日本語で構いません</p>
+    </div>
+
+    <div class="field">
+      <label class="field__k" for="f-pass" data-en="Password">パスワード</label>
+      <input class="field__i" id="f-pass" name="pass" type="password" required minlength="8">
+      <p class="field__note" data-only="signup" data-en="8 characters or more.">8文字以上</p>
+    </div>
+
+    <p class="modal__err" id="auth-err" role="alert" hidden></p>
+
+    <button class="btn btn--go btn--wide" type="submit" id="auth-submit">ログイン</button>
+
+    <p class="modal__foot" data-en="Accounts live in this browser only — nothing is sent to a server, and there is nothing to recover if you clear your browser data. A real account system is coming.">
+      アカウントは<strong>いまのところこのブラウザの中だけ</strong>にあります。サーバーへは何も送っていません。
+      そのぶん、ブラウザのデータを消すと戻せません。サーバー側の仕組みはこれから入れます。
+    </p>
+  </form>
+</dialog>
+
 <script src="data/works.js"></script>
+<script src="assets/auth.js"></script>
 <script src="assets/site.js"></script>
 </body>
 </html>

@@ -1,8 +1,8 @@
 /* ==========================================================================
-   PLAYBENCH ─ 図録の組版
+   PLAYBENCH ─ 画面の組み立て
 
-   作品は data/works.js から組む。作品を増やすときにこのファイルは触らない。
-   図版は外部画像を持たず、その場で SVG を生成する（3作の流儀に合わせる）。
+   ゲームは data/works.js から組む。ゲームを増やすときにこのファイルは触らない。
+   図版もアバターも外部画像を持たず、その場で SVG を生成する。
    ========================================================================== */
 'use strict';
 
@@ -18,28 +18,39 @@
     return n;
   }
   function pick(o, key) {
-    // lang が en のとき keyEn を優先し、無ければ日本語に落とす
-    if (lang === 'en') {
-      var k = key + 'En';
-      if (o[k]) return o[k];
-    }
+    if (lang === 'en') { var k = key + 'En'; if (o[k]) return o[k]; }
     return o[key];
   }
   function fmt(v) {
-    // .855 / 1.000 ── 桁を揃えて先頭の 0 を落とす
     var s = v.toFixed(3);
     return v < 1 ? s.slice(1) : s;
   }
   var T = {
     ja: {
-      opponent: '相手の作り', plate: '実測', remark: '注記',
-      play: '遊ぶ', repo: 'リポジトリ', designer: '作者', players: '人数', genre: '分類',
-      fig: '図', parity: '互角', planned: '未実装'
+      play: '遊ぶ', soon: '準備中', repo: '実装を見る', opponent: '相手',
+      players: '人数', genre: '分類', designer: '作者',
+      strength: '相手の強さ', parity: '互角', detail: 'この相手をどう作ったか',
+      plate: '実測', remark: '注記', fig: '図', planned: '未実装',
+      signin: 'ログイン', signup: '新規登録', signout: 'ログアウト',
+      account: 'アカウント', guest: 'ゲスト',
+      played: '対戦', won: '勝ち', rate: '勝率', agents: 'エージェント',
+      noRecord: 'まだ記録がありません。ゲームを遊ぶと、ここに残ります。',
+      noRank: 'まだ対戦が行われていません。エージェント機能ができると、ここに並びます。',
+      joined: '登録', save: '保存する', del: 'アカウントを削除', exportD: '書き出す',
+      displayName: '表示名', localOnly: 'この端末のみ'
     },
     en: {
-      opponent: 'The opponent', plate: 'Measured', remark: 'Note',
-      play: 'Play', repo: 'Source', designer: 'Designer', players: 'Players', genre: 'Type',
-      fig: 'Fig.', parity: 'parity', planned: 'planned'
+      play: 'Play', soon: 'Coming soon', repo: 'Source', opponent: 'Opponents',
+      players: 'Players', genre: 'Type', designer: 'Designer',
+      strength: 'How strong', parity: 'parity', detail: 'How this opponent was built',
+      plate: 'Measured', remark: 'Note', fig: 'Fig.', planned: 'planned',
+      signin: 'Sign in', signup: 'Create account', signout: 'Sign out',
+      account: 'Account', guest: 'Guest',
+      played: 'Played', won: 'Won', rate: 'Win rate', agents: 'Agents',
+      noRecord: 'No games yet. Your results will appear here once you play.',
+      noRank: 'No matches yet. Once agents arrive, they will be ranked here.',
+      joined: 'Joined', save: 'Save', del: 'Delete account', exportD: 'Export',
+      displayName: 'Display name', localOnly: 'this device only'
     }
   };
   function t(k) { return T[lang][k]; }
@@ -59,50 +70,35 @@
     return n;
   }
 
-  /* 街区図 ── ビッグショット。街路で区切られた街区と、公園ひとつ */
+  /* 街区図 ── ビッグショット */
   function figBlocks() {
-    var s = svg(100, 100);
-    var ink = 'currentColor';
-    sh(s, 'rect', { x: 0, y: 0, width: 100, height: 100, fill: 'none' });
-    var cells = [
-      [8, 8], [38, 8], [68, 8],
-      [8, 38], [38, 38], [68, 38],
-      [8, 68], [38, 68], [68, 68]
-    ];
+    var s = svg(100, 100), ink = 'currentColor';
+    var cells = [[8,8],[38,8],[68,8],[8,38],[38,38],[68,38],[8,68],[38,68],[68,68]];
     cells.forEach(function (c, i) {
-      var x = c[0], y = c[1], w = 24, h = 24;
-      var park = (i === 4);
+      var x = c[0], y = c[1], w = 24, h = 24, park = (i === 4);
       sh(s, 'rect', {
         x: x, y: y, width: w, height: h,
-        fill: park ? 'none' : 'currentColor',
-        'fill-opacity': park ? 0 : .05,
+        fill: park ? 'none' : 'currentColor', 'fill-opacity': park ? 0 : .05,
         stroke: ink, 'stroke-width': .85, 'stroke-opacity': .8
       });
       if (park) {
-        // 園路と木立
         sh(s, 'path', {
           d: 'M' + x + ' ' + (y + 16) + ' Q' + (x + 12) + ' ' + (y + 4) + ' ' + (x + 24) + ' ' + (y + 10),
           fill: 'none', stroke: ink, 'stroke-width': .6, 'stroke-opacity': .4
         });
-        [[6, 6], [17, 8], [11, 18], [19, 17]].forEach(function (p) {
+        [[6,6],[17,8],[11,18],[19,17]].forEach(function (p) {
           sh(s, 'circle', { cx: x + p[0], cy: y + p[1], r: 2.1, fill: ink, 'fill-opacity': .3 });
         });
       } else {
-        // 敷地割。高い区画ほど線が密になる
         var n = 2 + (i % 4);
         for (var j = 1; j < n; j++) {
-          sh(s, 'line', {
-            x1: x + (w / n) * j, y1: y, x2: x + (w / n) * j, y2: y + h,
-            stroke: ink, 'stroke-width': .4, 'stroke-opacity': .42
-          });
+          sh(s, 'line', { x1: x + (w / n) * j, y1: y, x2: x + (w / n) * j, y2: y + h,
+            stroke: ink, 'stroke-width': .4, 'stroke-opacity': .42 });
         }
-        sh(s, 'line', {
-          x1: x, y1: y + h * .62, x2: x + w, y2: y + h * .62,
-          stroke: ink, 'stroke-width': .4, 'stroke-opacity': .42
-        });
+        sh(s, 'line', { x1: x, y1: y + h * .62, x2: x + w, y2: y + h * .62,
+          stroke: ink, 'stroke-width': .4, 'stroke-opacity': .42 });
       }
     });
-    // 街路のセンターライン
     [32, 62].forEach(function (v) {
       sh(s, 'line', { x1: v + 2, y1: 4, x2: v + 2, y2: 96, stroke: ink, 'stroke-width': .5, 'stroke-opacity': .35, 'stroke-dasharray': '3 3' });
       sh(s, 'line', { x1: 4, y1: v + 2, x2: 96, y2: v + 2, stroke: ink, 'stroke-width': .5, 'stroke-opacity': .35, 'stroke-dasharray': '3 3' });
@@ -110,71 +106,72 @@
     return s;
   }
 
-  /* 盤面 ── アクワイア。12×9 のマスに、繋がったチェーンが2つ */
+  /* 盤面 ── アクワイア */
   function figGrid() {
-    var s = svg(100, 100);
-    var ink = 'currentColor';
+    var s = svg(100, 100), ink = 'currentColor';
     var cols = 12, rows = 9, pad = 6;
     var cw = (100 - pad * 2) / cols, ch = (100 - pad * 2 - 8) / rows;
-    var chainA = ['2,2', '3,2', '3,3', '4,3', '4,2', '5,2'];
-    var chainB = ['7,5', '8,5', '8,6', '9,6', '7,6'];
-    for (var r = 0; r < rows; r++) {
-      for (var c = 0; c < cols; c++) {
-        var key = c + ',' + r;
-        var inA = chainA.indexOf(key) >= 0, inB = chainB.indexOf(key) >= 0;
-        sh(s, 'rect', {
-          x: pad + c * cw + .5, y: pad + 4 + r * ch + .5,
-          width: cw - 1.4, height: ch - 1.4,
-          fill: (inA || inB) ? ink : 'none',
-          'fill-opacity': inA ? .6 : (inB ? .32 : 0),
-          stroke: ink, 'stroke-width': .35,
-          'stroke-opacity': (inA || inB) ? .72 : .34
-        });
-      }
+    var A = ['2,2','3,2','3,3','4,3','4,2','5,2'], B = ['7,5','8,5','8,6','9,6','7,6'];
+    for (var r = 0; r < rows; r++) for (var c = 0; c < cols; c++) {
+      var key = c + ',' + r, inA = A.indexOf(key) >= 0, inB = B.indexOf(key) >= 0;
+      sh(s, 'rect', {
+        x: pad + c * cw + .5, y: pad + 4 + r * ch + .5,
+        width: cw - 1.4, height: ch - 1.4,
+        fill: (inA || inB) ? ink : 'none',
+        'fill-opacity': inA ? .6 : (inB ? .32 : 0),
+        stroke: ink, 'stroke-width': .35, 'stroke-opacity': (inA || inB) ? .72 : .34
+      });
     }
     return s;
   }
 
-  /* 競り札 ── ハイソサエティ。重ねた3枚 */
+  /* 競り札 ── ハイソサエティ */
   function figCards() {
-    var s = svg(100, 100);
-    var ink = 'currentColor';
-    var defs = [
-      { x: 12, y: 26, rot: -8, op: .06 },
-      { x: 26, y: 20, rot: -1, op: .10 },
-      { x: 40, y: 25, rot: 7, op: .16 }
-    ];
-    defs.forEach(function (d, i) {
+    var s = svg(100, 100), ink = 'currentColor';
+    [{ x:12,y:26,rot:-8,op:.06 }, { x:26,y:20,rot:-1,op:.10 }, { x:40,y:25,rot:7,op:.16 }]
+    .forEach(function (d, i) {
       var g = sh(s, 'g', { transform: 'rotate(' + d.rot + ' ' + (d.x + 24) + ' ' + (d.y + 26) + ')' });
-      sh(g, 'rect', {
-        x: d.x, y: d.y, width: 34, height: 48, rx: 2,
-        fill: ink, 'fill-opacity': d.op, stroke: ink, 'stroke-width': .85, 'stroke-opacity': .8
+      sh(g, 'rect', { x: d.x, y: d.y, width: 34, height: 48, rx: 2,
+        fill: ink, 'fill-opacity': d.op, stroke: ink, 'stroke-width': .7, 'stroke-opacity': .72 });
+      sh(g, 'rect', { x: d.x + 4, y: d.y + 4, width: 26, height: 40, rx: 1,
+        fill: 'none', stroke: ink, 'stroke-width': .4, 'stroke-opacity': .42 });
+      if (i === 2) [[0,0],[1,0],[0,1],[1,1],[.5,.5]].forEach(function (p) {
+        sh(g, 'circle', { cx: d.x + 12 + p[0] * 11, cy: d.y + 16 + p[1] * 11, r: 1.9, fill: ink, 'fill-opacity': .45 });
       });
-      sh(g, 'rect', {
-        x: d.x + 4, y: d.y + 4, width: 26, height: 40, rx: 1,
-        fill: 'none', stroke: ink, 'stroke-width': .4, 'stroke-opacity': .42
-      });
-      if (i === 2) {
-        [[0, 0], [1, 0], [0, 1], [1, 1], [.5, .5]].forEach(function (p) {
-          sh(g, 'circle', {
-            cx: d.x + 12 + p[0] * 11, cy: d.y + 16 + p[1] * 11, r: 1.9,
-            fill: ink, 'fill-opacity': .45
-          });
-        });
-      }
     });
     return s;
   }
 
   var FIGS = { blocks: figBlocks, grid: figGrid, cards: figCards };
 
+  /* アバター。ハンドル名から決まる、左右対称の升目模様 */
+  function identicon(handle, size) {
+    var h = 2166136261;
+    for (var i = 0; i < handle.length; i++) {
+      h ^= handle.charCodeAt(i);
+      h = Math.imul(h, 16777619);
+    }
+    var s = svg(5, 5);
+    s.setAttribute('class', 'idc');
+    if (size) { s.style.width = size; s.style.height = size; }
+    s.setAttribute('aria-hidden', 'true');
+    for (var c = 0; c < 3; c++) for (var r = 0; r < 5; r++) {
+      h = Math.imul(h ^ (h >>> 15), 2246822507);
+      h = (h ^ (h >>> 13)) >>> 0;
+      if ((h & 3) === 0) continue;
+      [c, 4 - c].forEach(function (x) {
+        sh(s, 'rect', { x: x, y: r, width: 1, height: 1, fill: 'currentColor', 'fill-opacity': (h & 4) ? .75 : .4 });
+      });
+    }
+    return s;
+  }
+
   /* ------------------------------------------------------- 実測プレート */
   function buildPlate(p) {
     var fig = el('figure', 'plate');
 
     var cap = el('figcaption', 'cell__k');
-    var capT = el('span', 'tag tag--ink', t('plate') + ' ── ' + pick(p, 'caption'));
-    cap.appendChild(capT);
+    cap.appendChild(el('span', 'tag tag--ink', t('plate') + ' ── ' + pick(p, 'caption')));
     cap.appendChild(el('span', 'plate__note', pick(p, 'note')));
     fig.appendChild(cap);
 
@@ -185,18 +182,15 @@
     p.rows.forEach(function (r) {
       var row = el('div', 'srow' + (r.lead ? ' srow--lead' : ''));
       row.appendChild(el('div', 'srow__l', pick(r, 'label')));
-
       var track = el('div', 'srow__track');
       var bar = el('div', 'srow__bar');
       bar.style.setProperty('--v', r.v);
       track.appendChild(bar);
       row.appendChild(track);
-
       row.appendChild(el('div', 'srow__v', fmt(r.v)));
       scale.appendChild(row);
     });
 
-    /* 目盛り。0 ／ 互角 ／ 1.000 の三点だけ打つ */
     var axis = el('div', 'axis');
     var at = el('div', 'axis__t');
     [
@@ -210,90 +204,283 @@
     });
     axis.appendChild(at);
     scale.appendChild(axis);
-
-    /* 互角の線は全行を貫くので、行ではなく scale の上に1本だけ置く */
     scale.appendChild(el('div', 'scale__base'));
 
     fig.appendChild(scale);
     return fig;
   }
 
-  /* ------------------------------------------------------------- 作品 */
-  function buildWork(w) {
-    var art = el('article', 'work');
+  /* 一行版。カードの表に出す「相手の強さ」 */
+  function strengthChip(w) {
+    var p = w.plate, baseV = p.baseline == null ? .25 : p.baseline;
+    var row = null;
+    p.rows.forEach(function (r) { if (r.lead && !row) row = r; });
+    if (!row) row = p.rows[0];
+
+    var chip = el('div', 'chip');
+    chip.appendChild(el('span', 'chip__k', t('strength')));
+
+    var track = el('div', 'chip__track');
+    track.style.setProperty('--base', baseV * 100 + '%');
+    var bar = el('div', 'chip__bar');
+    bar.style.setProperty('--v', row.v);
+    track.appendChild(bar);
+    chip.appendChild(track);
+
+    chip.appendChild(el('span', 'chip__v num', fmt(row.v)));
+    chip.appendChild(el('span', 'chip__n', pick(row, 'label')));
+    return chip;
+  }
+
+  /* --------------------------------------------------------------- ゲーム */
+  function buildGame(w) {
+    var art = el('article', 'game');
     art.id = w.id;
 
-    /* 上段：図版と書誌 */
-    var top = el('div', 'work__top');
+    /* ── 表：遊ぶための情報だけ ── */
+    var top = el('div', 'game__top');
 
-    var figWrap = el('figure', 'work__fig');
+    var figWrap = el('div', 'game__fig');
     var s = (FIGS[w.figure] || figGrid)();
     s.setAttribute('aria-label', pick(w, 'title'));
     figWrap.appendChild(s);
-    figWrap.appendChild(el('figcaption', 'work__figcap',
-      t('fig') + ' ' + w.no + ' ── ' + (lang === 'en' ? 'schematic' : '模式図')));
     top.appendChild(figWrap);
 
-    var head = el('div', 'work__head');
-    var no = el('div', 'work__no');
-    no.appendChild(el('span', 'tag tag--red', 'No.' + String(w.no).padStart(2, '0')));
-    head.appendChild(no);
+    var head = el('div', 'game__head');
 
-    head.appendChild(el('h3', 'work__title', pick(w, 'title')));
-    head.appendChild(el('p', 'work__latin', w.latin));
+    head.appendChild(el('h3', 'game__title', pick(w, 'title')));
 
-    var meta = el('ul', 'work__meta');
-    [
-      [t('designer'), pick(w, 'designer')],
-      [t('players'), pick(w, 'players')],
-      [t('genre'), pick(w, 'genre')]
-    ].forEach(function (m) {
-      var li = el('li');
-      li.appendChild(el('b', null, m[0]));
-      li.appendChild(el('span', null, m[1]));
-      meta.appendChild(li);
+    var meta = el('p', 'game__meta');
+    [pick(w, 'players'), pick(w, 'genre'), pick(w, 'designer')].forEach(function (m, i) {
+      if (i) meta.appendChild(el('span', 'game__dot', '·'));
+      meta.appendChild(el('span', null, m));
     });
     head.appendChild(meta);
-    head.appendChild(el('p', 'work__lead', pick(w, 'lead')));
 
-    var acts = el('div', 'work__acts');
+    head.appendChild(el('p', 'game__hook', pick(w, 'hook')));
+    head.appendChild(strengthChip(w));
+
+    var acts = el('div', 'game__acts');
     if (w.play) {
-      var a = el('a', 'act act--play', t('play') + ' →');
+      var a = el('a', 'btn btn--go', '▶ ' + t('play'));
       a.href = w.play;
       acts.appendChild(a);
     } else {
-      acts.appendChild(el('span', 'act act--off', pick(w, 'playNote') || t('planned')));
+      var off = el('span', 'btn btn--off', t('soon'));
+      off.title = pick(w, 'playNote') || '';
+      acts.appendChild(off);
     }
-    var rp = el('a', 'act', t('repo'));
-    rp.href = w.repo;
-    rp.rel = 'noopener';
+    var rp = el('a', 'btn', t('repo'));
+    rp.href = w.repo; rp.rel = 'noopener';
     acts.appendChild(rp);
+
+    var opp = el('span', 'game__opp');
+    opp.appendChild(el('b', null, t('opponent')));
+    opp.appendChild(el('span', null, pick(w, 'opponents')));
+    acts.appendChild(opp);
+
     head.appendChild(acts);
     top.appendChild(head);
     art.appendChild(top);
 
-    /* 下段：相手の作り ／ 実測 */
-    var body = el('div', 'work__body');
+    /* ── 裏：作りの話。畳んでおく ── */
+    var det = el('details', 'game__more');
+    var sum = el('summary', 'game__sum', t('detail'));
+    det.appendChild(sum);
 
+    var body = el('div', 'game__body cells');
     var c1 = el('div', 'cell');
-    c1.appendChild(el('span', 'cell__k tag tag--ink', t('opponent')));
     c1.appendChild(el('h4', 'cell__t', pick(w, 'method')));
     c1.appendChild(el('p', 'cell__p', pick(w, 'methodBody')));
+    if (w.remark) {
+      var rm = el('p', 'cell__p cell__p--rm');
+      rm.appendChild(el('b', null, t('remark') + '　'));
+      rm.appendChild(el('span', null, pick(w, 'remark')));
+      c1.appendChild(rm);
+    }
     body.appendChild(c1);
 
     var c2 = el('div', 'cell');
     c2.appendChild(buildPlate(w.plate));
     body.appendChild(c2);
-    art.appendChild(body);
 
-    /* 注記 */
-    if (w.remark) {
-      var rm = el('div', 'remark');
-      rm.appendChild(el('span', 'remark__k', t('remark')));
-      rm.appendChild(el('p', 'remark__b', pick(w, 'remark')));
-      art.appendChild(rm);
-    }
+    det.appendChild(body);
+    det.addEventListener('toggle', function () {
+      if (det.open) watchPlates(det);
+    });
+    art.appendChild(det);
+
     return art;
+  }
+
+  /* ----------------------------------------------------------- アカウント */
+  function initials(u) { return (u.display || u.handle).trim().charAt(0); }
+
+  function buildAccountSlot() {
+    var slot = document.getElementById('account-slot');
+    if (!slot) return;
+    slot.textContent = '';
+    var u = PB.auth.user();
+
+    if (!u) {
+      var b = el('button', 'ctl ctl--go', t('signin'));
+      b.type = 'button';
+      b.setAttribute('data-auth-open', 'signin');
+      slot.appendChild(b);
+      return;
+    }
+
+    var link = el('a', 'who');
+    link.href = '#me';
+    link.appendChild(identicon(u.handle, '1.15rem'));
+    link.appendChild(el('span', 'who__n', u.display));
+    slot.appendChild(link);
+  }
+
+  function statTile(k, v, note) {
+    var d = el('div', 'stat');
+    d.appendChild(el('span', 'stat__v num', v));
+    d.appendChild(el('span', 'stat__k', k));
+    if (note) d.appendChild(el('span', 'stat__note', note));
+    return d;
+  }
+
+  function buildAccountPanel() {
+    var host = document.getElementById('account-panel');
+    if (!host) return;
+    host.textContent = '';
+    var u = PB.auth.user();
+
+    /* 未ログイン ── 勧誘。ただし遊ぶのに要らないことを必ず添える */
+    if (!u) {
+      var box = el('div', 'invite');
+      box.appendChild(el('h3', 'invite__t',
+        lang === 'en' ? 'Keep your results' : '成績を残しませんか'));
+      box.appendChild(el('p', 'invite__b', lang === 'en'
+        ? 'An account records what you played and how it went, and later it is what your own agent is trained from. Playing never requires one.'
+        : 'アカウントを作ると、遊んだ記録が残ります。のちのち、あなた専用のエージェントを鍛える材料にもなります。遊ぶだけならアカウントは要りません。'));
+      var acts = el('div', 'invite__acts');
+      var b1 = el('button', 'btn btn--go', t('signup'));
+      b1.type = 'button'; b1.setAttribute('data-auth-open', 'signup');
+      var b2 = el('button', 'btn', t('signin'));
+      b2.type = 'button'; b2.setAttribute('data-auth-open', 'signin');
+      acts.appendChild(b1); acts.appendChild(b2);
+      box.appendChild(acts);
+      host.appendChild(box);
+      return;
+    }
+
+    /* ログイン済み */
+    var card = el('div', 'me');
+
+    var head = el('div', 'me__head');
+    head.appendChild(identicon(u.handle, '2.6rem'));
+    var who = el('div', 'me__who');
+    who.appendChild(el('h3', 'me__n', u.display));
+    who.appendChild(el('p', 'me__h', '@' + u.handle));
+    head.appendChild(who);
+
+    var badge = el('span', 'me__where', PB.auth.kind === 'local' ? t('localOnly') : PB.auth.label);
+    head.appendChild(badge);
+    card.appendChild(head);
+
+    var st = u.stats || { played: 0, won: 0 };
+    var tiles = el('div', 'cells stats');
+    tiles.appendChild(statTile(t('played'), String(st.played || 0)));
+    tiles.appendChild(statTile(t('won'), String(st.won || 0)));
+    tiles.appendChild(statTile(t('rate'), st.played ? fmt(st.won / st.played) : '—'));
+    tiles.appendChild(statTile(t('agents'), String((u.agents || []).length),
+      lang === 'en' ? 'not yet available' : 'これから'));
+    card.appendChild(tiles);
+
+    if (!st.played) card.appendChild(el('p', 'me__empty', t('noRecord')));
+
+    /* 設定 */
+    var form = el('form', 'me__form');
+    var f = el('div', 'field field--row');
+    var lab = el('label', 'field__k', t('displayName'));
+    lab.htmlFor = 'me-display';
+    var inp = el('input', 'field__i');
+    inp.id = 'me-display'; inp.type = 'text'; inp.value = u.display; inp.maxLength = 24;
+    var sv = el('button', 'btn', t('save'));
+    sv.type = 'submit';
+    f.appendChild(lab); f.appendChild(inp); f.appendChild(sv);
+    form.appendChild(f);
+    var msg = el('p', 'me__msg');
+    msg.hidden = true;
+    form.appendChild(msg);
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      PB.auth.update({ display: inp.value }).then(function () {
+        msg.hidden = false;
+        msg.textContent = lang === 'en' ? 'Saved.' : '保存しました';
+        msg.className = 'me__msg';
+      }).catch(function (err) {
+        msg.hidden = false;
+        msg.textContent = err.message;
+        msg.className = 'me__msg me__msg--bad';
+      });
+    });
+    card.appendChild(form);
+
+    var foot = el('div', 'me__foot');
+    var out = el('button', 'btn', t('signout'));
+    out.type = 'button';
+    out.addEventListener('click', function () { PB.auth.signOut(); });
+    foot.appendChild(out);
+
+    var exp = el('button', 'btn', t('exportD'));
+    exp.type = 'button';
+    exp.addEventListener('click', function () {
+      var data = PB.auth.exportData();
+      if (!data) return;
+      var url = URL.createObjectURL(new Blob([data], { type: 'application/json' }));
+      var a = document.createElement('a');
+      a.href = url; a.download = 'playbench-' + u.handle + '.json';
+      a.click();
+      setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+    });
+    foot.appendChild(exp);
+
+    var del = el('button', 'btn btn--danger', t('del'));
+    del.type = 'button';
+    del.addEventListener('click', function () {
+      var ok = window.confirm(lang === 'en'
+        ? 'Delete this account and its record from this browser? This cannot be undone.'
+        : 'このブラウザから、このアカウントと記録を消します。元に戻せません。よろしいですか。');
+      if (ok) PB.auth.remove();
+    });
+    foot.appendChild(del);
+
+    card.appendChild(foot);
+    host.appendChild(card);
+  }
+
+  /* ----------------------------------------------------------- ランキング */
+  function buildRanking() {
+    var host = document.getElementById('ranking-panel');
+    if (!host) return;
+    host.textContent = '';
+
+    var box = el('div', 'rank');
+    var head = el('div', 'rank__row rank__row--head');
+    [
+      lang === 'en' ? '#' : '順',
+      lang === 'en' ? 'Agent' : 'エージェント',
+      lang === 'en' ? 'Owner' : '作者',
+      lang === 'en' ? 'Game' : 'ゲーム',
+      lang === 'en' ? 'Rating' : 'レート',
+      lang === 'en' ? 'Games' : '対戦数'
+    ].forEach(function (h) { head.appendChild(el('span', null, h)); });
+    box.appendChild(head);
+
+    var empty = el('div', 'rank__empty');
+    empty.appendChild(el('p', null, t('noRank')));
+    box.appendChild(empty);
+    host.appendChild(box);
+
+    host.appendChild(buildWire());
   }
 
   /* ----------------------------------------------------------- これから */
@@ -311,7 +498,6 @@
     return wrap;
   }
 
-  /* 構成図。サーバーを持たない対戦の流れ */
   function buildWire() {
     var box = el('div', 'wire');
     var s = svg(640, 132);
@@ -319,48 +505,37 @@
       ? 'Agents arrive as pull requests, run in CI, and results are committed back as JSON.'
       : 'エージェントはPRで届き、CIで対戦し、結果はJSONとしてコミットされる。');
     var ink = 'currentColor';
-
     var boxes = lang === 'en'
       ? ['Agent (JS)', 'Pull request', 'GitHub Actions\nseeded matches', 'results.json\ncommitted', 'This page']
       : ['エージェント\n(JS 1ファイル)', 'Pull Request', 'GitHub Actions\nシード固定で対戦', 'results.json\nをコミット', 'このページ'];
 
     var w = 108, h = 54, gap = 25, y = 22;
     boxes.forEach(function (label, i) {
-      var x = i * (w + gap) + 6;
-      var accent = (i === 2);
-      sh(s, 'rect', {
-        x: x, y: y, width: w, height: h,
+      var x = i * (w + gap) + 6, accent = (i === 2);
+      sh(s, 'rect', { x: x, y: y, width: w, height: h,
         fill: ink, 'fill-opacity': accent ? .07 : .03,
-        stroke: ink, 'stroke-width': accent ? 1.1 : .8,
-        'stroke-opacity': accent ? .7 : .45
-      });
+        stroke: ink, 'stroke-width': accent ? 1.1 : .8, 'stroke-opacity': accent ? .7 : .45 });
       label.split('\n').forEach(function (line, li, arr) {
         var tx = sh(s, 'text', {
           x: x + w / 2, y: y + h / 2 + (li - (arr.length - 1) / 2) * 13 + 4,
           'text-anchor': 'middle', fill: ink,
-          'font-size': arr.length > 1 ? 10 : 11,
-          'fill-opacity': li === 0 ? .85 : .6
-        });
+          'font-size': arr.length > 1 ? 10 : 11, 'fill-opacity': li === 0 ? .85 : .6 });
         tx.textContent = line;
       });
       if (i < boxes.length - 1) {
         var ax = x + w + 4;
         sh(s, 'line', { x1: ax, y1: y + h / 2, x2: ax + gap - 8, y2: y + h / 2, stroke: ink, 'stroke-width': .8, 'stroke-opacity': .5 });
-        sh(s, 'path', {
-          d: 'M' + (ax + gap - 8) + ' ' + (y + h / 2) + ' l-4 -3 v6 z',
-          fill: ink, 'fill-opacity': .5
-        });
+        sh(s, 'path', { d: 'M' + (ax + gap - 8) + ' ' + (y + h / 2) + ' l-4 -3 v6 z', fill: ink, 'fill-opacity': .5 });
       }
     });
     var cap = sh(s, 'text', { x: 6, y: 116, fill: ink, 'font-size': 10, 'fill-opacity': .55 });
     cap.textContent = lang === 'en'
-      ? 'No server. Every row of the ranking can be reproduced from its seed and its run log.'
+      ? 'No server. Every row can be reproduced from its seed and its run log.'
       : 'サーバーを持たない。順位表のどの行も、シードと実行ログから再現できる。';
     box.appendChild(s);
     return box;
   }
 
-  /* ------------------------------------------------------------- 作法 */
   function buildTenets() {
     var wrap = el('div', 'cells tenets');
     PB.PRINCIPLES.forEach(function (p) {
@@ -372,11 +547,12 @@
     return wrap;
   }
 
-  /* --------------------------------------------------------------- 描画 */
+  /* ------------------------------------------------------------- 棒の伸び */
   var io = null;
   function watchPlates(root) {
+    var nodes = root.querySelectorAll('.scale:not(.is-read)');
     if (!('IntersectionObserver' in window)) {
-      root.querySelectorAll('.scale').forEach(function (n) { n.classList.add('is-read'); });
+      Array.prototype.forEach.call(nodes, function (n) { n.classList.add('is-read'); });
       return;
     }
     if (!io) {
@@ -384,29 +560,111 @@
         entries.forEach(function (e) {
           if (e.isIntersecting) { e.target.classList.add('is-read'); io.unobserve(e.target); }
         });
-      }, { rootMargin: '0px 0px -12% 0px', threshold: .2 });
+      }, { rootMargin: '0px 0px -8% 0px', threshold: .15 });
     }
-    root.querySelectorAll('.scale').forEach(function (n) { io.observe(n); });
+    Array.prototype.forEach.call(nodes, function (n) { io.observe(n); });
   }
 
+  /* --------------------------------------------------------------- 描画 */
   function render() {
-    var works = document.getElementById('works');
-    works.textContent = '';
-    PB.WORKS.forEach(function (w) { works.appendChild(buildWork(w)); });
+    var games = document.getElementById('works');
+    games.textContent = '';
+    PB.WORKS.forEach(function (w) { games.appendChild(buildGame(w)); });
+
+    var cnt = document.getElementById('games-count');
+    if (cnt) cnt.textContent = lang === 'en'
+      ? PB.WORKS.length + ' games'
+      : '全 ' + PB.WORKS.length + ' 作';
 
     var plan = document.getElementById('plan');
     plan.textContent = '';
     plan.appendChild(buildPlan());
-    plan.appendChild(buildWire());
 
     var tenets = document.getElementById('tenets');
     tenets.textContent = '';
     tenets.appendChild(buildTenets());
 
-    var n = document.getElementById('gauge-works');
-    if (n) n.textContent = PB.WORKS.length;
-
+    buildRanking();
+    buildAccountSlot();
+    buildAccountPanel();
     watchPlates(document);
+  }
+
+  /* ------------------------------------------------- ログイン／新規登録 */
+  var modal, form, mode = 'signin';
+
+  function setMode(m) {
+    mode = m;
+    var title = document.getElementById('auth-title');
+    var submit = document.getElementById('auth-submit');
+    title.textContent = t(m === 'signup' ? 'signup' : 'signin');
+    submit.textContent = t(m === 'signup' ? 'signup' : 'signin');
+    modal.querySelectorAll('[data-only]').forEach(function (n) {
+      n.hidden = (n.dataset.only !== m);
+    });
+    modal.querySelectorAll('.tab').forEach(function (b) {
+      var on = b.dataset.tab === m;
+      b.classList.toggle('tab--on', on);
+      b.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+    showErr(null);
+  }
+
+  function showErr(msg) {
+    var box = document.getElementById('auth-err');
+    box.hidden = !msg;
+    box.textContent = msg || '';
+  }
+
+  function openAuth(m) {
+    setMode(m || 'signin');
+    if (!modal.open) modal.showModal();
+    var first = document.getElementById('f-handle');
+    setTimeout(function () { first.focus(); }, 40);
+  }
+
+  function wireAuth() {
+    modal = document.getElementById('auth-modal');
+    form = document.getElementById('auth-form');
+
+    document.getElementById('auth-close').addEventListener('click', function () { modal.close(); });
+
+    modal.querySelectorAll('.tab').forEach(function (b) {
+      b.addEventListener('click', function () { setMode(b.dataset.tab); });
+    });
+
+    /* 背景を押したら閉じる */
+    modal.addEventListener('click', function (e) {
+      if (e.target === modal) modal.close();
+    });
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var submit = document.getElementById('auth-submit');
+      var o = {
+        handle: form.handle.value,
+        display: form.display.value,
+        pass: form.pass.value
+      };
+      submit.disabled = true;
+      showErr(null);
+
+      var p = (mode === 'signup') ? PB.auth.signUp(o) : PB.auth.signIn(o);
+      p.then(function () {
+        form.reset();
+        modal.close();
+      }).catch(function (err) {
+        showErr(err.message || String(err));
+      }).then(function () {
+        submit.disabled = false;
+      });
+    });
+
+    /* どこからでも開けるようにしておく */
+    document.addEventListener('click', function (e) {
+      var b = e.target.closest ? e.target.closest('[data-auth-open]') : null;
+      if (b) { e.preventDefault(); openAuth(b.getAttribute('data-auth-open')); }
+    });
   }
 
   /* ------------------------------------------------------------ 言語切替 */
@@ -416,25 +674,34 @@
       if (n.dataset.ja == null) n.dataset.ja = n.innerHTML;
       n.innerHTML = lang === 'en' ? n.dataset.en : n.dataset.ja;
     });
+    /* 狭い画面では「切り替え先」だけを出す。CSS で .ctl__now を隠す */
     var btn = document.getElementById('lang');
     if (btn) {
-      btn.innerHTML = lang === 'en'
-        ? '<span class="ctl__on">EN</span> / 日本語'
-        : '<span class="ctl__on">日本語</span> / EN';
+      btn.textContent = '';
+      btn.appendChild(el('span', 'ctl__now ctl__on', lang === 'en' ? 'EN' : '日本語'));
+      btn.appendChild(el('span', 'ctl__now', ' / '));
+      btn.appendChild(el('span', null, lang === 'en' ? '日本語' : 'EN'));
       btn.setAttribute('aria-label', lang === 'en' ? 'Switch to Japanese' : '英語に切り替える');
     }
+    if (modal) setMode(mode);
     render();
   }
 
   /* ------------------------------------------------------------ 明暗切替 */
-  function applyTheme(mode) {
-    if (mode) document.documentElement.setAttribute('data-theme', mode);
+  function applyTheme(m) {
+    if (m) document.documentElement.setAttribute('data-theme', m);
     else document.documentElement.removeAttribute('data-theme');
-    try { mode ? localStorage.setItem('pb-theme', mode) : localStorage.removeItem('pb-theme'); } catch (e) {}
+    try { m ? localStorage.setItem('pb-theme', m) : localStorage.removeItem('pb-theme'); } catch (e) {}
     var btn = document.getElementById('theme');
     if (btn) {
       var cur = document.documentElement.getAttribute('data-theme');
-      btn.textContent = cur === 'dark' ? '青焼き' : (cur === 'light' ? '製図用紙' : '地の色');
+      var name = cur === 'dark' ? '青焼き' : (cur === 'light' ? '製図用紙' : '地の色');
+      btn.textContent = '';
+      btn.appendChild(el('span', 'ctl__long', name));
+      var short = el('span', 'ctl__short', '◐');
+      short.setAttribute('aria-hidden', 'true');
+      btn.appendChild(short);
+      btn.setAttribute('aria-label', lang === 'en' ? 'Change background (' + name + ')' : '地の色を変える（' + name + '）');
     }
   }
 
@@ -445,8 +712,14 @@
       if (saved) document.documentElement.setAttribute('data-theme', saved);
     } catch (e) {}
 
+    wireAuth();
     applyLang();
     applyTheme(document.documentElement.getAttribute('data-theme'));
+
+    PB.auth.onChange(function () {
+      buildAccountSlot();
+      buildAccountPanel();
+    });
 
     var lb = document.getElementById('lang');
     if (lb) lb.addEventListener('click', function () { lang = (lang === 'ja' ? 'en' : 'ja'); applyLang(); });
@@ -455,8 +728,8 @@
     if (tb) tb.addEventListener('click', function () {
       var cur = document.documentElement.getAttribute('data-theme');
       var dark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-      // 地の色 → 反対側 → 元の側 → 地の色
-      applyTheme(!cur ? (dark ? 'light' : 'dark') : (cur === (dark ? 'light' : 'dark') ? (dark ? 'dark' : 'light') : null));
+      applyTheme(!cur ? (dark ? 'light' : 'dark')
+        : (cur === (dark ? 'light' : 'dark') ? (dark ? 'dark' : 'light') : null));
     });
   }
 

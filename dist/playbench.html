@@ -3,23 +3,23 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>PLAYBENCH ── 盤上を、測る。</title>
-<meta name="description" content="ボードゲームをブラウザで遊べるようにして、その相手がどれだけ強いのかを実測して並べた図録。すべて単一ファイル・外部依存ゼロ。">
+<title>PLAYBENCH ── ボードゲームで遊ぶ</title>
+<meta name="description" content="名作ボードゲームをブラウザで。登録なしですぐ遊べます。相手はどれも本気です。">
 <meta name="color-scheme" content="light dark">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20fill%3D%22%231b2027%22%2F%3E%3Crect%20x%3D%225%22%20y%3D%2213%22%20width%3D%2222%22%20height%3D%226%22%20fill%3D%22%23e8e9e3%22%20fill-opacity%3D%22.22%22%2F%3E%3Crect%20x%3D%225%22%20y%3D%2213%22%20width%3D%2214%22%20height%3D%226%22%20fill%3D%22%23b03a24%22%2F%3E%3Crect%20x%3D%2210%22%20y%3D%227%22%20width%3D%221.4%22%20height%3D%2218%22%20fill%3D%22%23e8e9e3%22%2F%3E%3C%2Fsvg%3E">
 <style>
 /* ==========================================================================
-   PLAYBENCH ─ 製図シートとしての図録
+   PLAYBENCH ─ 製図シートの上で遊ぶ
 
    明の地は製図用紙、暗の地は青焼き。同じ図面の2つの複製方式であって、
    単純な明暗の反転ではない。色は2つだけ役割を持つ。
-     朱  ── 主張・朱入れ（この作品が言いたい一行、互角を超えた棒）
-     藍  ── 計測値（比較のための棒、目盛り、注記）
+     朱  ── 押せるもの、いま言いたい一行、互角を超えた棒
+     藍  ── 比較のための計測値
    数値はすべて等幅・桁揃えで、互角の線と一緒に読む。
    ========================================================================== */
 
 /* --------------------------------------------------------------- tokens */
 :root {
-  /* 明 ── 製図用紙 */
   --paper:        #e8e9e3;
   --sheet:        #f4f4f0;
   --ink:          #1b2027;
@@ -32,26 +32,27 @@
   --vermilion:    #b03a24;
   --vermilion-dim:rgba(176, 58, 36, .13);
   --indigo:       #2b4c6f;
-  --indigo-dim:   rgba(43, 76, 111, .15);
   --bar-cmp:      rgba(43, 76, 111, .30);
   --bar-lead:     rgba(176, 58, 36, .34);
+  --danger:       #8c2f1c;
+  --scrim:        rgba(27, 32, 39, .42);
   --shadow:       0 1px 0 rgba(27, 32, 39, .05);
+  --lift:         0 12px 40px rgba(27, 32, 39, .18);
 
   --serif: "Hiragino Mincho ProN", "HiraMinProN-W3", "Yu Mincho", YuMincho,
            "Noto Serif JP", "Songti SC", "Source Han Serif", serif;
   --mono:  ui-monospace, "SF Mono", SFMono-Regular, "Cascadia Mono", Menlo,
            Consolas, "Noto Sans Mono", monospace;
 
-  --measure: 34rem;
-  --sheet-w: 62rem;
+  --measure: 36rem;
+  --sheet-w: 64rem;
 
   --s1: .35rem;  --s2: .7rem;   --s3: 1.1rem;  --s4: 1.7rem;
-  --s5: 2.6rem;  --s6: 4rem;    --s7: 6rem;    --s8: 9rem;
+  --s5: 2.6rem;  --s6: 4rem;    --s7: 6rem;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    /* 暗 ── 青焼き。線が白く抜ける */
     --paper:        #0f151c;
     --sheet:        #151d26;
     --ink:          #dde5ea;
@@ -64,14 +65,15 @@
     --vermilion:    #e8815f;
     --vermilion-dim:rgba(232, 129, 95, .16);
     --indigo:       #82b4da;
-    --indigo-dim:   rgba(130, 180, 218, .17);
     --bar-cmp:      rgba(130, 180, 218, .30);
     --bar-lead:     rgba(232, 129, 95, .34);
+    --danger:       #e0715a;
+    --scrim:        rgba(4, 8, 12, .62);
     --shadow:       0 1px 0 rgba(0, 0, 0, .3);
+    --lift:         0 14px 46px rgba(0, 0, 0, .55);
   }
 }
 
-/* 閲覧者のトグルは、どちらの向きにも media query に勝つ */
 :root[data-theme="dark"] {
   --paper:        #0f151c;
   --sheet:        #151d26;
@@ -85,10 +87,12 @@
   --vermilion:    #e8815f;
   --vermilion-dim:rgba(232, 129, 95, .16);
   --indigo:       #82b4da;
-  --indigo-dim:   rgba(130, 180, 218, .17);
   --bar-cmp:      rgba(130, 180, 218, .30);
   --bar-lead:     rgba(232, 129, 95, .34);
+  --danger:       #e0715a;
+  --scrim:        rgba(4, 8, 12, .62);
   --shadow:       0 1px 0 rgba(0, 0, 0, .3);
+  --lift:         0 14px 46px rgba(0, 0, 0, .55);
 }
 :root[data-theme="light"] {
   --paper:        #e8e9e3;
@@ -103,22 +107,24 @@
   --vermilion:    #b03a24;
   --vermilion-dim:rgba(176, 58, 36, .13);
   --indigo:       #2b4c6f;
-  --indigo-dim:   rgba(43, 76, 111, .15);
   --bar-cmp:      rgba(43, 76, 111, .30);
   --bar-lead:     rgba(176, 58, 36, .34);
+  --danger:       #8c2f1c;
+  --scrim:        rgba(27, 32, 39, .42);
   --shadow:       0 1px 0 rgba(27, 32, 39, .05);
+  --lift:         0 12px 40px rgba(27, 32, 39, .18);
 }
 
 /* ----------------------------------------------------------------- base */
 *, *::before, *::after { box-sizing: border-box; }
 
-html { background-color: var(--paper); }
+html { background-color: var(--paper); scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
 
 body {
   margin: 0;
   color: var(--ink);
   background-color: var(--paper);
-  /* 方眼。細目 24px に、5マスごとの主線を重ねる */
   background-image:
     linear-gradient(var(--grid-fine) 1px, transparent 1px),
     linear-gradient(90deg, var(--grid-fine) 1px, transparent 1px),
@@ -133,31 +139,15 @@ body {
 }
 
 ::selection { background: var(--vermilion-dim); }
-
 a { color: inherit; }
 
-:focus-visible {
-  outline: 2px solid var(--vermilion);
-  outline-offset: 3px;
-}
+/* hidden 属性は、display を持つクラスに負ける。ここで勝たせておく */
+[hidden] { display: none !important; }
+:focus-visible { outline: 2px solid var(--vermilion); outline-offset: 3px; }
 
-/* --------------------------------------------------------------- 版面 */
-.sheet {
-  width: min(100% - 2.5rem, var(--sheet-w));
-  margin-inline: auto;
-}
+.sheet { width: min(100% - 2.5rem, var(--sheet-w)); margin-inline: auto; }
 
-/* 製図シートの縁。内容はこの上に「描かれる」 */
-.leaf {
-  background: var(--sheet);
-  border: 1px solid var(--rule);
-  box-shadow: var(--shadow);
-}
-
-.rule       { border: 0; border-top: 1px solid var(--rule); margin: 0; }
-.rule--soft { border-top-color: var(--rule-soft); }
-
-/* ラベル。小さく、字間を開けた等幅 */
+/* ラベル */
 .tag {
   font-family: var(--mono);
   font-size: .68rem;
@@ -167,20 +157,52 @@ a { color: inherit; }
   font-variant-numeric: tabular-nums;
 }
 .tag--ink { color: var(--ink-mid); }
-.tag--red { color: var(--vermilion); }
+.num { font-family: var(--mono); font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
 
-.num {
+/* 升目。罫は outline で引くので、最終行が埋まらなくても余りが抜けない */
+.cells { display: grid; gap: 1px; background: var(--sheet); border: 1px solid var(--rule); }
+.cells > * { outline: 1px solid var(--rule); }
+
+/* --------------------------------------------------------------- ボタン */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
   font-family: var(--mono);
-  font-variant-numeric: tabular-nums;
-  letter-spacing: -.01em;
+  font-size: .76rem;
+  letter-spacing: .08em;
+  padding: .55rem 1rem;
+  border: 1px solid var(--rule);
+  background: transparent;
+  color: var(--ink-mid);
+  text-decoration: none;
+  cursor: pointer;
+  border-radius: 0;
+  transition: color .15s, border-color .15s, background .15s;
 }
+.btn:hover { color: var(--ink); border-color: var(--ink-mute); }
+
+.btn--go {
+  border-color: var(--vermilion);
+  color: var(--vermilion);
+  font-size: .82rem;
+  padding: .62rem 1.3rem;
+}
+.btn--go:hover { background: var(--vermilion-dim); color: var(--vermilion); border-color: var(--vermilion); }
+
+.btn--wide { width: 100%; justify-content: center; }
+.btn--off { border-style: dashed; color: var(--ink-mute); cursor: not-allowed; }
+.btn--off:hover { color: var(--ink-mute); border-color: var(--rule); }
+.btn--danger { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 40%, var(--rule)); }
+.btn--danger:hover { color: var(--danger); border-color: var(--danger); }
+.btn[disabled] { opacity: .5; cursor: progress; }
 
 /* --------------------------------------------------------------- 天 */
 .masthead {
   position: sticky;
   top: 0;
   z-index: 20;
-  background: color-mix(in srgb, var(--paper) 88%, transparent);
+  background: color-mix(in srgb, var(--paper) 90%, transparent);
   backdrop-filter: blur(8px);
   border-bottom: 1px solid var(--rule);
 }
@@ -188,17 +210,29 @@ a { color: inherit; }
   display: flex;
   align-items: center;
   gap: var(--s3);
-  padding-block: .8rem;
+  padding-block: .75rem;
 }
 .masthead__mark {
   font-family: var(--mono);
   font-size: .92rem;
   font-weight: 600;
   letter-spacing: .3em;
-  margin-right: auto;
   text-decoration: none;
+  white-space: nowrap;
 }
 .masthead__mark span { color: var(--vermilion); }
+
+.masthead__nav { display: flex; gap: var(--s3); margin-right: auto; }
+.masthead__nav a {
+  font-size: .84rem;
+  color: var(--ink-mute);
+  text-decoration: none;
+  padding-block: .2rem;
+  border-bottom: 1px solid transparent;
+}
+.masthead__nav a:hover { color: var(--ink); border-bottom-color: var(--vermilion); }
+
+.masthead__tools { display: flex; align-items: center; gap: .45rem; }
 
 .ctl {
   font-family: var(--mono);
@@ -211,214 +245,157 @@ a { color: inherit; }
   padding: .32rem .62rem;
   cursor: pointer;
   text-decoration: none;
+  white-space: nowrap;
   transition: color .15s, border-color .15s;
 }
 .ctl:hover { color: var(--ink); border-color: var(--ink-mute); }
+.ctl--go { color: var(--vermilion); border-color: var(--vermilion); }
 .ctl__on { color: var(--vermilion); }
+.ctl__short { display: none; }
+
+/* ログイン中の名前 */
+.who {
+  display: inline-flex;
+  align-items: center;
+  gap: .45rem;
+  padding: .25rem .6rem .25rem .35rem;
+  border: 1px solid var(--rule);
+  text-decoration: none;
+  color: var(--ink-mid);
+  max-width: 12rem;
+}
+.who:hover { color: var(--ink); border-color: var(--ink-mute); }
+.who__n { font-size: .8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.idc { display: block; width: 1.15rem; height: 1.15rem; color: var(--indigo); flex: none; }
 
 /* --------------------------------------------------------------- 表紙 */
-.cover { padding-block: var(--s7) var(--s6); }
-
-.cover__eyebrow {
-  display: flex;
-  align-items: center;
-  gap: var(--s2);
-  margin-bottom: var(--s5);
-}
-.cover__eyebrow::after {
-  content: "";
-  flex: 1;
-  border-top: 1px solid var(--rule);
-}
+.cover { padding-block: var(--s6) var(--s5); }
 
 .cover__title {
-  font-size: clamp(2.6rem, 7.5vw, 4.6rem);
-  line-height: 1.24;
+  font-size: clamp(2.2rem, 6.4vw, 3.9rem);
+  line-height: 1.3;
   font-weight: 500;
-  margin: 0 0 var(--s4);
+  margin: 0 0 var(--s3);
   letter-spacing: .02em;
   text-wrap: balance;
 }
-.cover__title em {
-  font-style: normal;
-  color: var(--vermilion);
-}
+.cover__title em { font-style: normal; color: var(--vermilion); }
 
 .cover__lead {
   max-width: var(--measure);
-  font-size: 1.02rem;
+  font-size: 1rem;
   color: var(--ink-mid);
-  margin: 0 0 var(--s5);
+  margin: 0 0 var(--s4);
 }
 .cover__lead strong { font-weight: 600; color: var(--ink); }
+.cover__lead em { font-style: normal; color: var(--vermilion); }
 
-/* 升目に並べる区画。
-   罫は gap の下地ではなく outline で引く。outline は場所を取らないので
-   隣どうしがちょうど重なり、最終行が埋まらなくても余りが灰色に抜けない。 */
-.cells {
-  display: grid;
-  gap: 1px;
-  background: var(--sheet);
-  border: 1px solid var(--rule);
-}
-.cells > * { outline: 1px solid var(--rule); }
-
-/* 表紙の指標。3つめが、このサイトの読み方そのものを教える */
-.gauges { grid-template-columns: repeat(auto-fit, minmax(min(11rem, 100%), 1fr)); }
-.gauge {
-  background: var(--sheet);
-  padding: var(--s3);
-  display: flex;
-  flex-direction: column;
-  gap: .3rem;
-}
-.gauge__v {
-  font-family: var(--mono);
-  font-variant-numeric: tabular-nums;
-  font-size: 2.1rem;
-  line-height: 1;
-  color: var(--ink);
-}
-.gauge--key .gauge__v { color: var(--vermilion); }
-.gauge__k { font-size: .8rem; color: var(--ink-mid); }
-.gauge__note { font-size: .74rem; color: var(--ink-mute); line-height: 1.6; }
+.cover__acts { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2) var(--s3); }
+.cover__hint { font-size: .8rem; color: var(--ink-mute); }
 
 /* --------------------------------------------------------------- 見出し */
 .band {
   display: flex;
   align-items: baseline;
   gap: var(--s3);
-  padding-top: var(--s7);
+  padding-top: var(--s6);
   padding-bottom: var(--s4);
 }
-.band__t {
-  font-size: 1.45rem;
-  font-weight: 500;
-  margin: 0;
-  letter-spacing: .04em;
-}
+.band__t { font-size: 1.4rem; font-weight: 500; margin: 0; letter-spacing: .04em; white-space: nowrap; }
+.band__t--sub { font-size: 1.05rem; color: var(--ink-mid); }
 .band__n { flex: 1; border-top: 1px solid var(--rule); }
 
-/* --------------------------------------------------------------- 作品 */
-.works { display: flex; flex-direction: column; gap: var(--s6); }
+/* --------------------------------------------------------------- ゲーム */
+.works { display: flex; flex-direction: column; gap: var(--s4); }
 
-.work { position: relative; }
+.game { border: 1px solid var(--rule); background: var(--sheet); }
 
-.work__top {
+.game__top {
   display: grid;
-  grid-template-columns: 12.5rem 1fr;
-  gap: var(--s5);
+  grid-template-columns: 9rem 1fr;
+  gap: var(--s4);
   padding: var(--s4);
-  border: 1px solid var(--rule);
-  background: var(--sheet);
   align-items: start;
 }
 
-/* 図版 */
-.work__fig {
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--s2);
-}
-.work__fig svg {
-  width: 100%;
-  height: auto;
-  display: block;
+.game__fig { border: 1px solid var(--rule-soft); background: var(--sheet); }
+.game__fig svg { width: 100%; height: auto; display: block; }
+
+.game__head { min-width: 0; display: flex; flex-direction: column; gap: var(--s2); }
+
+.game__title { font-size: 1.75rem; font-weight: 500; margin: 0; letter-spacing: .03em; line-height: 1.3; }
+
+.game__meta { margin: 0; font-size: .82rem; color: var(--ink-mute); display: flex; flex-wrap: wrap; gap: .1rem .5rem; }
+.game__dot { opacity: .5; }
+
+.game__hook { margin: 0; color: var(--ink); max-width: var(--measure); }
+
+/* 相手の強さ。一行の計器 */
+.chip {
+  display: grid;
+  grid-template-columns: auto 7.5rem auto minmax(0, 1fr);
+  align-items: center;
+  gap: .55rem;
+  padding: .5rem .7rem;
   border: 1px solid var(--rule-soft);
-  background: var(--sheet);
+  background: color-mix(in srgb, var(--paper) 45%, var(--sheet));
+  font-size: .74rem;
 }
-.work__figcap { font-size: .7rem; color: var(--ink-mute); font-family: var(--mono); letter-spacing: .02em; }
+.chip__k { font-family: var(--mono); font-size: .64rem; letter-spacing: .12em; color: var(--ink-mute); white-space: nowrap; }
+.chip__track { position: relative; height: .75rem; background: color-mix(in srgb, var(--paper) 80%, var(--sheet)); border: 1px solid var(--rule-soft); }
+.chip__track::after {
+  content: "";
+  position: absolute;
+  inset-block: -1px;
+  left: var(--base, 25%);
+  border-left: 1px dashed var(--ink);
+  opacity: .55;
+}
+.chip__bar {
+  position: absolute; inset-block: 0; left: 0;
+  width: calc(var(--v) * 100%);
+  background: var(--bar-lead);
+  border-right: 2px solid var(--vermilion);
+}
+.chip__v { color: var(--vermilion); font-size: .82rem; }
+.chip__n { color: var(--ink-mute); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-.work__head { min-width: 0; }
+.game__acts { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2); margin-top: .2rem; }
+.game__opp { font-size: .74rem; color: var(--ink-mute); display: flex; gap: .4rem; align-items: baseline; }
+.game__opp b { font-weight: 400; font-family: var(--mono); font-size: .62rem; letter-spacing: .12em; }
 
-.work__no {
+/* 畳んである「作りの話」 */
+.game__more { border-top: 1px solid var(--rule); }
+.game__sum {
+  cursor: pointer;
+  list-style: none;
+  padding: .7rem var(--s4);
+  font-family: var(--mono);
+  font-size: .72rem;
+  letter-spacing: .1em;
+  color: var(--ink-mute);
   display: flex;
   align-items: center;
-  gap: var(--s2);
-  margin-bottom: var(--s2);
+  gap: .5rem;
 }
-.work__no::after { content: ""; flex: 1; border-top: 1px solid var(--rule-soft); }
+.game__sum::-webkit-details-marker { display: none; }
+.game__sum::before { content: "＋"; color: var(--vermilion); }
+.game__more[open] .game__sum::before { content: "−"; }
+.game__sum:hover { color: var(--ink); }
 
-.work__title {
-  font-size: 1.85rem;
-  font-weight: 500;
-  margin: 0 0 .2rem;
-  letter-spacing: .03em;
-  text-wrap: balance;
-}
-.work__latin {
-  font-family: var(--mono);
-  font-size: .74rem;
-  letter-spacing: .26em;
-  color: var(--ink-mute);
-  margin: 0 0 var(--s3);
-}
-.work__meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: .3rem var(--s3);
-  margin: 0 0 var(--s3);
-  padding: 0;
-  list-style: none;
-  font-size: .82rem;
-  color: var(--ink-mid);
-}
-.work__meta li { display: flex; gap: .5rem; }
-.work__meta b { font-weight: 400; color: var(--ink-mute); font-size: .74rem; letter-spacing: .08em; }
-
-.work__lead {
-  margin: 0 0 var(--s3);
-  max-width: var(--measure);
-  color: var(--ink-mid);
-}
-
-.work__acts { display: flex; flex-wrap: wrap; gap: var(--s2); align-items: center; }
-
-.act {
-  font-family: var(--mono);
-  font-size: .74rem;
-  letter-spacing: .1em;
-  padding: .46rem .9rem;
-  border: 1px solid var(--rule);
-  text-decoration: none;
-  color: var(--ink-mid);
-  transition: color .15s, border-color .15s, background .15s;
-}
-.act:hover { color: var(--ink); border-color: var(--ink-mute); }
-.act--play {
-  border-color: var(--vermilion);
-  color: var(--vermilion);
-}
-.act--play:hover { background: var(--vermilion-dim); color: var(--vermilion); border-color: var(--vermilion); }
-.act--off { border-style: dashed; color: var(--ink-mute); cursor: default; }
-.act--off:hover { color: var(--ink-mute); border-color: var(--rule); }
-
-/* --------------------------------------- 相手の作り／実測プレート の2段組 */
-.work__body {
-  display: grid;
-  grid-template-columns: 1fr 1.15fr;
-  gap: 1px;
-  background: var(--rule);
-  border: 1px solid var(--rule);
-  border-top: 0;
-}
+.game__body { border: 0; border-top: 1px solid var(--rule); grid-template-columns: 1fr 1.1fr; }
 .cell { background: var(--sheet); padding: var(--s4); }
-
-.cell__k {
-  display: block;
-  margin-bottom: var(--s2);
-  padding-bottom: var(--s2);
-  border-bottom: 1px solid var(--rule-soft);
-}
-.cell__t { font-size: 1.02rem; font-weight: 500; margin: 0 0 var(--s2); }
-.cell__p { margin: 0; font-size: .88rem; color: var(--ink-mid); }
+.cell__k { display: block; margin-bottom: var(--s2); padding-bottom: var(--s2); border-bottom: 1px solid var(--rule-soft); }
+.cell__t { font-size: 1rem; font-weight: 500; margin: 0 0 var(--s2); }
+.cell__p { margin: 0; font-size: .85rem; color: var(--ink-mid); }
+.cell__p--rm { margin-top: var(--s3); padding-top: var(--s3); border-top: 1px solid var(--rule-soft); font-size: .8rem; }
+.cell__p--rm b { color: var(--vermilion); font-family: var(--mono); font-size: .66rem; letter-spacing: .14em; font-weight: 400; }
 
 /* --------------------------------------------------------- 実測プレート */
 .plate { margin: 0; }
 .plate__note { display: block; margin-top: .25rem; font-size: .72rem; color: var(--ink-mute); font-family: var(--mono); }
 
-/* 行と目盛りは同じ列組で並ぶ。互角の線はその座標系の上に1本だけ立つ。 */
 .scale {
   position: relative;
   display: flex;
@@ -431,7 +408,7 @@ a { color: inherit; }
   --axis-h: 1.45rem;
 }
 
-/* 互角の線 ── この図録の物差し。全行を貫いて立つ */
+/* 互角の線 ── 全行を貫いて1本立つ */
 .scale__base {
   position: absolute;
   top: -.15rem;
@@ -459,13 +436,7 @@ a { color: inherit; }
   gap: var(--cgap);
   align-items: center;
 }
-.srow__l {
-  font-size: .77rem;
-  color: var(--ink-mute);
-  line-height: 1.38;
-  text-align: right;
-  overflow-wrap: anywhere;
-}
+.srow__l { font-size: .77rem; color: var(--ink-mute); line-height: 1.38; text-align: right; overflow-wrap: anywhere; }
 .srow--lead .srow__l { color: var(--ink); }
 
 .srow__track {
@@ -474,30 +445,17 @@ a { color: inherit; }
   background: color-mix(in srgb, var(--paper) 75%, var(--sheet));
   border: 1px solid var(--rule-soft);
 }
-
 .srow__bar {
-  position: absolute;
-  inset-block: 0;
-  left: 0;
+  position: absolute; inset-block: 0; left: 0;
   width: calc(var(--v) * 100%);
   background: var(--bar-cmp);
   border-right: 2px solid var(--indigo);
 }
-.srow--lead .srow__bar {
-  background: var(--bar-lead);
-  border-right-color: var(--vermilion);
-}
+.srow--lead .srow__bar { background: var(--bar-lead); border-right-color: var(--vermilion); }
 
-.srow__v {
-  font-family: var(--mono);
-  font-variant-numeric: tabular-nums;
-  font-size: .82rem;
-  text-align: right;
-  color: var(--ink-mid);
-}
+.srow__v { font-family: var(--mono); font-variant-numeric: tabular-nums; font-size: .82rem; text-align: right; color: var(--ink-mid); }
 .srow--lead .srow__v { color: var(--vermilion); font-size: .92rem; }
 
-/* 目盛り。0 ／ 互角 ／ 1.000 の三点だけ */
 .axis { margin-top: .1rem; align-items: start; }
 .axis__t { grid-column: 2; position: relative; height: var(--axis-h); }
 .axis__tick {
@@ -512,57 +470,86 @@ a { color: inherit; }
   border-left: 1px solid var(--rule);
   white-space: nowrap;
 }
-.axis__tick--end {
-  border-left: 0;
-  border-right: 1px solid var(--rule);
-  padding-left: 0;
-  padding-right: .3rem;
-  transform: translateX(-100%);
-}
-.axis__tick--base {
-  color: var(--ink-mid);
-  border-left-style: dashed;
-  border-left-color: var(--ink);
-}
+.axis__tick--end { border-left: 0; border-right: 1px solid var(--rule); padding-left: 0; padding-right: .3rem; transform: translateX(-100%); }
+.axis__tick--base { color: var(--ink-mid); border-left-style: dashed; border-left-color: var(--ink); }
 
-/* 注記 */
-.remark {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: var(--s2);
-  padding: var(--s3) var(--s4);
+/* ------------------------------------------------------------ アカウント */
+.invite {
   border: 1px solid var(--rule);
-  border-top: 0;
-  background: var(--sheet);
-  font-size: .82rem;
-  color: var(--ink-mid);
-}
-.remark__k { color: var(--vermilion); font-family: var(--mono); font-size: .68rem; letter-spacing: .14em; padding-top: .32rem; }
-.remark__b { margin: 0; }
-
-/* ------------------------------------------------------------- これから */
-.plan { grid-template-columns: repeat(auto-fit, minmax(min(15rem, 100%), 1fr)); }
-.step {
   background: var(--sheet);
   padding: var(--s4);
   display: flex;
   flex-direction: column;
   gap: var(--s2);
 }
-.step__n {
-  font-size: 1.5rem;
-  color: var(--vermilion);
-  line-height: 1;
+.invite__t { margin: 0; font-size: 1.15rem; font-weight: 500; }
+.invite__b { margin: 0; color: var(--ink-mid); max-width: var(--measure); font-size: .92rem; }
+.invite__acts { display: flex; flex-wrap: wrap; gap: var(--s2); margin-top: var(--s2); }
+
+.me { border: 1px solid var(--rule); background: var(--sheet); }
+.me__head {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  padding: var(--s4);
+  border-bottom: 1px solid var(--rule);
 }
+.me__head .idc { width: 2.6rem; height: 2.6rem; border: 1px solid var(--rule-soft); }
+.me__who { margin-right: auto; min-width: 0; }
+.me__n { margin: 0; font-size: 1.25rem; font-weight: 500; line-height: 1.4; }
+.me__h { margin: 0; font-family: var(--mono); font-size: .75rem; color: var(--ink-mute); }
+.me__where {
+  font-family: var(--mono);
+  font-size: .62rem;
+  letter-spacing: .12em;
+  color: var(--ink-mute);
+  border: 1px solid var(--rule);
+  padding: .15rem .5rem;
+  white-space: nowrap;
+}
+
+.stats { border: 0; border-bottom: 1px solid var(--rule); grid-template-columns: repeat(auto-fit, minmax(min(9rem, 100%), 1fr)); }
+.stat { background: var(--sheet); padding: var(--s3); display: flex; flex-direction: column; gap: .15rem; }
+.stat__v { font-size: 1.7rem; line-height: 1.15; }
+.stat__k { font-size: .78rem; color: var(--ink-mid); }
+.stat__note { font-size: .68rem; color: var(--ink-mute); font-family: var(--mono); }
+
+.me__empty { margin: 0; padding: var(--s3) var(--s4); color: var(--ink-mute); font-size: .85rem; border-bottom: 1px solid var(--rule); }
+
+.me__form { padding: var(--s4); border-bottom: 1px solid var(--rule); }
+.me__msg { margin: var(--s2) 0 0; font-size: .8rem; color: var(--ink-mute); }
+.me__msg--bad { color: var(--danger); }
+
+.me__foot { display: flex; flex-wrap: wrap; gap: var(--s2); padding: var(--s3) var(--s4); }
+
+/* ------------------------------------------------------------ ランキング */
+.rank { border: 1px solid var(--rule); background: var(--sheet); }
+.rank__row {
+  display: grid;
+  grid-template-columns: 2.4rem 1fr 1fr 8rem 5rem 5rem;
+  gap: var(--s2);
+  padding: .6rem var(--s3);
+  font-size: .78rem;
+  align-items: center;
+}
+.rank__row--head {
+  font-family: var(--mono);
+  font-size: .64rem;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  border-bottom: 1px solid var(--rule);
+}
+.rank__empty { padding: var(--s5) var(--s3); text-align: center; color: var(--ink-mute); font-size: .88rem; }
+.rank__empty p { margin: 0; }
+
+/* ------------------------------------------------------------- これから */
+.plan { grid-template-columns: repeat(auto-fit, minmax(min(15rem, 100%), 1fr)); }
+.step { background: var(--sheet); padding: var(--s4); display: flex; flex-direction: column; gap: var(--s2); }
+.step__n { font-size: 1.5rem; color: var(--vermilion); line-height: 1; }
 .step__t { font-size: 1rem; font-weight: 500; margin: 0; }
 .step__b { margin: 0; font-size: .84rem; color: var(--ink-mid); }
-.step__note {
-  margin: auto 0 0;
-  padding-top: var(--s2);
-  border-top: 1px solid var(--rule-soft);
-  font-size: .74rem;
-  color: var(--ink-mute);
-}
+.step__note { margin: auto 0 0; padding-top: var(--s2); border-top: 1px solid var(--rule-soft); font-size: .74rem; color: var(--ink-mute); }
 .step__state {
   font-family: var(--mono);
   font-size: .62rem;
@@ -573,30 +560,92 @@ a { color: inherit; }
   align-self: flex-start;
 }
 
-/* 構成図 */
-.wire {
-  margin-top: var(--s4);
-  padding: var(--s4);
-  border: 1px solid var(--rule);
-  background: var(--sheet);
-  overflow-x: auto;
-}
+.wire { margin-top: var(--s3); padding: var(--s4); border: 1px solid var(--rule); background: var(--sheet); overflow-x: auto; }
 .wire svg { display: block; min-width: 40rem; width: 100%; height: auto; }
 
-/* ------------------------------------------------------------- 作法 */
-/* 4項なので 2×2 に組む。3列だと最終行が1つだけ残って締まらない */
+/* ------------------------------------------------------------- 作り */
 .tenets { grid-template-columns: repeat(auto-fit, minmax(min(24rem, 100%), 1fr)); }
 .tenet { background: var(--sheet); padding: var(--s4); }
-.tenet__t {
-  font-size: 1rem;
-  font-weight: 500;
-  margin: 0 0 var(--s2);
-  padding-bottom: var(--s2);
-  border-bottom: 1px solid var(--rule-soft);
-}
-.tenet__b { margin: 0; font-size: .85rem; color: var(--ink-mid); }
+.tenet__t { font-size: .95rem; font-weight: 500; margin: 0 0 var(--s2); padding-bottom: var(--s2); border-bottom: 1px solid var(--rule-soft); }
+.tenet__b { margin: 0; font-size: .84rem; color: var(--ink-mid); }
 
-/* ------------------------------------------------------------- 奥付 */
+/* ------------------------------------------------- ログイン／新規登録 */
+.modal {
+  border: 1px solid var(--rule);
+  background: var(--sheet);
+  color: var(--ink);
+  padding: 0;
+  width: min(100% - 2rem, 26rem);
+  box-shadow: var(--lift);
+}
+.modal::backdrop { background: var(--scrim); backdrop-filter: blur(2px); }
+
+.modal__in { padding: var(--s4); display: flex; flex-direction: column; gap: var(--s3); }
+.modal__head { display: flex; align-items: center; gap: var(--s2); }
+.modal__t { margin: 0; margin-right: auto; font-size: 1.2rem; font-weight: 500; }
+.modal__x {
+  background: transparent;
+  border: 1px solid var(--rule);
+  color: var(--ink-mute);
+  font-size: 1rem;
+  line-height: 1;
+  padding: .2rem .5rem;
+  cursor: pointer;
+}
+.modal__x:hover { color: var(--ink); border-color: var(--ink-mute); }
+
+.tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--rule); border: 1px solid var(--rule); }
+.tab {
+  background: var(--sheet);
+  border: 0;
+  padding: .5rem;
+  font-family: var(--mono);
+  font-size: .72rem;
+  letter-spacing: .08em;
+  color: var(--ink-mute);
+  cursor: pointer;
+}
+.tab--on { color: var(--vermilion); background: var(--vermilion-dim); }
+
+.field { display: flex; flex-direction: column; gap: .3rem; }
+.field--row { flex-direction: row; align-items: center; flex-wrap: wrap; gap: var(--s2); }
+.field--row .field__i { flex: 1; min-width: 10rem; }
+.field__k { font-family: var(--mono); font-size: .66rem; letter-spacing: .12em; color: var(--ink-mute); text-transform: uppercase; }
+.field__wrap { display: flex; align-items: stretch; }
+.field__at {
+  display: flex; align-items: center;
+  padding-inline: .55rem;
+  border: 1px solid var(--rule); border-right: 0;
+  font-family: var(--mono); font-size: .9rem; color: var(--ink-mute);
+  background: color-mix(in srgb, var(--paper) 50%, var(--sheet));
+}
+.field__i {
+  font-family: var(--mono);
+  font-size: .95rem;
+  padding: .55rem .65rem;
+  border: 1px solid var(--rule);
+  background: color-mix(in srgb, var(--paper) 30%, var(--sheet));
+  color: var(--ink);
+  border-radius: 0;
+  width: 100%;
+  min-width: 0;
+}
+.field__i:focus { outline: 2px solid var(--vermilion); outline-offset: -2px; border-color: var(--vermilion); }
+.field__i--at { border-left: 0; }
+.field__note { margin: 0; font-size: .72rem; color: var(--ink-mute); }
+
+.modal__err {
+  margin: 0;
+  padding: .6rem .8rem;
+  border: 1px solid var(--danger);
+  background: color-mix(in srgb, var(--danger) 10%, transparent);
+  color: var(--danger);
+  font-size: .82rem;
+}
+.modal__foot { margin: 0; font-size: .74rem; color: var(--ink-mute); line-height: 1.7; }
+.modal__foot strong { color: var(--ink-mid); font-weight: 600; }
+
+/* --------------------------------------------------------------- 奥付 */
 .colophon {
   margin-top: var(--s7);
   padding-block: var(--s5) var(--s6);
@@ -613,12 +662,8 @@ a { color: inherit; }
 .colophon a:hover { color: var(--vermilion); }
 
 /* --------------------------------------------------------------- 動き */
-/* 棒は針が振れて止まるように伸びる。一度だけ。 */
 @media (prefers-reduced-motion: no-preference) {
-  .srow__bar {
-    width: 0;
-    transition: width .8s cubic-bezier(.16, .84, .34, 1);
-  }
+  .srow__bar { width: 0; transition: width .8s cubic-bezier(.16, .84, .34, 1); }
   .is-read .srow__bar { width: calc(var(--v) * 100%); }
   .srow:nth-child(1) .srow__bar { transition-delay: .00s; }
   .srow:nth-child(2) .srow__bar { transition-delay: .07s; }
@@ -629,17 +674,33 @@ a { color: inherit; }
 
 /* --------------------------------------------------------------- 狭い幅 */
 @media (max-width: 62rem) {
-  .work__body { grid-template-columns: 1fr; }
+  .game__body { grid-template-columns: 1fr; }
+  .rank__row { grid-template-columns: 2.2rem 1fr 6rem 4.5rem; }
+  .rank__row > :nth-child(4) { display: none; }
 }
 @media (max-width: 46rem) {
   body { font-size: 15px; }
-  .work__top { grid-template-columns: 1fr; gap: var(--s3); padding: var(--s3); }
-  .work__fig { max-width: 11rem; }
-  .cell, .remark { padding: var(--s3); }
+  .masthead__nav { display: none; }
+  /* 天は幅が足りない。切り替え先の語だけ残して詰める */
+  .masthead__in { gap: .5rem; }
+  .masthead__mark { font-size: .78rem; letter-spacing: .16em; margin-right: auto; }
+  .ctl { padding: .32rem .5rem; }
+  .ctl__now, .ctl__long { display: none; }
+  .ctl__short { display: inline; }
+  .who { max-width: 8rem; }
+  .game__top { grid-template-columns: 1fr; gap: var(--s3); padding: var(--s3); }
+  .game__fig { max-width: 8rem; }
+  .game__sum, .cell, .me__head, .me__form, .invite { padding-inline: var(--s3); }
+  .me__foot { padding-inline: var(--s3); }
+  .chip { grid-template-columns: auto 1fr auto; }
+  .chip__n { display: none; }
   .srow, .axis { grid-template-columns: minmax(0, 6.4rem) 1fr 2.6rem; }
+  .scale { --lab: 6.4rem; --val: 2.6rem; }
   .srow__l { font-size: .7rem; }
   .cover { padding-block: var(--s5) var(--s4); }
   .band { padding-top: var(--s5); }
+  .rank__row { grid-template-columns: 2rem 1fr 4.5rem; }
+  .rank__row > :nth-child(3) { display: none; }
 }
 </style>
 </head>
@@ -649,9 +710,17 @@ a { color: inherit; }
 <header class="masthead">
   <div class="sheet masthead__in">
     <a class="masthead__mark" href="#">PLAY<span>BENCH</span></a>
-    <button class="ctl" id="lang" type="button"></button>
-    <button class="ctl" id="theme" type="button">地の色</button>
-    <a class="ctl" href="https://github.com/shunshun0904" rel="noopener">GITHUB</a>
+
+    <nav class="masthead__nav">
+      <a href="#games" data-en="Games">ゲーム</a>
+      <a href="#ranking" data-en="Ranking">ランキング</a>
+    </nav>
+
+    <div class="masthead__tools">
+      <button class="ctl" id="lang" type="button"></button>
+      <button class="ctl" id="theme" type="button">地の色</button>
+      <div id="account-slot"></div>
+    </div>
   </div>
 </header>
 
@@ -659,70 +728,73 @@ a { color: inherit; }
 
 <!-- ═══════════════════════════════════════════════════════════ 表紙 -->
 <section class="sheet cover">
-  <div class="cover__eyebrow">
-    <span class="tag" data-en="Catalogue of play &amp; measurement">遊びと計測の図録</span>
-  </div>
+  <h1 class="cover__title" data-en="Real board games.<br>Opponents that <em>actually try</em>.">
+    名作ボードゲームを、<br><em>手強い相手</em>と。
+  </h1>
 
-  <h1 class="cover__title" data-en="Play the board.<br><em>Measure</em> the opponent.">盤上を、<em>測る</em>。</h1>
-
-  <p class="cover__lead" data-en="Board games, rebuilt to run in a browser — and their opponents measured, plainly, against the line where an even game sits. Every title here is a single file with <strong>no libraries, no fonts, no images</strong>. In time this becomes the place where an agent trained on <strong>your own games</strong> takes a seat at the table.">
-    ボードゲームをブラウザで遊べるようにして、その相手がどれだけ強いのかを、
-    互角の線と並べて実測した図録です。収録作はいずれも単一ファイルで、
-    <strong>ライブラリもフォントも画像も読み込みません</strong>。
-    やがてここは、<strong>あなた自身の棋譜</strong>から鍛えたエージェントが席につく場所になります。
+  <p class="cover__lead" data-en="Three classics, rebuilt to run in your browser. <strong>No install, no sign-up, no ads.</strong> Press play and you are in. The computer players are not there to lose politely — each one has been measured, and the numbers are on this page.">
+    ブラウザで開くだけ。<strong>インストールも登録も広告もありません</strong>。
+    押せばもう始まります。相手のCPUは手加減しません。
+    どれくらい強いのかは実際に測ってあって、その数字もこのページに載せています。
   </p>
 
-  <div class="cells gauges">
-    <div class="gauge">
-      <span class="gauge__v num" id="gauge-works">3</span>
-      <span class="gauge__k" data-en="works in the catalogue">収録作品</span>
-      <span class="gauge__note" data-en="Each runs from one HTML file, offline.">どれも index.html ひとつで、オフラインでも動く</span>
-    </div>
-    <div class="gauge">
-      <span class="gauge__v num">0</span>
-      <span class="gauge__k" data-en="external dependencies">外部ライブラリ</span>
-      <span class="gauge__note" data-en="Boards and pieces are hand-written SVG and CSS.">盤も駒も手書きの SVG と CSS</span>
-    </div>
-    <div class="gauge gauge--key">
-      <span class="gauge__v num">.250</span>
-      <span class="gauge__k" data-en="the parity line">互角の線</span>
-      <span class="gauge__note" data-en="Four players. A win rate only means something once you can see this line beside it.">4人戦の互角はここ。勝率は、この線と一緒でなければ意味を持たない</span>
-    </div>
+  <div class="cover__acts">
+    <a class="btn btn--go" href="#games" data-en="Play now">▶ すぐ遊ぶ</a>
+    <button class="btn" type="button" data-auth-open="signup" data-en="Create an account">アカウントを作る</button>
+    <span class="cover__hint" data-en="An account keeps your results. Playing never requires one.">
+      アカウントがあると成績が残ります。遊ぶだけならいりません
+    </span>
   </div>
 </section>
 
-<!-- ═══════════════════════════════════════════════════════ 収録作品 -->
-<section class="sheet">
+<!-- ═══════════════════════════════════════════════════════ ゲーム -->
+<section class="sheet" id="games">
   <div class="band">
-    <h2 class="band__t" data-en="Works">収録作品</h2>
+    <h2 class="band__t" data-en="Games">遊ぶ</h2>
     <span class="band__n"></span>
-    <span class="tag" data-en="I">壱</span>
+    <span class="tag" id="games-count"></span>
   </div>
   <div class="works" id="works"></div>
 </section>
 
-<!-- ═══════════════════════════════════════════════════ これから作る -->
+<!-- ═══════════════════════════════════════════════════ あなたの記録 -->
+<section class="sheet" id="me">
+  <div class="band">
+    <h2 class="band__t" data-en="Your record">あなたの記録</h2>
+    <span class="band__n"></span>
+  </div>
+  <div id="account-panel"></div>
+</section>
+
+<!-- ═════════════════════════════════════════════════════ ランキング -->
+<section class="sheet" id="ranking">
+  <div class="band">
+    <h2 class="band__t" data-en="Ranking">ランキング</h2>
+    <span class="band__n"></span>
+  </div>
+  <div id="ranking-panel"></div>
+</section>
+
+<!-- ═══════════════════════════════════════════════ これからできること -->
 <section class="sheet">
   <div class="band">
-    <h2 class="band__t" data-en="What comes next">これから作るもの</h2>
+    <h2 class="band__t" data-en="Coming next">これからできること</h2>
     <span class="band__n"></span>
-    <span class="tag" data-en="II">弐</span>
   </div>
 
-  <p class="cover__lead" data-en="The interesting opponent is not the strongest one — it is the one that knows how <em>you</em> play. Four steps, in order. None of it is built yet; what is written below is the design, not a claim.">
-    面白い相手とは、いちばん強い相手ではなく、<em>あなたの打ち方</em>を知っている相手です。
-    順に4段階。<strong>まだどれも実装していません</strong>。以下は設計であって、出来ている話ではありません。
+  <p class="cover__lead" data-en="The most interesting opponent is not the strongest one — it is the one that has watched you play. Four steps. <strong>None of it is built yet</strong>; this is the plan, not a promise kept.">
+    いちばん面白い相手は、最強の相手ではなく、<strong>あなたの打ち方を見てきた相手</strong>です。
+    順に4段階。<strong>まだどれも実装していません</strong>。これは予定であって、できている話ではありません。
   </p>
 
   <div id="plan"></div>
 </section>
 
-<!-- ═════════════════════════════════════════════════════ 設計の作法 -->
+<!-- ═════════════════════════════════════════════════════ 作りについて -->
 <section class="sheet">
   <div class="band">
-    <h2 class="band__t" data-en="How these are built">設計の作法</h2>
+    <h2 class="band__t band__t--sub" data-en="About the build">作りについて</h2>
     <span class="band__n"></span>
-    <span class="tag" data-en="III">参</span>
   </div>
   <div id="tenets"></div>
 </section>
@@ -732,26 +804,73 @@ a { color: inherit; }
 <!-- ═════════════════════════════════════════════════════════ 奥付 -->
 <footer class="sheet colophon">
   <div>
-    <p class="colophon__t" data-en="Colophon">奥付</p>
-    <p data-en="PLAYBENCH is a personal, non-commercial catalogue. Nothing here is sold, and nothing is tracked.">
-      PLAYBENCH は個人による非商用の図録です。何も販売せず、何も追跡しません。
+    <p class="colophon__t" data-en="About">このサイトについて</p>
+    <p data-en="PLAYBENCH is personal and non-commercial. Nothing is sold, nothing is tracked, and there are no ads.">
+      PLAYBENCH は個人による非商用のサイトです。何も販売せず、何も追跡せず、広告も出しません。
     </p>
   </div>
   <div>
     <p class="colophon__t" data-en="Rights">権利について</p>
     <p data-en="Big Shot is a game by Alex Randolph; Acquire by Sid Sackson; High Society by Reiner Knizia. These are unofficial fan implementations built for study. They contain no trademarks and no original artwork.">
       Big Shot はアレックス・ランドルフ、Acquire はシド・サクソン、High Society はライナー・クニツィアによるゲームです。
-      本図録の実装はいずれも学習目的の非公式なファンメイドで、商標もアートワークも含みません。
+      本サイトの実装はいずれも学習目的の非公式なファンメイドで、商標もアートワークも含みません。
     </p>
   </div>
   <div>
     <p class="colophon__t" data-en="Source">実装</p>
-    <p data-en="Every line, including the measurements behind each bar, is public.">
+    <p data-en="Everything is public, including the measurements behind every bar.">
       すべて公開しています。棒グラフの裏にある実測も含めて。
     </p>
     <p><a href="https://github.com/shunshun0904" rel="noopener">github.com/shunshun0904</a></p>
   </div>
 </footer>
+
+<!-- ══════════════════════════════════════════════ ログイン／新規登録 -->
+<dialog class="modal" id="auth-modal" aria-labelledby="auth-title">
+  <form class="modal__in" id="auth-form" method="dialog" novalidate>
+    <div class="modal__head">
+      <h2 class="modal__t" id="auth-title">ログイン</h2>
+      <button class="modal__x" type="button" id="auth-close" aria-label="閉じる">×</button>
+    </div>
+
+    <div class="tabs" role="tablist">
+      <button class="tab" type="button" role="tab" data-tab="signin" data-en="Sign in">ログイン</button>
+      <button class="tab" type="button" role="tab" data-tab="signup" data-en="Create account">新規登録</button>
+    </div>
+
+    <div class="field">
+      <label class="field__k" for="f-handle" data-en="Handle">ハンドル名</label>
+      <div class="field__wrap">
+        <span class="field__at">@</span>
+        <input class="field__i field__i--at" id="f-handle" name="handle" type="text"
+               autocomplete="username" autocapitalize="none" spellcheck="false"
+               inputmode="latin" required>
+      </div>
+      <p class="field__note" data-en="Lower-case letters, digits and _ — 3 to 20 characters.">半角の英小文字・数字・_ で 3〜20 文字</p>
+    </div>
+
+    <div class="field" data-only="signup">
+      <label class="field__k" for="f-display" data-en="Display name">表示名</label>
+      <input class="field__i" id="f-display" name="display" type="text" autocomplete="nickname" maxlength="24">
+      <p class="field__note" data-en="Shown on the board and the ranking. Japanese is fine.">盤面やランキングに出る名前。日本語で構いません</p>
+    </div>
+
+    <div class="field">
+      <label class="field__k" for="f-pass" data-en="Password">パスワード</label>
+      <input class="field__i" id="f-pass" name="pass" type="password" required minlength="8">
+      <p class="field__note" data-only="signup" data-en="8 characters or more.">8文字以上</p>
+    </div>
+
+    <p class="modal__err" id="auth-err" role="alert" hidden></p>
+
+    <button class="btn btn--go btn--wide" type="submit" id="auth-submit">ログイン</button>
+
+    <p class="modal__foot" data-en="Accounts live in this browser only — nothing is sent to a server, and there is nothing to recover if you clear your browser data. A real account system is coming.">
+      アカウントは<strong>いまのところこのブラウザの中だけ</strong>にあります。サーバーへは何も送っていません。
+      そのぶん、ブラウザのデータを消すと戻せません。サーバー側の仕組みはこれから入れます。
+    </p>
+  </form>
+</dialog>
 
 <script>
 /* ==========================================================================
@@ -780,6 +899,10 @@ window.PB.WORKS = [
     playersEn: '4 players',
     genre: '競り・エリアマジョリティ',
     genreEn: 'Auction / Area majority',
+    hook: '落札した4個には相手の色も混ざっていて、それも落札者が置く。どこへ捨てるかが勝負どころ。',
+    hookEn: 'The four cubes you win include your rivals\' colours — and you place those too. Where you dump them is the game.',
+    opponents: 'CPU 3人（確率計算）',
+    opponentsEn: '3 CPU (exact probability)',
     lead: '18回の競りで街を分け合う。収入がないので、使った金はそのまま失点になる。',
     leadEn: 'Eighteen auctions divide a city. There is no income, so every dollar spent is a point lost.',
 
@@ -835,6 +958,10 @@ window.PB.WORKS = [
     playersEn: '2–6 players',
     genre: '株式・合併・タイル配置',
     genreEn: 'Stocks / Mergers / Tile laying',
+    hook: '小さなチェーンは大きなチェーンに呑み込まれる。その瞬間、筆頭株主に株価の10倍が落ちる。',
+    hookEn: 'Small chains get swallowed by big ones — and the moment they do, the largest shareholder is paid ten times the share price.',
+    opponents: '性格4種（バランス／アグレッシブ／キャッシュ重視／マージャー）',
+    opponentsEn: '4 personalities (balanced / aggressive / cautious / merger)',
     lead: 'ホテルチェーンを設立し、株を買い、合併ボーナスで資産を増やす。Avalon Hill 版に準拠。',
     leadEn: 'Found hotel chains, buy stock, and grow on merger bonuses. Rules follow the Avalon Hill edition.',
 
@@ -889,6 +1016,10 @@ window.PB.WORKS = [
     playersEn: '4 players',
     genre: '競り・逆説的な勝利条件',
     genreEn: 'Auction / Inverted victory condition',
+    hook: 'いちばん金を使った人は、最後に脱落する。競り勝ちすぎてもいけない。',
+    hookEn: 'Whoever spent the most is eliminated at the end. Winning too many auctions loses the game.',
+    opponents: 'ハード（学習AI＋先読み）／イージー（手書きルーチン）',
+    opponentsEn: 'Hard (trained AI + search) / Easy (hand-written routine)',
     lead: '贅沢品を競り落としつつ、いちばん金を使った者は最後に脱落する。Osprey 2018年版に準拠。',
     leadEn: 'Bid for luxuries, but whoever spent the most is eliminated at the end. Follows the Osprey 2018 edition.',
 
@@ -1029,10 +1160,265 @@ window.PB.PRINCIPLES = [
 </script>
 <script>
 /* ==========================================================================
-   PLAYBENCH ─ 図録の組版
+   PLAYBENCH ─ アカウント
 
-   作品は data/works.js から組む。作品を増やすときにこのファイルは触らない。
-   図版は外部画像を持たず、その場で SVG を生成する（3作の流儀に合わせる）。
+   いまは「この端末の中だけ」のアカウント（local プロバイダ）。
+   サーバーへは何も送らない。ブラウザの localStorage に入るだけ。
+
+   ここは差し替え口として作ってある。実際のサーバー（Supabase など）を
+   使うことになったら、下の LocalProvider と同じ形の実装を足して
+   PB.auth.use(provider) を呼べば、画面側は一切変えずに切り替わる。
+
+   断り書き ── local プロバイダは「同じ端末を使う人どうしの取り違えを防ぐ」
+   ためのもので、暗号的な保護ではない。端末を触れる人は localStorage を
+   読める。だから画面にもそう書いてある。
+   ========================================================================== */
+'use strict';
+
+window.PB = window.PB || {};
+
+(function () {
+
+  var KEY_USERS = 'pb.users.v1';
+  var KEY_SESS = 'pb.session.v1';
+
+  /* ------------------------------------------------------------ 補助 */
+  function load(key, fallback) {
+    try {
+      var raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : fallback;
+    } catch (e) { return fallback; }
+  }
+  function save(key, val) {
+    try { localStorage.setItem(key, JSON.stringify(val)); return true; }
+    catch (e) { return false; }
+  }
+  function err(code, msg) {
+    var e = new Error(msg);
+    e.code = code;
+    return e;
+  }
+  function normHandle(h) {
+    return String(h || '').trim().replace(/^@/, '').toLowerCase();
+  }
+  function bytesToHex(buf) {
+    return Array.prototype.map.call(new Uint8Array(buf),
+      function (b) { return ('0' + b.toString(16)).slice(-2); }).join('');
+  }
+  function randomHex(n) {
+    var a = new Uint8Array(n);
+    (crypto.getRandomValues ? crypto : window.msCrypto).getRandomValues(a);
+    return bytesToHex(a.buffer);
+  }
+
+  /* パスワードは PBKDF2 で伸ばしてから保存する。
+     生の文字列を置かないというだけの意味で、端末を握られたら守れない。 */
+  function derive(pass, saltHex) {
+    var enc = new TextEncoder();
+    return crypto.subtle.importKey('raw', enc.encode(pass), 'PBKDF2', false, ['deriveBits'])
+      .then(function (key) {
+        return crypto.subtle.deriveBits({
+          name: 'PBKDF2',
+          salt: enc.encode(saltHex),
+          iterations: 120000,
+          hash: 'SHA-256'
+        }, key, 256);
+      })
+      .then(bytesToHex);
+  }
+
+  /* --------------------------------------------------------- 検証 */
+  var RULES = {
+    handle: /^[a-z0-9_]{3,20}$/,
+    displayMax: 24,
+    passMin: 8
+  };
+
+  function checkHandle(h) {
+    if (!h) throw err('handle-required', 'ハンドル名を入れてください');
+    if (!RULES.handle.test(h)) {
+      throw err('handle-shape', 'ハンドル名は半角の英小文字・数字・_ で 3〜20 文字にしてください');
+    }
+  }
+  function checkPass(p) {
+    if (!p) throw err('pass-required', 'パスワードを入れてください');
+    if (p.length < RULES.passMin) {
+      throw err('pass-short', 'パスワードは ' + RULES.passMin + ' 文字以上にしてください');
+    }
+  }
+
+  /* ============================================== この端末だけのアカウント */
+  function LocalProvider() {
+    this.kind = 'local';
+    this.label = 'この端末';
+  }
+
+  LocalProvider.prototype._users = function () { return load(KEY_USERS, {}); };
+
+  LocalProvider.prototype.user = function () {
+    var id = load(KEY_SESS, null);
+    if (!id) return null;
+    var u = this._users()[id];
+    if (!u) return null;
+    return this._public(u);
+  };
+
+  LocalProvider.prototype._public = function (u) {
+    return {
+      id: u.id,
+      handle: u.handle,
+      display: u.display,
+      joined: u.joined,
+      stats: u.stats || { played: 0, won: 0, byGame: {} },
+      agents: u.agents || []
+    };
+  };
+
+  LocalProvider.prototype.signUp = function (o) {
+    var self = this;
+    return Promise.resolve().then(function () {
+      var handle = normHandle(o.handle);
+      checkHandle(handle);
+      checkPass(o.pass);
+
+      var users = self._users();
+      for (var k in users) {
+        if (users[k].handle === handle) {
+          throw err('handle-taken', 'その名前はこの端末ですでに使われています');
+        }
+      }
+      var salt = randomHex(16);
+      return derive(o.pass, salt).then(function (hash) {
+        var u = {
+          id: 'u_' + randomHex(8),
+          handle: handle,
+          display: String(o.display || o.handle).trim().slice(0, RULES.displayMax) || handle,
+          salt: salt,
+          hash: hash,
+          joined: new Date().toISOString(),
+          stats: { played: 0, won: 0, byGame: {} },
+          agents: []
+        };
+        users[u.id] = u;
+        if (!save(KEY_USERS, users)) {
+          throw err('storage', 'この端末に保存できませんでした（プライベートモードかもしれません）');
+        }
+        save(KEY_SESS, u.id);
+        return self._public(u);
+      });
+    });
+  };
+
+  LocalProvider.prototype.signIn = function (o) {
+    var self = this;
+    return Promise.resolve().then(function () {
+      var handle = normHandle(o.handle);
+      if (!handle) throw err('handle-required', 'ハンドル名を入れてください');
+      if (!o.pass) throw err('pass-required', 'パスワードを入れてください');
+
+      var users = self._users(), found = null;
+      for (var k in users) if (users[k].handle === handle) found = users[k];
+      if (!found) throw err('no-user', 'その名前のアカウントがこの端末に見つかりません');
+
+      return derive(o.pass, found.salt).then(function (hash) {
+        if (hash !== found.hash) throw err('bad-pass', 'パスワードが違います');
+        save(KEY_SESS, found.id);
+        return self._public(found);
+      });
+    });
+  };
+
+  LocalProvider.prototype.signOut = function () {
+    try { localStorage.removeItem(KEY_SESS); } catch (e) {}
+    return Promise.resolve(null);
+  };
+
+  LocalProvider.prototype.update = function (patch) {
+    var self = this;
+    return Promise.resolve().then(function () {
+      var id = load(KEY_SESS, null);
+      if (!id) throw err('no-session', 'ログインしていません');
+      var users = self._users(), u = users[id];
+      if (!u) throw err('no-session', 'ログインしていません');
+
+      if (patch.display != null) {
+        var d = String(patch.display).trim();
+        if (!d) throw err('display-required', '表示名を入れてください');
+        u.display = d.slice(0, RULES.displayMax);
+      }
+      if (patch.stats) u.stats = patch.stats;
+      users[id] = u;
+      save(KEY_USERS, users);
+      return self._public(u);
+    });
+  };
+
+  LocalProvider.prototype.remove = function () {
+    var self = this;
+    return Promise.resolve().then(function () {
+      var id = load(KEY_SESS, null);
+      if (!id) return null;
+      var users = self._users();
+      delete users[id];
+      save(KEY_USERS, users);
+      return self.signOut();
+    });
+  };
+
+  /* 持ち出せること。閉じ込めない */
+  LocalProvider.prototype.exportData = function () {
+    var u = this.user();
+    if (!u) return null;
+    return JSON.stringify({ exportedAt: new Date().toISOString(), profile: u }, null, 2);
+  };
+
+  /* ============================================================ 窓口 */
+  var listeners = [];
+  var provider = new LocalProvider();
+
+  function emit() {
+    var u = PB.auth.user();
+    listeners.forEach(function (fn) {
+      try { fn(u); } catch (e) { /* 1つ壊れても他を止めない */ }
+    });
+  }
+
+  PB.auth = {
+    get kind() { return provider.kind; },
+    get label() { return provider.label; },
+
+    /* 実サーバーへ切り替えるときの差し込み口 */
+    use: function (p) { provider = p; emit(); return PB.auth; },
+
+    user: function () { return provider.user(); },
+
+    signUp: function (o) { return provider.signUp(o).then(function (u) { emit(); return u; }); },
+    signIn: function (o) { return provider.signIn(o).then(function (u) { emit(); return u; }); },
+    signOut: function () { return provider.signOut().then(function () { emit(); return null; }); },
+    update: function (p) { return provider.update(p).then(function (u) { emit(); return u; }); },
+    remove: function () { return provider.remove().then(function () { emit(); return null; }); },
+    exportData: function () { return provider.exportData ? provider.exportData() : null; },
+
+    onChange: function (fn) {
+      listeners.push(fn);
+      return function () { listeners = listeners.filter(function (f) { return f !== fn; }); };
+    },
+
+    rules: RULES
+  };
+
+  /* 別タブでの出入りに追随する */
+  window.addEventListener('storage', function (e) {
+    if (e.key === KEY_SESS || e.key === KEY_USERS) emit();
+  });
+})();
+</script>
+<script>
+/* ==========================================================================
+   PLAYBENCH ─ 画面の組み立て
+
+   ゲームは data/works.js から組む。ゲームを増やすときにこのファイルは触らない。
+   図版もアバターも外部画像を持たず、その場で SVG を生成する。
    ========================================================================== */
 'use strict';
 
@@ -1048,28 +1434,39 @@ window.PB.PRINCIPLES = [
     return n;
   }
   function pick(o, key) {
-    // lang が en のとき keyEn を優先し、無ければ日本語に落とす
-    if (lang === 'en') {
-      var k = key + 'En';
-      if (o[k]) return o[k];
-    }
+    if (lang === 'en') { var k = key + 'En'; if (o[k]) return o[k]; }
     return o[key];
   }
   function fmt(v) {
-    // .855 / 1.000 ── 桁を揃えて先頭の 0 を落とす
     var s = v.toFixed(3);
     return v < 1 ? s.slice(1) : s;
   }
   var T = {
     ja: {
-      opponent: '相手の作り', plate: '実測', remark: '注記',
-      play: '遊ぶ', repo: 'リポジトリ', designer: '作者', players: '人数', genre: '分類',
-      fig: '図', parity: '互角', planned: '未実装'
+      play: '遊ぶ', soon: '準備中', repo: '実装を見る', opponent: '相手',
+      players: '人数', genre: '分類', designer: '作者',
+      strength: '相手の強さ', parity: '互角', detail: 'この相手をどう作ったか',
+      plate: '実測', remark: '注記', fig: '図', planned: '未実装',
+      signin: 'ログイン', signup: '新規登録', signout: 'ログアウト',
+      account: 'アカウント', guest: 'ゲスト',
+      played: '対戦', won: '勝ち', rate: '勝率', agents: 'エージェント',
+      noRecord: 'まだ記録がありません。ゲームを遊ぶと、ここに残ります。',
+      noRank: 'まだ対戦が行われていません。エージェント機能ができると、ここに並びます。',
+      joined: '登録', save: '保存する', del: 'アカウントを削除', exportD: '書き出す',
+      displayName: '表示名', localOnly: 'この端末のみ'
     },
     en: {
-      opponent: 'The opponent', plate: 'Measured', remark: 'Note',
-      play: 'Play', repo: 'Source', designer: 'Designer', players: 'Players', genre: 'Type',
-      fig: 'Fig.', parity: 'parity', planned: 'planned'
+      play: 'Play', soon: 'Coming soon', repo: 'Source', opponent: 'Opponents',
+      players: 'Players', genre: 'Type', designer: 'Designer',
+      strength: 'How strong', parity: 'parity', detail: 'How this opponent was built',
+      plate: 'Measured', remark: 'Note', fig: 'Fig.', planned: 'planned',
+      signin: 'Sign in', signup: 'Create account', signout: 'Sign out',
+      account: 'Account', guest: 'Guest',
+      played: 'Played', won: 'Won', rate: 'Win rate', agents: 'Agents',
+      noRecord: 'No games yet. Your results will appear here once you play.',
+      noRank: 'No matches yet. Once agents arrive, they will be ranked here.',
+      joined: 'Joined', save: 'Save', del: 'Delete account', exportD: 'Export',
+      displayName: 'Display name', localOnly: 'this device only'
     }
   };
   function t(k) { return T[lang][k]; }
@@ -1089,50 +1486,35 @@ window.PB.PRINCIPLES = [
     return n;
   }
 
-  /* 街区図 ── ビッグショット。街路で区切られた街区と、公園ひとつ */
+  /* 街区図 ── ビッグショット */
   function figBlocks() {
-    var s = svg(100, 100);
-    var ink = 'currentColor';
-    sh(s, 'rect', { x: 0, y: 0, width: 100, height: 100, fill: 'none' });
-    var cells = [
-      [8, 8], [38, 8], [68, 8],
-      [8, 38], [38, 38], [68, 38],
-      [8, 68], [38, 68], [68, 68]
-    ];
+    var s = svg(100, 100), ink = 'currentColor';
+    var cells = [[8,8],[38,8],[68,8],[8,38],[38,38],[68,38],[8,68],[38,68],[68,68]];
     cells.forEach(function (c, i) {
-      var x = c[0], y = c[1], w = 24, h = 24;
-      var park = (i === 4);
+      var x = c[0], y = c[1], w = 24, h = 24, park = (i === 4);
       sh(s, 'rect', {
         x: x, y: y, width: w, height: h,
-        fill: park ? 'none' : 'currentColor',
-        'fill-opacity': park ? 0 : .05,
+        fill: park ? 'none' : 'currentColor', 'fill-opacity': park ? 0 : .05,
         stroke: ink, 'stroke-width': .85, 'stroke-opacity': .8
       });
       if (park) {
-        // 園路と木立
         sh(s, 'path', {
           d: 'M' + x + ' ' + (y + 16) + ' Q' + (x + 12) + ' ' + (y + 4) + ' ' + (x + 24) + ' ' + (y + 10),
           fill: 'none', stroke: ink, 'stroke-width': .6, 'stroke-opacity': .4
         });
-        [[6, 6], [17, 8], [11, 18], [19, 17]].forEach(function (p) {
+        [[6,6],[17,8],[11,18],[19,17]].forEach(function (p) {
           sh(s, 'circle', { cx: x + p[0], cy: y + p[1], r: 2.1, fill: ink, 'fill-opacity': .3 });
         });
       } else {
-        // 敷地割。高い区画ほど線が密になる
         var n = 2 + (i % 4);
         for (var j = 1; j < n; j++) {
-          sh(s, 'line', {
-            x1: x + (w / n) * j, y1: y, x2: x + (w / n) * j, y2: y + h,
-            stroke: ink, 'stroke-width': .4, 'stroke-opacity': .42
-          });
+          sh(s, 'line', { x1: x + (w / n) * j, y1: y, x2: x + (w / n) * j, y2: y + h,
+            stroke: ink, 'stroke-width': .4, 'stroke-opacity': .42 });
         }
-        sh(s, 'line', {
-          x1: x, y1: y + h * .62, x2: x + w, y2: y + h * .62,
-          stroke: ink, 'stroke-width': .4, 'stroke-opacity': .42
-        });
+        sh(s, 'line', { x1: x, y1: y + h * .62, x2: x + w, y2: y + h * .62,
+          stroke: ink, 'stroke-width': .4, 'stroke-opacity': .42 });
       }
     });
-    // 街路のセンターライン
     [32, 62].forEach(function (v) {
       sh(s, 'line', { x1: v + 2, y1: 4, x2: v + 2, y2: 96, stroke: ink, 'stroke-width': .5, 'stroke-opacity': .35, 'stroke-dasharray': '3 3' });
       sh(s, 'line', { x1: 4, y1: v + 2, x2: 96, y2: v + 2, stroke: ink, 'stroke-width': .5, 'stroke-opacity': .35, 'stroke-dasharray': '3 3' });
@@ -1140,71 +1522,72 @@ window.PB.PRINCIPLES = [
     return s;
   }
 
-  /* 盤面 ── アクワイア。12×9 のマスに、繋がったチェーンが2つ */
+  /* 盤面 ── アクワイア */
   function figGrid() {
-    var s = svg(100, 100);
-    var ink = 'currentColor';
+    var s = svg(100, 100), ink = 'currentColor';
     var cols = 12, rows = 9, pad = 6;
     var cw = (100 - pad * 2) / cols, ch = (100 - pad * 2 - 8) / rows;
-    var chainA = ['2,2', '3,2', '3,3', '4,3', '4,2', '5,2'];
-    var chainB = ['7,5', '8,5', '8,6', '9,6', '7,6'];
-    for (var r = 0; r < rows; r++) {
-      for (var c = 0; c < cols; c++) {
-        var key = c + ',' + r;
-        var inA = chainA.indexOf(key) >= 0, inB = chainB.indexOf(key) >= 0;
-        sh(s, 'rect', {
-          x: pad + c * cw + .5, y: pad + 4 + r * ch + .5,
-          width: cw - 1.4, height: ch - 1.4,
-          fill: (inA || inB) ? ink : 'none',
-          'fill-opacity': inA ? .6 : (inB ? .32 : 0),
-          stroke: ink, 'stroke-width': .35,
-          'stroke-opacity': (inA || inB) ? .72 : .34
-        });
-      }
+    var A = ['2,2','3,2','3,3','4,3','4,2','5,2'], B = ['7,5','8,5','8,6','9,6','7,6'];
+    for (var r = 0; r < rows; r++) for (var c = 0; c < cols; c++) {
+      var key = c + ',' + r, inA = A.indexOf(key) >= 0, inB = B.indexOf(key) >= 0;
+      sh(s, 'rect', {
+        x: pad + c * cw + .5, y: pad + 4 + r * ch + .5,
+        width: cw - 1.4, height: ch - 1.4,
+        fill: (inA || inB) ? ink : 'none',
+        'fill-opacity': inA ? .6 : (inB ? .32 : 0),
+        stroke: ink, 'stroke-width': .35, 'stroke-opacity': (inA || inB) ? .72 : .34
+      });
     }
     return s;
   }
 
-  /* 競り札 ── ハイソサエティ。重ねた3枚 */
+  /* 競り札 ── ハイソサエティ */
   function figCards() {
-    var s = svg(100, 100);
-    var ink = 'currentColor';
-    var defs = [
-      { x: 12, y: 26, rot: -8, op: .06 },
-      { x: 26, y: 20, rot: -1, op: .10 },
-      { x: 40, y: 25, rot: 7, op: .16 }
-    ];
-    defs.forEach(function (d, i) {
+    var s = svg(100, 100), ink = 'currentColor';
+    [{ x:12,y:26,rot:-8,op:.06 }, { x:26,y:20,rot:-1,op:.10 }, { x:40,y:25,rot:7,op:.16 }]
+    .forEach(function (d, i) {
       var g = sh(s, 'g', { transform: 'rotate(' + d.rot + ' ' + (d.x + 24) + ' ' + (d.y + 26) + ')' });
-      sh(g, 'rect', {
-        x: d.x, y: d.y, width: 34, height: 48, rx: 2,
-        fill: ink, 'fill-opacity': d.op, stroke: ink, 'stroke-width': .85, 'stroke-opacity': .8
+      sh(g, 'rect', { x: d.x, y: d.y, width: 34, height: 48, rx: 2,
+        fill: ink, 'fill-opacity': d.op, stroke: ink, 'stroke-width': .7, 'stroke-opacity': .72 });
+      sh(g, 'rect', { x: d.x + 4, y: d.y + 4, width: 26, height: 40, rx: 1,
+        fill: 'none', stroke: ink, 'stroke-width': .4, 'stroke-opacity': .42 });
+      if (i === 2) [[0,0],[1,0],[0,1],[1,1],[.5,.5]].forEach(function (p) {
+        sh(g, 'circle', { cx: d.x + 12 + p[0] * 11, cy: d.y + 16 + p[1] * 11, r: 1.9, fill: ink, 'fill-opacity': .45 });
       });
-      sh(g, 'rect', {
-        x: d.x + 4, y: d.y + 4, width: 26, height: 40, rx: 1,
-        fill: 'none', stroke: ink, 'stroke-width': .4, 'stroke-opacity': .42
-      });
-      if (i === 2) {
-        [[0, 0], [1, 0], [0, 1], [1, 1], [.5, .5]].forEach(function (p) {
-          sh(g, 'circle', {
-            cx: d.x + 12 + p[0] * 11, cy: d.y + 16 + p[1] * 11, r: 1.9,
-            fill: ink, 'fill-opacity': .45
-          });
-        });
-      }
     });
     return s;
   }
 
   var FIGS = { blocks: figBlocks, grid: figGrid, cards: figCards };
 
+  /* アバター。ハンドル名から決まる、左右対称の升目模様 */
+  function identicon(handle, size) {
+    var h = 2166136261;
+    for (var i = 0; i < handle.length; i++) {
+      h ^= handle.charCodeAt(i);
+      h = Math.imul(h, 16777619);
+    }
+    var s = svg(5, 5);
+    s.setAttribute('class', 'idc');
+    if (size) { s.style.width = size; s.style.height = size; }
+    s.setAttribute('aria-hidden', 'true');
+    for (var c = 0; c < 3; c++) for (var r = 0; r < 5; r++) {
+      h = Math.imul(h ^ (h >>> 15), 2246822507);
+      h = (h ^ (h >>> 13)) >>> 0;
+      if ((h & 3) === 0) continue;
+      [c, 4 - c].forEach(function (x) {
+        sh(s, 'rect', { x: x, y: r, width: 1, height: 1, fill: 'currentColor', 'fill-opacity': (h & 4) ? .75 : .4 });
+      });
+    }
+    return s;
+  }
+
   /* ------------------------------------------------------- 実測プレート */
   function buildPlate(p) {
     var fig = el('figure', 'plate');
 
     var cap = el('figcaption', 'cell__k');
-    var capT = el('span', 'tag tag--ink', t('plate') + ' ── ' + pick(p, 'caption'));
-    cap.appendChild(capT);
+    cap.appendChild(el('span', 'tag tag--ink', t('plate') + ' ── ' + pick(p, 'caption')));
     cap.appendChild(el('span', 'plate__note', pick(p, 'note')));
     fig.appendChild(cap);
 
@@ -1215,18 +1598,15 @@ window.PB.PRINCIPLES = [
     p.rows.forEach(function (r) {
       var row = el('div', 'srow' + (r.lead ? ' srow--lead' : ''));
       row.appendChild(el('div', 'srow__l', pick(r, 'label')));
-
       var track = el('div', 'srow__track');
       var bar = el('div', 'srow__bar');
       bar.style.setProperty('--v', r.v);
       track.appendChild(bar);
       row.appendChild(track);
-
       row.appendChild(el('div', 'srow__v', fmt(r.v)));
       scale.appendChild(row);
     });
 
-    /* 目盛り。0 ／ 互角 ／ 1.000 の三点だけ打つ */
     var axis = el('div', 'axis');
     var at = el('div', 'axis__t');
     [
@@ -1240,90 +1620,283 @@ window.PB.PRINCIPLES = [
     });
     axis.appendChild(at);
     scale.appendChild(axis);
-
-    /* 互角の線は全行を貫くので、行ではなく scale の上に1本だけ置く */
     scale.appendChild(el('div', 'scale__base'));
 
     fig.appendChild(scale);
     return fig;
   }
 
-  /* ------------------------------------------------------------- 作品 */
-  function buildWork(w) {
-    var art = el('article', 'work');
+  /* 一行版。カードの表に出す「相手の強さ」 */
+  function strengthChip(w) {
+    var p = w.plate, baseV = p.baseline == null ? .25 : p.baseline;
+    var row = null;
+    p.rows.forEach(function (r) { if (r.lead && !row) row = r; });
+    if (!row) row = p.rows[0];
+
+    var chip = el('div', 'chip');
+    chip.appendChild(el('span', 'chip__k', t('strength')));
+
+    var track = el('div', 'chip__track');
+    track.style.setProperty('--base', baseV * 100 + '%');
+    var bar = el('div', 'chip__bar');
+    bar.style.setProperty('--v', row.v);
+    track.appendChild(bar);
+    chip.appendChild(track);
+
+    chip.appendChild(el('span', 'chip__v num', fmt(row.v)));
+    chip.appendChild(el('span', 'chip__n', pick(row, 'label')));
+    return chip;
+  }
+
+  /* --------------------------------------------------------------- ゲーム */
+  function buildGame(w) {
+    var art = el('article', 'game');
     art.id = w.id;
 
-    /* 上段：図版と書誌 */
-    var top = el('div', 'work__top');
+    /* ── 表：遊ぶための情報だけ ── */
+    var top = el('div', 'game__top');
 
-    var figWrap = el('figure', 'work__fig');
+    var figWrap = el('div', 'game__fig');
     var s = (FIGS[w.figure] || figGrid)();
     s.setAttribute('aria-label', pick(w, 'title'));
     figWrap.appendChild(s);
-    figWrap.appendChild(el('figcaption', 'work__figcap',
-      t('fig') + ' ' + w.no + ' ── ' + (lang === 'en' ? 'schematic' : '模式図')));
     top.appendChild(figWrap);
 
-    var head = el('div', 'work__head');
-    var no = el('div', 'work__no');
-    no.appendChild(el('span', 'tag tag--red', 'No.' + String(w.no).padStart(2, '0')));
-    head.appendChild(no);
+    var head = el('div', 'game__head');
 
-    head.appendChild(el('h3', 'work__title', pick(w, 'title')));
-    head.appendChild(el('p', 'work__latin', w.latin));
+    head.appendChild(el('h3', 'game__title', pick(w, 'title')));
 
-    var meta = el('ul', 'work__meta');
-    [
-      [t('designer'), pick(w, 'designer')],
-      [t('players'), pick(w, 'players')],
-      [t('genre'), pick(w, 'genre')]
-    ].forEach(function (m) {
-      var li = el('li');
-      li.appendChild(el('b', null, m[0]));
-      li.appendChild(el('span', null, m[1]));
-      meta.appendChild(li);
+    var meta = el('p', 'game__meta');
+    [pick(w, 'players'), pick(w, 'genre'), pick(w, 'designer')].forEach(function (m, i) {
+      if (i) meta.appendChild(el('span', 'game__dot', '·'));
+      meta.appendChild(el('span', null, m));
     });
     head.appendChild(meta);
-    head.appendChild(el('p', 'work__lead', pick(w, 'lead')));
 
-    var acts = el('div', 'work__acts');
+    head.appendChild(el('p', 'game__hook', pick(w, 'hook')));
+    head.appendChild(strengthChip(w));
+
+    var acts = el('div', 'game__acts');
     if (w.play) {
-      var a = el('a', 'act act--play', t('play') + ' →');
+      var a = el('a', 'btn btn--go', '▶ ' + t('play'));
       a.href = w.play;
       acts.appendChild(a);
     } else {
-      acts.appendChild(el('span', 'act act--off', pick(w, 'playNote') || t('planned')));
+      var off = el('span', 'btn btn--off', t('soon'));
+      off.title = pick(w, 'playNote') || '';
+      acts.appendChild(off);
     }
-    var rp = el('a', 'act', t('repo'));
-    rp.href = w.repo;
-    rp.rel = 'noopener';
+    var rp = el('a', 'btn', t('repo'));
+    rp.href = w.repo; rp.rel = 'noopener';
     acts.appendChild(rp);
+
+    var opp = el('span', 'game__opp');
+    opp.appendChild(el('b', null, t('opponent')));
+    opp.appendChild(el('span', null, pick(w, 'opponents')));
+    acts.appendChild(opp);
+
     head.appendChild(acts);
     top.appendChild(head);
     art.appendChild(top);
 
-    /* 下段：相手の作り ／ 実測 */
-    var body = el('div', 'work__body');
+    /* ── 裏：作りの話。畳んでおく ── */
+    var det = el('details', 'game__more');
+    var sum = el('summary', 'game__sum', t('detail'));
+    det.appendChild(sum);
 
+    var body = el('div', 'game__body cells');
     var c1 = el('div', 'cell');
-    c1.appendChild(el('span', 'cell__k tag tag--ink', t('opponent')));
     c1.appendChild(el('h4', 'cell__t', pick(w, 'method')));
     c1.appendChild(el('p', 'cell__p', pick(w, 'methodBody')));
+    if (w.remark) {
+      var rm = el('p', 'cell__p cell__p--rm');
+      rm.appendChild(el('b', null, t('remark') + '　'));
+      rm.appendChild(el('span', null, pick(w, 'remark')));
+      c1.appendChild(rm);
+    }
     body.appendChild(c1);
 
     var c2 = el('div', 'cell');
     c2.appendChild(buildPlate(w.plate));
     body.appendChild(c2);
-    art.appendChild(body);
 
-    /* 注記 */
-    if (w.remark) {
-      var rm = el('div', 'remark');
-      rm.appendChild(el('span', 'remark__k', t('remark')));
-      rm.appendChild(el('p', 'remark__b', pick(w, 'remark')));
-      art.appendChild(rm);
-    }
+    det.appendChild(body);
+    det.addEventListener('toggle', function () {
+      if (det.open) watchPlates(det);
+    });
+    art.appendChild(det);
+
     return art;
+  }
+
+  /* ----------------------------------------------------------- アカウント */
+  function initials(u) { return (u.display || u.handle).trim().charAt(0); }
+
+  function buildAccountSlot() {
+    var slot = document.getElementById('account-slot');
+    if (!slot) return;
+    slot.textContent = '';
+    var u = PB.auth.user();
+
+    if (!u) {
+      var b = el('button', 'ctl ctl--go', t('signin'));
+      b.type = 'button';
+      b.setAttribute('data-auth-open', 'signin');
+      slot.appendChild(b);
+      return;
+    }
+
+    var link = el('a', 'who');
+    link.href = '#me';
+    link.appendChild(identicon(u.handle, '1.15rem'));
+    link.appendChild(el('span', 'who__n', u.display));
+    slot.appendChild(link);
+  }
+
+  function statTile(k, v, note) {
+    var d = el('div', 'stat');
+    d.appendChild(el('span', 'stat__v num', v));
+    d.appendChild(el('span', 'stat__k', k));
+    if (note) d.appendChild(el('span', 'stat__note', note));
+    return d;
+  }
+
+  function buildAccountPanel() {
+    var host = document.getElementById('account-panel');
+    if (!host) return;
+    host.textContent = '';
+    var u = PB.auth.user();
+
+    /* 未ログイン ── 勧誘。ただし遊ぶのに要らないことを必ず添える */
+    if (!u) {
+      var box = el('div', 'invite');
+      box.appendChild(el('h3', 'invite__t',
+        lang === 'en' ? 'Keep your results' : '成績を残しませんか'));
+      box.appendChild(el('p', 'invite__b', lang === 'en'
+        ? 'An account records what you played and how it went, and later it is what your own agent is trained from. Playing never requires one.'
+        : 'アカウントを作ると、遊んだ記録が残ります。のちのち、あなた専用のエージェントを鍛える材料にもなります。遊ぶだけならアカウントは要りません。'));
+      var acts = el('div', 'invite__acts');
+      var b1 = el('button', 'btn btn--go', t('signup'));
+      b1.type = 'button'; b1.setAttribute('data-auth-open', 'signup');
+      var b2 = el('button', 'btn', t('signin'));
+      b2.type = 'button'; b2.setAttribute('data-auth-open', 'signin');
+      acts.appendChild(b1); acts.appendChild(b2);
+      box.appendChild(acts);
+      host.appendChild(box);
+      return;
+    }
+
+    /* ログイン済み */
+    var card = el('div', 'me');
+
+    var head = el('div', 'me__head');
+    head.appendChild(identicon(u.handle, '2.6rem'));
+    var who = el('div', 'me__who');
+    who.appendChild(el('h3', 'me__n', u.display));
+    who.appendChild(el('p', 'me__h', '@' + u.handle));
+    head.appendChild(who);
+
+    var badge = el('span', 'me__where', PB.auth.kind === 'local' ? t('localOnly') : PB.auth.label);
+    head.appendChild(badge);
+    card.appendChild(head);
+
+    var st = u.stats || { played: 0, won: 0 };
+    var tiles = el('div', 'cells stats');
+    tiles.appendChild(statTile(t('played'), String(st.played || 0)));
+    tiles.appendChild(statTile(t('won'), String(st.won || 0)));
+    tiles.appendChild(statTile(t('rate'), st.played ? fmt(st.won / st.played) : '—'));
+    tiles.appendChild(statTile(t('agents'), String((u.agents || []).length),
+      lang === 'en' ? 'not yet available' : 'これから'));
+    card.appendChild(tiles);
+
+    if (!st.played) card.appendChild(el('p', 'me__empty', t('noRecord')));
+
+    /* 設定 */
+    var form = el('form', 'me__form');
+    var f = el('div', 'field field--row');
+    var lab = el('label', 'field__k', t('displayName'));
+    lab.htmlFor = 'me-display';
+    var inp = el('input', 'field__i');
+    inp.id = 'me-display'; inp.type = 'text'; inp.value = u.display; inp.maxLength = 24;
+    var sv = el('button', 'btn', t('save'));
+    sv.type = 'submit';
+    f.appendChild(lab); f.appendChild(inp); f.appendChild(sv);
+    form.appendChild(f);
+    var msg = el('p', 'me__msg');
+    msg.hidden = true;
+    form.appendChild(msg);
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      PB.auth.update({ display: inp.value }).then(function () {
+        msg.hidden = false;
+        msg.textContent = lang === 'en' ? 'Saved.' : '保存しました';
+        msg.className = 'me__msg';
+      }).catch(function (err) {
+        msg.hidden = false;
+        msg.textContent = err.message;
+        msg.className = 'me__msg me__msg--bad';
+      });
+    });
+    card.appendChild(form);
+
+    var foot = el('div', 'me__foot');
+    var out = el('button', 'btn', t('signout'));
+    out.type = 'button';
+    out.addEventListener('click', function () { PB.auth.signOut(); });
+    foot.appendChild(out);
+
+    var exp = el('button', 'btn', t('exportD'));
+    exp.type = 'button';
+    exp.addEventListener('click', function () {
+      var data = PB.auth.exportData();
+      if (!data) return;
+      var url = URL.createObjectURL(new Blob([data], { type: 'application/json' }));
+      var a = document.createElement('a');
+      a.href = url; a.download = 'playbench-' + u.handle + '.json';
+      a.click();
+      setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+    });
+    foot.appendChild(exp);
+
+    var del = el('button', 'btn btn--danger', t('del'));
+    del.type = 'button';
+    del.addEventListener('click', function () {
+      var ok = window.confirm(lang === 'en'
+        ? 'Delete this account and its record from this browser? This cannot be undone.'
+        : 'このブラウザから、このアカウントと記録を消します。元に戻せません。よろしいですか。');
+      if (ok) PB.auth.remove();
+    });
+    foot.appendChild(del);
+
+    card.appendChild(foot);
+    host.appendChild(card);
+  }
+
+  /* ----------------------------------------------------------- ランキング */
+  function buildRanking() {
+    var host = document.getElementById('ranking-panel');
+    if (!host) return;
+    host.textContent = '';
+
+    var box = el('div', 'rank');
+    var head = el('div', 'rank__row rank__row--head');
+    [
+      lang === 'en' ? '#' : '順',
+      lang === 'en' ? 'Agent' : 'エージェント',
+      lang === 'en' ? 'Owner' : '作者',
+      lang === 'en' ? 'Game' : 'ゲーム',
+      lang === 'en' ? 'Rating' : 'レート',
+      lang === 'en' ? 'Games' : '対戦数'
+    ].forEach(function (h) { head.appendChild(el('span', null, h)); });
+    box.appendChild(head);
+
+    var empty = el('div', 'rank__empty');
+    empty.appendChild(el('p', null, t('noRank')));
+    box.appendChild(empty);
+    host.appendChild(box);
+
+    host.appendChild(buildWire());
   }
 
   /* ----------------------------------------------------------- これから */
@@ -1341,7 +1914,6 @@ window.PB.PRINCIPLES = [
     return wrap;
   }
 
-  /* 構成図。サーバーを持たない対戦の流れ */
   function buildWire() {
     var box = el('div', 'wire');
     var s = svg(640, 132);
@@ -1349,48 +1921,37 @@ window.PB.PRINCIPLES = [
       ? 'Agents arrive as pull requests, run in CI, and results are committed back as JSON.'
       : 'エージェントはPRで届き、CIで対戦し、結果はJSONとしてコミットされる。');
     var ink = 'currentColor';
-
     var boxes = lang === 'en'
       ? ['Agent (JS)', 'Pull request', 'GitHub Actions\nseeded matches', 'results.json\ncommitted', 'This page']
       : ['エージェント\n(JS 1ファイル)', 'Pull Request', 'GitHub Actions\nシード固定で対戦', 'results.json\nをコミット', 'このページ'];
 
     var w = 108, h = 54, gap = 25, y = 22;
     boxes.forEach(function (label, i) {
-      var x = i * (w + gap) + 6;
-      var accent = (i === 2);
-      sh(s, 'rect', {
-        x: x, y: y, width: w, height: h,
+      var x = i * (w + gap) + 6, accent = (i === 2);
+      sh(s, 'rect', { x: x, y: y, width: w, height: h,
         fill: ink, 'fill-opacity': accent ? .07 : .03,
-        stroke: ink, 'stroke-width': accent ? 1.1 : .8,
-        'stroke-opacity': accent ? .7 : .45
-      });
+        stroke: ink, 'stroke-width': accent ? 1.1 : .8, 'stroke-opacity': accent ? .7 : .45 });
       label.split('\n').forEach(function (line, li, arr) {
         var tx = sh(s, 'text', {
           x: x + w / 2, y: y + h / 2 + (li - (arr.length - 1) / 2) * 13 + 4,
           'text-anchor': 'middle', fill: ink,
-          'font-size': arr.length > 1 ? 10 : 11,
-          'fill-opacity': li === 0 ? .85 : .6
-        });
+          'font-size': arr.length > 1 ? 10 : 11, 'fill-opacity': li === 0 ? .85 : .6 });
         tx.textContent = line;
       });
       if (i < boxes.length - 1) {
         var ax = x + w + 4;
         sh(s, 'line', { x1: ax, y1: y + h / 2, x2: ax + gap - 8, y2: y + h / 2, stroke: ink, 'stroke-width': .8, 'stroke-opacity': .5 });
-        sh(s, 'path', {
-          d: 'M' + (ax + gap - 8) + ' ' + (y + h / 2) + ' l-4 -3 v6 z',
-          fill: ink, 'fill-opacity': .5
-        });
+        sh(s, 'path', { d: 'M' + (ax + gap - 8) + ' ' + (y + h / 2) + ' l-4 -3 v6 z', fill: ink, 'fill-opacity': .5 });
       }
     });
     var cap = sh(s, 'text', { x: 6, y: 116, fill: ink, 'font-size': 10, 'fill-opacity': .55 });
     cap.textContent = lang === 'en'
-      ? 'No server. Every row of the ranking can be reproduced from its seed and its run log.'
+      ? 'No server. Every row can be reproduced from its seed and its run log.'
       : 'サーバーを持たない。順位表のどの行も、シードと実行ログから再現できる。';
     box.appendChild(s);
     return box;
   }
 
-  /* ------------------------------------------------------------- 作法 */
   function buildTenets() {
     var wrap = el('div', 'cells tenets');
     PB.PRINCIPLES.forEach(function (p) {
@@ -1402,11 +1963,12 @@ window.PB.PRINCIPLES = [
     return wrap;
   }
 
-  /* --------------------------------------------------------------- 描画 */
+  /* ------------------------------------------------------------- 棒の伸び */
   var io = null;
   function watchPlates(root) {
+    var nodes = root.querySelectorAll('.scale:not(.is-read)');
     if (!('IntersectionObserver' in window)) {
-      root.querySelectorAll('.scale').forEach(function (n) { n.classList.add('is-read'); });
+      Array.prototype.forEach.call(nodes, function (n) { n.classList.add('is-read'); });
       return;
     }
     if (!io) {
@@ -1414,29 +1976,111 @@ window.PB.PRINCIPLES = [
         entries.forEach(function (e) {
           if (e.isIntersecting) { e.target.classList.add('is-read'); io.unobserve(e.target); }
         });
-      }, { rootMargin: '0px 0px -12% 0px', threshold: .2 });
+      }, { rootMargin: '0px 0px -8% 0px', threshold: .15 });
     }
-    root.querySelectorAll('.scale').forEach(function (n) { io.observe(n); });
+    Array.prototype.forEach.call(nodes, function (n) { io.observe(n); });
   }
 
+  /* --------------------------------------------------------------- 描画 */
   function render() {
-    var works = document.getElementById('works');
-    works.textContent = '';
-    PB.WORKS.forEach(function (w) { works.appendChild(buildWork(w)); });
+    var games = document.getElementById('works');
+    games.textContent = '';
+    PB.WORKS.forEach(function (w) { games.appendChild(buildGame(w)); });
+
+    var cnt = document.getElementById('games-count');
+    if (cnt) cnt.textContent = lang === 'en'
+      ? PB.WORKS.length + ' games'
+      : '全 ' + PB.WORKS.length + ' 作';
 
     var plan = document.getElementById('plan');
     plan.textContent = '';
     plan.appendChild(buildPlan());
-    plan.appendChild(buildWire());
 
     var tenets = document.getElementById('tenets');
     tenets.textContent = '';
     tenets.appendChild(buildTenets());
 
-    var n = document.getElementById('gauge-works');
-    if (n) n.textContent = PB.WORKS.length;
-
+    buildRanking();
+    buildAccountSlot();
+    buildAccountPanel();
     watchPlates(document);
+  }
+
+  /* ------------------------------------------------- ログイン／新規登録 */
+  var modal, form, mode = 'signin';
+
+  function setMode(m) {
+    mode = m;
+    var title = document.getElementById('auth-title');
+    var submit = document.getElementById('auth-submit');
+    title.textContent = t(m === 'signup' ? 'signup' : 'signin');
+    submit.textContent = t(m === 'signup' ? 'signup' : 'signin');
+    modal.querySelectorAll('[data-only]').forEach(function (n) {
+      n.hidden = (n.dataset.only !== m);
+    });
+    modal.querySelectorAll('.tab').forEach(function (b) {
+      var on = b.dataset.tab === m;
+      b.classList.toggle('tab--on', on);
+      b.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+    showErr(null);
+  }
+
+  function showErr(msg) {
+    var box = document.getElementById('auth-err');
+    box.hidden = !msg;
+    box.textContent = msg || '';
+  }
+
+  function openAuth(m) {
+    setMode(m || 'signin');
+    if (!modal.open) modal.showModal();
+    var first = document.getElementById('f-handle');
+    setTimeout(function () { first.focus(); }, 40);
+  }
+
+  function wireAuth() {
+    modal = document.getElementById('auth-modal');
+    form = document.getElementById('auth-form');
+
+    document.getElementById('auth-close').addEventListener('click', function () { modal.close(); });
+
+    modal.querySelectorAll('.tab').forEach(function (b) {
+      b.addEventListener('click', function () { setMode(b.dataset.tab); });
+    });
+
+    /* 背景を押したら閉じる */
+    modal.addEventListener('click', function (e) {
+      if (e.target === modal) modal.close();
+    });
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var submit = document.getElementById('auth-submit');
+      var o = {
+        handle: form.handle.value,
+        display: form.display.value,
+        pass: form.pass.value
+      };
+      submit.disabled = true;
+      showErr(null);
+
+      var p = (mode === 'signup') ? PB.auth.signUp(o) : PB.auth.signIn(o);
+      p.then(function () {
+        form.reset();
+        modal.close();
+      }).catch(function (err) {
+        showErr(err.message || String(err));
+      }).then(function () {
+        submit.disabled = false;
+      });
+    });
+
+    /* どこからでも開けるようにしておく */
+    document.addEventListener('click', function (e) {
+      var b = e.target.closest ? e.target.closest('[data-auth-open]') : null;
+      if (b) { e.preventDefault(); openAuth(b.getAttribute('data-auth-open')); }
+    });
   }
 
   /* ------------------------------------------------------------ 言語切替 */
@@ -1446,25 +2090,34 @@ window.PB.PRINCIPLES = [
       if (n.dataset.ja == null) n.dataset.ja = n.innerHTML;
       n.innerHTML = lang === 'en' ? n.dataset.en : n.dataset.ja;
     });
+    /* 狭い画面では「切り替え先」だけを出す。CSS で .ctl__now を隠す */
     var btn = document.getElementById('lang');
     if (btn) {
-      btn.innerHTML = lang === 'en'
-        ? '<span class="ctl__on">EN</span> / 日本語'
-        : '<span class="ctl__on">日本語</span> / EN';
+      btn.textContent = '';
+      btn.appendChild(el('span', 'ctl__now ctl__on', lang === 'en' ? 'EN' : '日本語'));
+      btn.appendChild(el('span', 'ctl__now', ' / '));
+      btn.appendChild(el('span', null, lang === 'en' ? '日本語' : 'EN'));
       btn.setAttribute('aria-label', lang === 'en' ? 'Switch to Japanese' : '英語に切り替える');
     }
+    if (modal) setMode(mode);
     render();
   }
 
   /* ------------------------------------------------------------ 明暗切替 */
-  function applyTheme(mode) {
-    if (mode) document.documentElement.setAttribute('data-theme', mode);
+  function applyTheme(m) {
+    if (m) document.documentElement.setAttribute('data-theme', m);
     else document.documentElement.removeAttribute('data-theme');
-    try { mode ? localStorage.setItem('pb-theme', mode) : localStorage.removeItem('pb-theme'); } catch (e) {}
+    try { m ? localStorage.setItem('pb-theme', m) : localStorage.removeItem('pb-theme'); } catch (e) {}
     var btn = document.getElementById('theme');
     if (btn) {
       var cur = document.documentElement.getAttribute('data-theme');
-      btn.textContent = cur === 'dark' ? '青焼き' : (cur === 'light' ? '製図用紙' : '地の色');
+      var name = cur === 'dark' ? '青焼き' : (cur === 'light' ? '製図用紙' : '地の色');
+      btn.textContent = '';
+      btn.appendChild(el('span', 'ctl__long', name));
+      var short = el('span', 'ctl__short', '◐');
+      short.setAttribute('aria-hidden', 'true');
+      btn.appendChild(short);
+      btn.setAttribute('aria-label', lang === 'en' ? 'Change background (' + name + ')' : '地の色を変える（' + name + '）');
     }
   }
 
@@ -1475,8 +2128,14 @@ window.PB.PRINCIPLES = [
       if (saved) document.documentElement.setAttribute('data-theme', saved);
     } catch (e) {}
 
+    wireAuth();
     applyLang();
     applyTheme(document.documentElement.getAttribute('data-theme'));
+
+    PB.auth.onChange(function () {
+      buildAccountSlot();
+      buildAccountPanel();
+    });
 
     var lb = document.getElementById('lang');
     if (lb) lb.addEventListener('click', function () { lang = (lang === 'ja' ? 'en' : 'ja'); applyLang(); });
@@ -1485,8 +2144,8 @@ window.PB.PRINCIPLES = [
     if (tb) tb.addEventListener('click', function () {
       var cur = document.documentElement.getAttribute('data-theme');
       var dark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-      // 地の色 → 反対側 → 元の側 → 地の色
-      applyTheme(!cur ? (dark ? 'light' : 'dark') : (cur === (dark ? 'light' : 'dark') ? (dark ? 'dark' : 'light') : null));
+      applyTheme(!cur ? (dark ? 'light' : 'dark')
+        : (cur === (dark ? 'light' : 'dark') ? (dark ? 'dark' : 'light') : null));
     });
   }
 

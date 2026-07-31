@@ -24,6 +24,10 @@ window.PB.WORKS = [
     playersEn: '4 players',
     genre: '競り・エリアマジョリティ',
     genreEn: 'Auction / Area majority',
+    hook: '落札した4個には相手の色も混ざっていて、それも落札者が置く。どこへ捨てるかが勝負どころ。',
+    hookEn: 'The four cubes you win include your rivals\' colours — and you place those too. Where you dump them is the game.',
+    opponents: 'CPU 3人（確率計算）',
+    opponentsEn: '3 CPU (exact probability)',
     lead: '18回の競りで街を分け合う。収入がないので、使った金はそのまま失点になる。',
     leadEn: 'Eighteen auctions divide a city. There is no income, so every dollar spent is a point lost.',
 
@@ -79,6 +83,10 @@ window.PB.WORKS = [
     playersEn: '2–6 players',
     genre: '株式・合併・タイル配置',
     genreEn: 'Stocks / Mergers / Tile laying',
+    hook: '小さなチェーンは大きなチェーンに呑み込まれる。その瞬間、筆頭株主に株価の10倍が落ちる。',
+    hookEn: 'Small chains get swallowed by big ones — and the moment they do, the largest shareholder is paid ten times the share price.',
+    opponents: '性格4種（バランス／アグレッシブ／キャッシュ重視／マージャー）',
+    opponentsEn: '4 personalities (balanced / aggressive / cautious / merger)',
     lead: 'ホテルチェーンを設立し、株を買い、合併ボーナスで資産を増やす。Avalon Hill 版に準拠。',
     leadEn: 'Found hotel chains, buy stock, and grow on merger bonuses. Rules follow the Avalon Hill edition.',
 
@@ -133,6 +141,10 @@ window.PB.WORKS = [
     playersEn: '4 players',
     genre: '競り・逆説的な勝利条件',
     genreEn: 'Auction / Inverted victory condition',
+    hook: 'いちばん金を使った人は、最後に脱落する。競り勝ちすぎてもいけない。',
+    hookEn: 'Whoever spent the most is eliminated at the end. Winning too many auctions loses the game.',
+    opponents: 'ハード（学習AI＋先読み）／イージー（手書きルーチン）',
+    opponentsEn: 'Hard (trained AI + search) / Easy (hand-written routine)',
     lead: '贅沢品を競り落としつつ、いちばん金を使った者は最後に脱落する。Osprey 2018年版に準拠。',
     leadEn: 'Bid for luxuries, but whoever spent the most is eliminated at the end. Follows the Osprey 2018 edition.',
 
