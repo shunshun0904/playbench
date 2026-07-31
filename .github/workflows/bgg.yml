@@ -1,0 +1,40 @@
+name: Refresh BGG data
+
+on:
+  schedule:
+    - cron: '17 4 * * 1'      # 毎週月曜。BGG の値はゆっくりしか動かない
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: bgg
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: BGG から取ってくる
+        run: node tools/fetch-bgg.mjs
+
+      - name: 変化があればコミットする
+        run: |
+          if git diff --quiet -- data/bgg.js; then
+            echo "変化なし。何もしない"
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/bgg.js
+          git commit -m "BGG の重さと評価を更新
+
+出典は boardgamegeek.com。こちらの実測ではなく他人が付けた数字なので、
+取得日と評価人数を一緒に残している。tools/fetch-bgg.mjs が週次で取得する。"
+          git push

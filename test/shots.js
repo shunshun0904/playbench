@@ -145,6 +145,8 @@ function serve() {
       tenets: document.querySelectorAll('.tenet').length,
       invite: document.querySelectorAll('.invite').length,
       rank: document.querySelectorAll('.rank').length,
+      bgg: document.querySelectorAll('.bgg').length,
+      err: document.querySelectorAll('.srow__err').length,
       wantGames: window.PB.WORKS.length,
       wantBars: window.PB.WORKS.reduce((n, w) => n + w.plate.rows.length, 0),
       wantSteps: window.PB.ROADMAP.length,
@@ -157,7 +159,7 @@ function serve() {
     const ratio = bar.w / bar.t;
 
     console.log(`── ${view.name}`);
-    console.log(`   横あふれ ${overflow}px / ゲーム ${c.games} / 遊ぶ ${c.play} / 強さ ${c.chips} / 棒 ${c.bars} / 段階 ${c.steps} / 作り ${c.tenets}`);
+    console.log(`   横あふれ ${overflow}px / ゲーム ${c.games} / 遊ぶ ${c.play} / 強さ ${c.chips} / 棒 ${c.bars} / BGG ${c.bgg} / ひげ ${c.err} / 段階 ${c.steps} / 作り ${c.tenets}`);
     console.log(`   棒幅の比 ${ratio.toFixed(3)} (--v=${bar.v})`);
     if (errs.length) fail('コンソール: ' + errs.slice(0, 3).join(' | '));
     if (overflow > 1) fail('横スクロールが出ている');
@@ -167,6 +169,9 @@ function serve() {
         + `・強さ ${c.chips}/${c.wantGames}・棒 ${c.bars}/${c.wantBars}`
         + `・段階 ${c.steps}/${c.wantSteps}・作り ${c.tenets}/${c.wantTenets}）`);
     }
+    // data/bgg.js が空のあいだは 0、CI が取ってきたら 4。中途半端はおかしい
+    if (c.bgg !== 0 && c.bgg !== 4) fail('BGG の行が一部の作品にしか出ていない');
+    if (c.err !== 5) fail('信頼区間のひげが出ていない（インペリアルの5行）');
     if (c.invite !== 1 || c.rank !== 1) fail('未ログインの勧誘またはランキング枠が出ていない');
     if (Math.abs(ratio - bar.v) > 0.02) fail('棒の幅が値と合っていない');
     await ctx.close();

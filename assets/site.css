@@ -463,6 +463,69 @@ a { color: inherit; }
 .axis__tick--end { border-left: 0; border-right: 1px solid var(--rule); padding-left: 0; padding-right: .3rem; transform: translateX(-100%); }
 .axis__tick--base { color: var(--ink-mid); border-left-style: dashed; border-left-color: var(--ink); }
 
+/* ------------------------------------------------------------------ BGG */
+/* 他人が付けた数字。こちらの実測（朱）と混ざらないよう、藍だけで組む。 */
+.bgg {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .4rem 1rem;
+  padding: .5rem .7rem;
+  border: 1px solid var(--rule-soft);
+  border-left: 2px solid var(--indigo);
+  background: color-mix(in srgb, var(--paper) 30%, var(--sheet));
+  font-size: .73rem;
+}
+.bgg__k {
+  font-family: var(--mono);
+  font-size: .62rem;
+  letter-spacing: .16em;
+  color: var(--indigo);
+  white-space: nowrap;
+}
+.bgg__m { display: flex; align-items: center; gap: .45rem; }
+.bgg__ml { color: var(--ink-mute); white-space: nowrap; }
+.bgg__t {
+  position: relative;
+  width: 4.6rem;
+  height: .5rem;
+  background: color-mix(in srgb, var(--paper) 80%, var(--sheet));
+  border: 1px solid var(--rule-soft);
+}
+.bgg__b { position: absolute; inset-block: 0; left: 0; background: var(--bar-cmp); border-right: 2px solid var(--indigo); }
+.bgg__v { color: var(--ink-mid); white-space: nowrap; font-size: .73rem; }
+
+.bgg__tail { display: flex; align-items: center; gap: .7rem; margin-left: auto; flex-wrap: wrap; }
+.bgg__n, .bgg__d { color: var(--ink-mute); font-size: .66rem; white-space: nowrap; }
+.bgg__a {
+  color: var(--indigo);
+  text-decoration-color: color-mix(in srgb, var(--indigo) 40%, transparent);
+  text-underline-offset: .2em;
+  white-space: nowrap;
+}
+.bgg__a:hover { text-decoration-color: var(--indigo); }
+
+/* 信頼区間のひげ。棒の先がどれだけ揺れるかを示す */
+.srow__err {
+  position: absolute;
+  top: 50%;
+  height: 0;
+  border-top: 1px solid var(--ink);
+  opacity: .5;
+  z-index: 2;
+  pointer-events: none;
+}
+.srow__err::before, .srow__err::after {
+  content: "";
+  position: absolute;
+  top: -3px;
+  height: 7px;
+  border-left: 1px solid var(--ink);
+}
+.srow__err::before { left: 0; }
+.srow__err::after  { right: 0; }
+.srow__ci { margin-left: .3rem; font-size: .62rem; color: var(--ink-mute); }
+
 /* ------------------------------------------------------------ アカウント */
 .invite {
   border: 1px solid var(--rule);
@@ -683,6 +746,8 @@ a { color: inherit; }
   .game__sum, .cell, .me__head, .me__form, .invite { padding-inline: var(--s3); }
   .me__foot { padding-inline: var(--s3); }
   .chip { grid-template-columns: auto 1fr auto; }
+  .bgg__tail { margin-left: 0; }
+  .bgg__t { width: 3.4rem; }
   .chip__n { display: none; }
   .srow, .axis { grid-template-columns: minmax(0, 6.4rem) 1fr 2.6rem; }
   .scale { --lab: 6.4rem; --val: 2.6rem; }

@@ -465,6 +465,69 @@ a { color: inherit; }
 .axis__tick--end { border-left: 0; border-right: 1px solid var(--rule); padding-left: 0; padding-right: .3rem; transform: translateX(-100%); }
 .axis__tick--base { color: var(--ink-mid); border-left-style: dashed; border-left-color: var(--ink); }
 
+/* ------------------------------------------------------------------ BGG */
+/* 他人が付けた数字。こちらの実測（朱）と混ざらないよう、藍だけで組む。 */
+.bgg {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .4rem 1rem;
+  padding: .5rem .7rem;
+  border: 1px solid var(--rule-soft);
+  border-left: 2px solid var(--indigo);
+  background: color-mix(in srgb, var(--paper) 30%, var(--sheet));
+  font-size: .73rem;
+}
+.bgg__k {
+  font-family: var(--mono);
+  font-size: .62rem;
+  letter-spacing: .16em;
+  color: var(--indigo);
+  white-space: nowrap;
+}
+.bgg__m { display: flex; align-items: center; gap: .45rem; }
+.bgg__ml { color: var(--ink-mute); white-space: nowrap; }
+.bgg__t {
+  position: relative;
+  width: 4.6rem;
+  height: .5rem;
+  background: color-mix(in srgb, var(--paper) 80%, var(--sheet));
+  border: 1px solid var(--rule-soft);
+}
+.bgg__b { position: absolute; inset-block: 0; left: 0; background: var(--bar-cmp); border-right: 2px solid var(--indigo); }
+.bgg__v { color: var(--ink-mid); white-space: nowrap; font-size: .73rem; }
+
+.bgg__tail { display: flex; align-items: center; gap: .7rem; margin-left: auto; flex-wrap: wrap; }
+.bgg__n, .bgg__d { color: var(--ink-mute); font-size: .66rem; white-space: nowrap; }
+.bgg__a {
+  color: var(--indigo);
+  text-decoration-color: color-mix(in srgb, var(--indigo) 40%, transparent);
+  text-underline-offset: .2em;
+  white-space: nowrap;
+}
+.bgg__a:hover { text-decoration-color: var(--indigo); }
+
+/* 信頼区間のひげ。棒の先がどれだけ揺れるかを示す */
+.srow__err {
+  position: absolute;
+  top: 50%;
+  height: 0;
+  border-top: 1px solid var(--ink);
+  opacity: .5;
+  z-index: 2;
+  pointer-events: none;
+}
+.srow__err::before, .srow__err::after {
+  content: "";
+  position: absolute;
+  top: -3px;
+  height: 7px;
+  border-left: 1px solid var(--ink);
+}
+.srow__err::before { left: 0; }
+.srow__err::after  { right: 0; }
+.srow__ci { margin-left: .3rem; font-size: .62rem; color: var(--ink-mute); }
+
 /* ------------------------------------------------------------ アカウント */
 .invite {
   border: 1px solid var(--rule);
@@ -685,6 +748,8 @@ a { color: inherit; }
   .game__sum, .cell, .me__head, .me__form, .invite { padding-inline: var(--s3); }
   .me__foot { padding-inline: var(--s3); }
   .chip { grid-template-columns: auto 1fr auto; }
+  .bgg__tail { margin-left: 0; }
+  .bgg__t { width: 3.4rem; }
   .chip__n { display: none; }
   .srow, .axis { grid-template-columns: minmax(0, 6.4rem) 1fr 2.6rem; }
   .scale { --lab: 6.4rem; --val: 2.6rem; }
@@ -906,6 +971,7 @@ window.PB.WORKS = [
   /* ---------------------------------------------------------------- 01 */
   {
     id: 'bigshot',
+    bggName: 'Big Shot',
     no: 1,
     title: 'ビッグショット',
     titleEn: 'Big Shot',
@@ -965,6 +1031,7 @@ window.PB.WORKS = [
   /* ---------------------------------------------------------------- 02 */
   {
     id: 'acquire',
+    bggName: 'Acquire',
     no: 2,
     title: 'アクワイア',
     titleEn: 'Acquire',
@@ -1021,6 +1088,7 @@ window.PB.WORKS = [
   /* ---------------------------------------------------------------- 03 */
   {
     id: 'highsociety',
+    bggName: 'High Society',
     no: 3,
     title: 'ハイソサエティ',
     titleEn: 'High Society',
@@ -1081,6 +1149,7 @@ window.PB.WORKS = [
   /* ---------------------------------------------------------------- 04 */
   {
     id: 'imperial',
+    bggName: 'Imperial',
     no: 4,
     title: 'インペリアル',
     titleEn: 'Imperial',
@@ -1118,15 +1187,15 @@ window.PB.WORKS = [
     plate: {
       caption: '実測勝率',
       captionEn: 'Measured win rate',
-      note: '4人戦・席順ローテーション・各400局',
-      noteEn: '4 players, seats rotated, 400 games each',
+      note: '4人戦・席順ローテーション・各400局（括弧内は95%信頼区間）',
+      noteEn: '4 players, seats rotated, 400 games each (95% CI)',
       baseline: 0.25,
       rows: [
-        { label: 'AI 1人 対 素人筋 3人',   labelEn: 'AI vs 3 naive',        v: 0.780, lead: true },
-        { label: 'AI 1人 対 乱択 3人',     labelEn: 'AI vs 3 random',       v: 0.988 },
-        { label: '素人筋 1人 対 AI 3人',   labelEn: 'Naive vs 3 AI',        v: 0.120 },
-        { label: '乱択 1人 対 AI 3人',     labelEn: 'Random vs 3 AI',       v: 0.003 },
-        { label: '［参考］素人筋 対 乱択 3人', labelEn: '[ref] Naive vs 3 random', v: 0.815 }
+        { label: 'AI 1人 対 素人筋 3人',   labelEn: 'AI vs 3 naive',        v: 0.780, ci: 0.041, lead: true },
+        { label: 'AI 1人 対 乱択 3人',     labelEn: 'AI vs 3 random',       v: 0.988, ci: 0.011 },
+        { label: '素人筋 1人 対 AI 3人',   labelEn: 'Naive vs 3 AI',        v: 0.120, ci: 0.032 },
+        { label: '乱択 1人 対 AI 3人',     labelEn: 'Random vs 3 AI',       v: 0.003, ci: 0.005 },
+        { label: '［参考］素人筋 対 乱択3人', labelEn: '[ref] Naive vs 3 random', v: 0.815, ci: 0.038 }
       ]
     },
 
@@ -1240,6 +1309,21 @@ window.PB.PRINCIPLES = [
       'played worse" is exactly the kind of result that decides what to try next.'
   }
 ];
+</script>
+<script>
+/* boardgamegeek.com から取得。tools/fetch-bgg.mjs が書き換えるので手で編集しない。
+   こちらの実測ではなく他人が付けた数字なので、取得日と評価人数を必ず添えて表示する。
+
+   まだ一度も取得していない。GitHub Actions の "Refresh BGG data" が走ると
+   ここが実データで置き換わる。games が空のあいだ、画面には何も出ない。 */
+'use strict';
+
+window.PB = window.PB || {};
+window.PB.BGG = {
+  "fetchedAt": null,
+  "source": "boardgamegeek.com",
+  "games": {}
+};
 </script>
 <script>
 /* ==========================================================================
@@ -1854,6 +1938,52 @@ window.PB = window.PB || {};
 
   var FIGS = { blocks: figBlocks, grid: figGrid, cards: figCards, rondel: figRondel };
 
+  /* ------------------------------------------------------------ BGG */
+  /* 他人が付けた数字。こちらの実測とは別物なので、色も置き場所も分ける。
+     data/bgg.js が無い、あるいはその作品の項が無ければ、黙って何も出さない。 */
+  function bggRow(w) {
+    var all = PB.BGG;
+    if (!all || !all.games) return null;
+    var g = all.games[w.id];
+    if (!g || (g.weight == null && g.rating == null)) return null;
+
+    var box = el('div', 'bgg');
+    box.appendChild(el('span', 'bgg__k', 'BGG'));
+
+    function meter(label, v, max) {
+      if (v == null) return;
+      var unit = el('div', 'bgg__m');
+      unit.appendChild(el('span', 'bgg__ml', label));
+      var track = el('div', 'bgg__t');
+      var bar = el('div', 'bgg__b');
+      bar.style.width = (v / max * 100) + '%';
+      track.appendChild(bar);
+      unit.appendChild(track);
+      unit.appendChild(el('span', 'bgg__v num', v.toFixed(2) + ' / ' + max));
+      box.appendChild(unit);
+    }
+    meter(lang === 'en' ? 'Weight' : '重さ', g.weight, 5);
+    meter(lang === 'en' ? 'Rating' : '評価', g.rating, 10);
+
+    var tail = el('div', 'bgg__tail');
+    if (g.ratings) {
+      tail.appendChild(el('span', 'bgg__n num',
+        g.ratings.toLocaleString(lang === 'en' ? 'en' : 'ja') +
+        (lang === 'en' ? ' ratings' : '人が評価')));
+    }
+    var a = el('a', 'bgg__a', (lang === 'en' ? 'on BGG' : 'BGG で見る') + ' \u2197');
+    a.href = 'https://boardgamegeek.com/boardgame/' + g.id;
+    a.rel = 'noopener';
+    a.target = '_blank';
+    tail.appendChild(a);
+    if (all.fetchedAt) {
+      tail.appendChild(el('span', 'bgg__d num',
+        (lang === 'en' ? 'as of ' : '') + all.fetchedAt + (lang === 'en' ? '' : ' 時点')));
+    }
+    box.appendChild(tail);
+    return box;
+  }
+
   /* アバター。ハンドル名から決まる、左右対称の升目模様 */
   function identicon(handle, size) {
     var h = 2166136261;
@@ -1896,8 +2026,22 @@ window.PB = window.PB || {};
       var bar = el('div', 'srow__bar');
       bar.style.setProperty('--v', r.v);
       track.appendChild(bar);
+
+      /* 信頼区間があれば棒の先にひげを立てる。
+         その棒がどれだけ揺れうるかは、値そのものと同じだけ意味がある。 */
+      if (r.ci) {
+        var lo = Math.max(0, r.v - r.ci), hi = Math.min(1, r.v + r.ci);
+        var err = el('div', 'srow__err');
+        err.style.left = lo * 100 + '%';
+        err.style.width = (hi - lo) * 100 + '%';
+        err.title = fmt(r.v) + ' \u00b1' + fmt(r.ci);
+        track.appendChild(err);
+      }
       row.appendChild(track);
-      row.appendChild(el('div', 'srow__v', fmt(r.v)));
+
+      var val = el('div', 'srow__v', fmt(r.v));
+      if (r.ci) val.appendChild(el('span', 'srow__ci', '\u00b1' + fmt(r.ci)));
+      row.appendChild(val);
       scale.appendChild(row);
     });
 
@@ -1968,6 +2112,8 @@ window.PB = window.PB || {};
     head.appendChild(meta);
 
     head.appendChild(el('p', 'game__hook', pick(w, 'hook')));
+    var bgg = bggRow(w);
+    if (bgg) head.appendChild(bgg);
     head.appendChild(strengthChip(w));
 
     var acts = el('div', 'game__acts');

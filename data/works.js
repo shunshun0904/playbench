@@ -14,6 +14,7 @@ window.PB.WORKS = [
   /* ---------------------------------------------------------------- 01 */
   {
     id: 'bigshot',
+    bggName: 'Big Shot',
     no: 1,
     title: 'ビッグショット',
     titleEn: 'Big Shot',
@@ -73,6 +74,7 @@ window.PB.WORKS = [
   /* ---------------------------------------------------------------- 02 */
   {
     id: 'acquire',
+    bggName: 'Acquire',
     no: 2,
     title: 'アクワイア',
     titleEn: 'Acquire',
@@ -129,6 +131,7 @@ window.PB.WORKS = [
   /* ---------------------------------------------------------------- 03 */
   {
     id: 'highsociety',
+    bggName: 'High Society',
     no: 3,
     title: 'ハイソサエティ',
     titleEn: 'High Society',
@@ -189,6 +192,7 @@ window.PB.WORKS = [
   /* ---------------------------------------------------------------- 04 */
   {
     id: 'imperial',
+    bggName: 'Imperial',
     no: 4,
     title: 'インペリアル',
     titleEn: 'Imperial',
@@ -226,15 +230,15 @@ window.PB.WORKS = [
     plate: {
       caption: '実測勝率',
       captionEn: 'Measured win rate',
-      note: '4人戦・席順ローテーション・各400局',
-      noteEn: '4 players, seats rotated, 400 games each',
+      note: '4人戦・席順ローテーション・各400局（括弧内は95%信頼区間）',
+      noteEn: '4 players, seats rotated, 400 games each (95% CI)',
       baseline: 0.25,
       rows: [
-        { label: 'AI 1人 対 素人筋 3人',   labelEn: 'AI vs 3 naive',        v: 0.780, lead: true },
-        { label: 'AI 1人 対 乱択 3人',     labelEn: 'AI vs 3 random',       v: 0.988 },
-        { label: '素人筋 1人 対 AI 3人',   labelEn: 'Naive vs 3 AI',        v: 0.120 },
-        { label: '乱択 1人 対 AI 3人',     labelEn: 'Random vs 3 AI',       v: 0.003 },
-        { label: '［参考］素人筋 対 乱択 3人', labelEn: '[ref] Naive vs 3 random', v: 0.815 }
+        { label: 'AI 1人 対 素人筋 3人',   labelEn: 'AI vs 3 naive',        v: 0.780, ci: 0.041, lead: true },
+        { label: 'AI 1人 対 乱択 3人',     labelEn: 'AI vs 3 random',       v: 0.988, ci: 0.011 },
+        { label: '素人筋 1人 対 AI 3人',   labelEn: 'Naive vs 3 AI',        v: 0.120, ci: 0.032 },
+        { label: '乱択 1人 対 AI 3人',     labelEn: 'Random vs 3 AI',       v: 0.003, ci: 0.005 },
+        { label: '［参考］素人筋 対 乱択3人', labelEn: '[ref] Naive vs 3 random', v: 0.815, ci: 0.038 }
       ]
     },
 

@@ -181,6 +181,52 @@
 
   var FIGS = { blocks: figBlocks, grid: figGrid, cards: figCards, rondel: figRondel };
 
+  /* ------------------------------------------------------------ BGG */
+  /* 他人が付けた数字。こちらの実測とは別物なので、色も置き場所も分ける。
+     data/bgg.js が無い、あるいはその作品の項が無ければ、黙って何も出さない。 */
+  function bggRow(w) {
+    var all = PB.BGG;
+    if (!all || !all.games) return null;
+    var g = all.games[w.id];
+    if (!g || (g.weight == null && g.rating == null)) return null;
+
+    var box = el('div', 'bgg');
+    box.appendChild(el('span', 'bgg__k', 'BGG'));
+
+    function meter(label, v, max) {
+      if (v == null) return;
+      var unit = el('div', 'bgg__m');
+      unit.appendChild(el('span', 'bgg__ml', label));
+      var track = el('div', 'bgg__t');
+      var bar = el('div', 'bgg__b');
+      bar.style.width = (v / max * 100) + '%';
+      track.appendChild(bar);
+      unit.appendChild(track);
+      unit.appendChild(el('span', 'bgg__v num', v.toFixed(2) + ' / ' + max));
+      box.appendChild(unit);
+    }
+    meter(lang === 'en' ? 'Weight' : '重さ', g.weight, 5);
+    meter(lang === 'en' ? 'Rating' : '評価', g.rating, 10);
+
+    var tail = el('div', 'bgg__tail');
+    if (g.ratings) {
+      tail.appendChild(el('span', 'bgg__n num',
+        g.ratings.toLocaleString(lang === 'en' ? 'en' : 'ja') +
+        (lang === 'en' ? ' ratings' : '人が評価')));
+    }
+    var a = el('a', 'bgg__a', (lang === 'en' ? 'on BGG' : 'BGG で見る') + ' \u2197');
+    a.href = 'https://boardgamegeek.com/boardgame/' + g.id;
+    a.rel = 'noopener';
+    a.target = '_blank';
+    tail.appendChild(a);
+    if (all.fetchedAt) {
+      tail.appendChild(el('span', 'bgg__d num',
+        (lang === 'en' ? 'as of ' : '') + all.fetchedAt + (lang === 'en' ? '' : ' 時点')));
+    }
+    box.appendChild(tail);
+    return box;
+  }
+
   /* アバター。ハンドル名から決まる、左右対称の升目模様 */
   function identicon(handle, size) {
     var h = 2166136261;
@@ -223,8 +269,22 @@
       var bar = el('div', 'srow__bar');
       bar.style.setProperty('--v', r.v);
       track.appendChild(bar);
+
+      /* 信頼区間があれば棒の先にひげを立てる。
+         その棒がどれだけ揺れうるかは、値そのものと同じだけ意味がある。 */
+      if (r.ci) {
+        var lo = Math.max(0, r.v - r.ci), hi = Math.min(1, r.v + r.ci);
+        var err = el('div', 'srow__err');
+        err.style.left = lo * 100 + '%';
+        err.style.width = (hi - lo) * 100 + '%';
+        err.title = fmt(r.v) + ' \u00b1' + fmt(r.ci);
+        track.appendChild(err);
+      }
       row.appendChild(track);
-      row.appendChild(el('div', 'srow__v', fmt(r.v)));
+
+      var val = el('div', 'srow__v', fmt(r.v));
+      if (r.ci) val.appendChild(el('span', 'srow__ci', '\u00b1' + fmt(r.ci)));
+      row.appendChild(val);
       scale.appendChild(row);
     });
 
@@ -295,6 +355,8 @@
     head.appendChild(meta);
 
     head.appendChild(el('p', 'game__hook', pick(w, 'hook')));
+    var bgg = bggRow(w);
+    if (bgg) head.appendChild(bgg);
     head.appendChild(strengthChip(w));
 
     var acts = el('div', 'game__acts');
