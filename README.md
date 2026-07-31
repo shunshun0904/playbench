@@ -156,11 +156,12 @@ Supabase 版は**模擬サーバを立てて**検査します（`test/shots.js` 
 | 01 | [ビッグショット](https://shunshun0904.github.io/bigshot/) | 所有権の確率を厳密に数え上げ | 対 素人筋3人 **.855** |
 | 02 | [アクワイア](https://shunshun0904.github.io/aquire/) | 期待ドルへの換算（ルールベース） | 4人戦 **.500** |
 | 03 | [ハイソサエティ](https://shunshun0904.github.io/highsociety/) | 自己対戦PPO＋先読み | 対 既存CPU3人 **.621** |
+| 04 | [インペリアル](https://shunshun0904.github.io/imperial/) | ロンデルを巡回の設計として採点 | 対 素人筋3人 **.780** |
 
 ## 権利について
 
 Big Shot はアレックス・ランドルフ、Acquire はシド・サクソン、
-High Society はライナー・クニツィアによるゲームです。
+High Society はライナー・クニツィア、Imperial はマック・ゲルツによるゲームです。
 本サイトの実装はいずれも学習目的の非公式なファンメイドで、商標もアートワークも含みません。
 
 個人による非商用のサイトです。何も販売せず、何も追跡せず、広告も出しません。

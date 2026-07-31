@@ -184,6 +184,72 @@ window.PB.WORKS = [
     play: 'https://shunshun0904.github.io/highsociety/',
     repo: 'https://github.com/shunshun0904/highsociety',
     figure: 'cards'
+  },
+
+  /* ---------------------------------------------------------------- 04 */
+  {
+    id: 'imperial',
+    no: 4,
+    title: 'インペリアル',
+    titleEn: 'Imperial',
+    latin: 'IMPERIAL',
+    designer: 'マック・ゲルツ',
+    designerEn: 'Mac Gerdts',
+    players: '2〜6人',
+    playersEn: '2–6 players',
+    genre: 'ロンデル・債券・エリア支配',
+    genreEn: 'Rondel / Bonds / Area control',
+    hook: '国を持つのではない。国に一番出資している者が、その国を動かす。出資を抜かれた瞬間、軍も国庫も相手のものになる。',
+    hookEn: 'You do not own a country — whoever has lent it the most money commands it. Get outbid, and its armies and treasury change hands mid-game.',
+    opponents: 'CPU 1〜5人（ルールベース）',
+    opponentsEn: '1–5 CPU (rule-based)',
+    lead: '六帝国の債券を引き受け、その国の政府として盤上を動かす。2006年版・日本語版ルールに準拠。',
+    leadEn: 'Underwrite the bonds of six empires and command whichever one you have funded most. Follows the 2006 edition.',
+
+    /* 相手の作り */
+    method: '巡回の設計として解く',
+    methodEn: 'Solved as a scheduling problem',
+    methodBody:
+      '学習も探索木も使っていない。このゲームの行動選択はロンデル（8マスの輪）で行われ、' +
+      '同じマスに留まれず、時計回りにしか進めず、4マス目以降は1マスにつき2かかる。' +
+      'つまり「何をするか」ではなく「どの順で回るか」を決める問題になっている。' +
+      'そこで各マスについて、いま止まった場合の効果（徴税なら上がる国力、生産なら妨害されていない工場の数）を' +
+      '見積もり、そこから移動料を引いた値で比べている。投資は「利息 × 国力係数」に、' +
+      'その国の筆頭出資者を奪えるなら加点する。',
+    methodBodyEn:
+      'No learning and no search tree. Actions are chosen on a rondel of eight spaces: you may not stay put, ' +
+      'you may only advance clockwise, and every space past the third costs 2. The decision is therefore not ' +
+      'what to do but in what order to come back round. Each space is scored by its immediate payoff — the ' +
+      'power gained if taxing, the number of unblocked factories if producing — minus the cost of reaching it. ' +
+      'Investments are priced as interest × the power multiplier, plus a bonus for seizing control of a nation.',
+
+    plate: {
+      caption: '実測勝率',
+      captionEn: 'Measured win rate',
+      note: '4人戦・席順ローテーション・各400局',
+      noteEn: '4 players, seats rotated, 400 games each',
+      baseline: 0.25,
+      rows: [
+        { label: 'AI 1人 対 素人筋 3人',   labelEn: 'AI vs 3 naive',        v: 0.780, lead: true },
+        { label: 'AI 1人 対 乱択 3人',     labelEn: 'AI vs 3 random',       v: 0.988 },
+        { label: '素人筋 1人 対 AI 3人',   labelEn: 'Naive vs 3 AI',        v: 0.120 },
+        { label: '乱択 1人 対 AI 3人',     labelEn: 'Random vs 3 AI',       v: 0.003 },
+        { label: '［参考］素人筋 対 乱択 3人', labelEn: '[ref] Naive vs 3 random', v: 0.815 }
+      ]
+    },
+
+    remark:
+      '席順の有利不利を疑って、AI 4人だけでも400局回した。席別の勝率は .233/.217/.300/.250 で、' +
+      '偏りは信頼区間の内側に収まっている。なお本作は盤面に持ち込みの画像を1枚使っており、' +
+      '他の3作の「画像を読み込まない」という作法からは外れている。',
+    remarkEn:
+      'Suspecting a seat advantage, 400 games were also run with four copies of the AI: .233/.217/.300/.250 by ' +
+      'seat, within the confidence interval. Note that this one loads a single supplied board image, and so ' +
+      'departs from the no-images rule the other three keep.',
+
+    play: 'https://shunshun0904.github.io/imperial/',
+    repo: 'https://github.com/shunshun0904/imperial',
+    figure: 'rondel'
   }
 ];
 
@@ -237,27 +303,29 @@ window.PB.ROADMAP = [
   }
 ];
 
-/* 設計の作法。3作すべてに共通して実際に守られていること。 */
+/* 設計の作法。収録作で実際に守られていること（例外はその場に書く）。 */
 window.PB.PRINCIPLES = [
   {
     title: '外部依存を持たない',
     titleEn: 'No dependencies',
     body:
-      '3作ともライブラリもフォントも画像も読み込まない。盤面も駒もすべて手書きの SVG と CSS。' +
-      'index.html を開けば動く。',
+      'どれもライブラリもフォントも読み込まない。盤面も駒も手書きの SVG と CSS で、' +
+      '最初の3作は index.html を開くだけで動く。' +
+      '例外はインペリアルで、持ち込みの盤面画像を1枚使い、ES モジュールのため配信が要る。',
     bodyEn:
-      'None of the three loads a library, a font, or an image. Boards and pieces are hand-written SVG and CSS. ' +
-      'Open index.html and it runs.'
+      'None of them loads a library or a font. Boards and pieces are hand-written SVG and CSS, and the first ' +
+      'three run by opening index.html. Imperial is the exception: it uses one supplied board image and, being ' +
+      'ES modules, needs to be served.'
   },
   {
     title: '遊ぶコードと測るコードを分けない',
     titleEn: 'One copy of the rules',
     body:
-      '検査も学習も、index.html のロジック区画をそのまま切り出して Node で実行する。' +
+      '検査も学習も、遊ぶときと同じロジックをそのまま Node で実行する。' +
       'ブラウザで動く相手と、机上で測った相手がずれない。',
     bodyEn:
-      'Tests and training run the very same logic sections lifted out of index.html. The opponent measured on ' +
-      'the bench and the opponent in your browser cannot drift apart.'
+      'Tests and training run the very same logic that runs when you play. The opponent measured on the bench ' +
+      'and the opponent in your browser cannot drift apart.'
   },
   {
     title: '互角の線を必ず添える',
