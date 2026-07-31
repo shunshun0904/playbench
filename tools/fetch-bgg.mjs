@@ -19,26 +19,70 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
-const API = 'https://boardgamegeek.com/xmlapi2';
-const UA = 'playbench/1.0 (+https://github.com/shunshun0904/playbench)';
+/* BGG はデータセンターからの要求を弾くことがある（GitHub Actions のランナーは
+   まさにそれ）。宛先も名乗りも複数用意して、通る組み合わせを探す。
+   どれも通らなければ、手元で実行してもらうほうが早い。 */
+const HOSTS = [
+  'https://api.geekdo.com/xmlapi2',
+  'https://boardgamegeek.com/xmlapi2',
+  'https://www.boardgamegeek.com/xmlapi2'
+];
+const UAS = [
+  'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+  'playbench/1.0 (+https://github.com/shunshun0904/playbench)'
+];
+let API = null, UA = UAS[0];   // 一度通った組み合わせを使い回す
 
 /* ---------------------------------------------------------------- 小物 */
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
+async function hit(base, ua, pathq) {
+  return fetch(base + pathq, {
+    headers: {
+      'User-Agent': ua,
+      'Accept': 'application/xml,text/xml,*/*',
+      'Accept-Language': 'en-US,en;q=0.9'
+    }
+  });
+}
+
+/* 最初の1回だけ、通る宛先と名乗りの組み合わせを探す */
+async function probe(pathq) {
+  for (const base of HOSTS) {
+    for (const ua of UAS) {
+      try {
+        const res = await hit(base, ua, pathq);
+        console.log(`   試行 ${res.status} ${base} / ${ua.slice(0, 24)}…`);
+        if (res.ok || res.status === 202) { API = base; UA = ua; return res; }
+      } catch (e) {
+        console.log(`   試行 失敗 ${base} ── ${e.message}`);
+      }
+      await sleep(600);
+    }
+  }
+  return null;
+}
+
 /* BGG は温まっていないと 202 を返して「あとで来い」と言う。素直に待つ。 */
-async function get(url, tries = 6) {
+async function get(pathq, tries = 6) {
   for (let i = 0; i < tries; i++) {
-    const res = await fetch(url, { headers: { 'User-Agent': UA, 'Accept': 'application/xml' } });
+    let res;
+    if (!API) {
+      res = await probe(pathq);
+      if (!res) throw new Error('どの宛先・名乗りでも BGG に届かない（データセンターからの遮断と思われる）');
+    } else {
+      res = await hit(API, UA, pathq);
+    }
     if (res.status === 202 || res.status === 429) {
       const wait = 2000 * (i + 1);
       console.log(`   ${res.status} ── ${wait / 1000}秒待って再試行`);
       await sleep(wait);
       continue;
     }
-    if (!res.ok) throw new Error(`${res.status} ${res.statusText} — ${url}`);
+    if (!res.ok) throw new Error(`${res.status} ${res.statusText} — ${(API || '') + pathq}`);
     return res.text();
   }
-  throw new Error('BGG が応答しない: ' + url);
+  throw new Error('BGG が応答しない: ' + pathq);
 }
 
 /* 必要な項目は数えるほどしかなく、XML の形も安定している。
@@ -55,7 +99,7 @@ const num = (xml, tag) => {
 
 /* ------------------------------------------------------------ 名前で引く */
 async function resolveId(name) {
-  const xml = await get(`${API}/search?type=boardgame&exact=1&query=${encodeURIComponent(name)}`);
+  const xml = await get(`/search?type=boardgame&exact=1&query=${encodeURIComponent(name)}`);
   const ids = [...xml.matchAll(/<item[^>]*\bid="(\d+)"/g)].map(m => m[1]);
   if (!ids.length) throw new Error(`BGG に「${name}」が見つからない`);
   if (ids.length > 1) console.log(`   完全一致が ${ids.length} 件。いちばん若い id を採る`);
@@ -64,7 +108,7 @@ async function resolveId(name) {
 }
 
 async function fetchThing(id) {
-  const xml = await get(`${API}/thing?id=${id}&stats=1`);
+  const xml = await get(`/thing?id=${id}&stats=1`);
   return {
     id,
     name: attr(xml, 'name type="primary"') || attr(xml, 'name'),
