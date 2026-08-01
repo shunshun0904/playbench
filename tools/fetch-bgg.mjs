@@ -27,9 +27,11 @@ const HOSTS = [
   'https://boardgamegeek.com/xmlapi2',
   'https://www.boardgamegeek.com/xmlapi2'
 ];
+/* 名乗りは、申請した名前を先に出す。ブラウザのふりを先に試すのは、
+   利用申請をしておきながら素性を隠すことになって筋が通らない。 */
 const UAS = [
-  'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
-  'playbench/1.0 (+https://github.com/shunshun0904/playbench)'
+  'playbench/1.0 (+https://github.com/shunshun0904/playbench)',
+  'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
 ];
 let API = null, UA = UAS[0];   // 一度通った組み合わせを使い回す
 

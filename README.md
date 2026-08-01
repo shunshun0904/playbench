@@ -202,6 +202,12 @@ npm run bgg:print                        # 書き込まず、中身だけ標準�
 ワークフロー（`.github/workflows/bgg.yml`）は手動実行の口だけ残してあります。
 BGG の方針が変われば、そこから通るようになります。
 
+なお BGG の XML API は <https://boardgamegeek.com/applications> での利用申請を
+求めています。申請用の文面は [`docs/bgg-api-application.md`](docs/bgg-api-application.md)
+に用意してあります（英文＋日本語訳）。**内容は `tools/fetch-bgg.mjs` の実装と
+一致させてあるので、実装を変えたら申請文も直してください。** 申告と実際の
+振る舞いがずれるのがいちばんまずい形です。
+
 **スナップショットは古くなります。** だから画面には必ず取得日を出しています。
 「いつの数字か」が見えないまま置かれた値ほど当てにならないものはありません。
 
