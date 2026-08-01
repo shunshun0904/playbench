@@ -259,6 +259,12 @@ window.PB = window.PB || {};
     if (/Signups not allowed|signup is disabled/i.test(m)) {
       return 'このプロジェクトは新規登録を受け付けない設定です。Authentication → Providers を確かめてください';
     }
+    if (/otp_expired|Email link is invalid or has expired/i.test(m)) {
+      return '確認リンクの有効期限が切れています。もう一度登録するか、ログインをやり直してください';
+    }
+    if (/redirect_to|not allowed for this|invalid_request.*redirect/i.test(m)) {
+      return '戻り先が許可されていません。Supabase の Authentication → URL Configuration で、このサイトのURLを Site URL と Redirect URLs に入れてください';
+    }
 
     if (/Invalid login credentials/i.test(m)) return 'メールアドレスかパスワードが違います';
     if (/Email not confirmed/i.test(m)) return 'メールアドレスの確認がまだ済んでいません。届いた確認メールのリンクを開いてください';
@@ -302,9 +308,57 @@ window.PB = window.PB || {};
       });
   };
 
+  /* 確認メールのリンクから戻ってきたときの受け取り。
+
+     Supabase は確認が済むと #access_token=…&refresh_token=… を付けて
+     戻してくる。これを拾わないと、リンクを踏んでもログインしていない状態で
+     元の画面に戻るだけになる（利用者からは「何も起きなかった」に見える）。
+
+     取ったあとは history.replaceState で URL から消す。認証情報を
+     アドレス欄に残したまま共有されるのを避けるため。 */
+  SupabaseProvider.prototype.adoptFromUrl = function () {
+    var h = String(location.hash || '').replace(/^#/, '');
+    if (!h) return null;
+    var q = new URLSearchParams(h);
+
+    var clean = function () {
+      try {
+        history.replaceState(null, '', location.pathname + location.search);
+      } catch (e) { location.hash = ''; }
+    };
+
+    if (q.get('error') || q.get('error_description')) {
+      var code = q.get('error_code') || '';
+      var desc = q.get('error_description') || q.get('error') || '';
+      clean();
+      return { error: translate(code + ' ' + desc, 400) };
+    }
+
+    var at = q.get('access_token');
+    if (!at) return null;
+    this._setSession({
+      access_token: at,
+      refresh_token: q.get('refresh_token'),
+      expires_in: Number(q.get('expires_in') || 3600),
+      token_type: q.get('token_type') || 'bearer'
+    });
+    clean();
+    return { type: q.get('type') || 'signup' };
+  };
+
   /* 起動時に一度だけ。保存してあるセッションから利用者を取り戻す */
   SupabaseProvider.prototype.start = function () {
     var self = this;
+    var landed = this.adoptFromUrl();
+    if (landed && landed.error) {
+      this._landing = { error: landed.error };
+    } else if (landed) {
+      this._landing = { ok: landed.type };
+      /* URL から来た access_token には利用者 id が無いので、まず本人を引く */
+      return this._call('/auth/v1/user')
+        .then(function (u) { return self._profile(u.id); })
+        .catch(function () { self._setSession(null); self._me = null; return null; });
+    }
     if (!this._sess) return Promise.resolve(null);
     return this._fresh()
       .then(function (s) { return self._profile(s.user ? s.user.id : self._sess.user.id); })
@@ -326,7 +380,11 @@ window.PB = window.PB || {};
       return self._call('/rest/v1/profiles?select=handle&handle=eq.' + encodeURIComponent(handle), { auth: false })
         .then(function (rows) {
           if (rows && rows.length) throw err('handle-taken', 'そのハンドル名はすでに使われています');
-          return self._call('/auth/v1/signup', {
+          /* 戻り先はいま開いているページ。プロジェクトの既定値
+             （作りたてだと http://localhost:3000）に任せない。
+             ただし Supabase 側の Redirect URLs に入っていないと拒否される。 */
+          var back = location.origin + location.pathname;
+          return self._call('/auth/v1/signup?redirect_to=' + encodeURIComponent(back), {
             method: 'POST', auth: false,
             body: {
               email: email, password: o.pass,
@@ -430,6 +488,13 @@ window.PB = window.PB || {};
     onChange: function (fn) {
       listeners.push(fn);
       return function () { listeners = listeners.filter(function (f) { return f !== fn; }); };
+    },
+
+    /* 確認リンクから戻ってきた直後だけ、その結果を1回だけ返す */
+    takeLanding: function () {
+      var l = provider._landing;
+      provider._landing = null;
+      return l || null;
     },
 
     rules: RULES,

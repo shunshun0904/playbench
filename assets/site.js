@@ -828,6 +828,27 @@
     }
   }
 
+  /* 確認リンクから戻ってきたときに、何が起きたのかを画面上部に出す。
+     黙って元の画面に戻すと「何も起きなかった」ようにしか見えない。 */
+  function showLanding(landed) {
+    var host = document.querySelector('main');
+    if (!host) return;
+    var box = el('div', 'landing' + (landed.error ? ' landing--bad' : ''));
+    var msg = landed.error
+      ? landed.error
+      : (lang === 'en'
+          ? 'Email confirmed. You are signed in.'
+          : 'メールアドレスを確認しました。ログインしています。');
+    box.appendChild(el('span', 'landing__t', msg));
+    var x = el('button', 'landing__x', '×');
+    x.type = 'button';
+    x.setAttribute('aria-label', lang === 'en' ? 'Dismiss' : '閉じる');
+    x.addEventListener('click', function () { box.remove(); });
+    box.appendChild(x);
+    host.insertBefore(box, host.firstChild);
+    box.scrollIntoView({ block: 'nearest' });
+  }
+
   /* --------------------------------------------------------------- 起動 */
   function boot() {
     try {
@@ -844,8 +865,12 @@
       buildAccountPanel();
     });
 
-    /* 保存してあるセッションから利用者を取り戻す（Supabase では通信が入る） */
-    PB.auth.start();
+    /* 保存してあるセッションから利用者を取り戻す。
+       確認メールのリンクから戻ってきた場合もここで拾われる。 */
+    PB.auth.start().then(function () {
+      var landed = PB.auth.takeLanding && PB.auth.takeLanding();
+      if (landed) showLanding(landed);
+    });
 
     var lb = document.getElementById('lang');
     if (lb) lb.addEventListener('click', function () { lang = (lang === 'ja' ? 'en' : 'ja'); applyLang(); });

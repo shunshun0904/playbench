@@ -526,6 +526,27 @@ a { color: inherit; }
 .srow__err::after  { right: 0; }
 .srow__ci { margin-left: .3rem; font-size: .62rem; color: var(--ink-mute); }
 
+/* 確認リンクから戻ってきたときの知らせ */
+.landing {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  width: min(100% - 2.5rem, var(--sheet-w));
+  margin: var(--s3) auto 0;
+  padding: .7rem var(--s3);
+  border: 1px solid var(--indigo);
+  border-left-width: 3px;
+  background: color-mix(in srgb, var(--indigo) 8%, var(--sheet));
+  font-size: .88rem;
+}
+.landing--bad { border-color: var(--danger); background: color-mix(in srgb, var(--danger) 8%, var(--sheet)); }
+.landing__t { flex: 1; }
+.landing__x {
+  background: transparent; border: 1px solid var(--rule); color: var(--ink-mute);
+  cursor: pointer; padding: .1rem .45rem; line-height: 1; font-size: .95rem;
+}
+.landing__x:hover { color: var(--ink); border-color: var(--ink-mute); }
+
 /* ------------------------------------------------------------ アカウント */
 .invite {
   border: 1px solid var(--rule);

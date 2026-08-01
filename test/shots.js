@@ -55,6 +55,13 @@ function mockSupabase(req, res, body) {
 
   if (url.pathname === '/auth/v1/logout') return json(204);
 
+  if (url.pathname === '/auth/v1/user') {
+    const tok = String(req.headers.authorization || '').replace('Bearer ', '');
+    const uid = tok.replace('tok_', '');
+    if (!store.profiles[uid]) return json(401, { msg: 'invalid token' });
+    return json(200, { id: uid, email: 'me@example.com' });
+  }
+
   if (url.pathname === '/rest/v1/profiles') {
     const eq = k => {
       const v = url.searchParams.get(k);
@@ -437,6 +444,60 @@ function serve() {
     await page.unroute('**/rest/v1/profiles**');
 
     if (errs.length) fail('例外: ' + errs.slice(0, 3).join(' | '));
+    await ctx.close();
+  }
+
+  /* --------------------- 確認メールのリンクから戻ってきたとき（模擬） */
+  {
+    const ctx = await browser.newContext({ viewport: { width: 1280, height: 1000 } });
+    const page = await ctx.newPage();
+    await page.addInitScript(u => {
+      window.PB = { CONFIG: { supabase: { url: u, anonKey: 'anon-test-key' } } };
+    }, URL.replace(/\/$/, ''));
+
+    console.log('── 確認リンクからの着地（模擬）');
+
+    // まず登録して、模擬サーバ側に利用者を作る
+    await page.goto(URL, { waitUntil: 'load' });
+    await page.click('[data-auth-open="signin"]');
+    await page.click('.tab[data-tab="signup"]');
+    await page.fill('#f-email', 'land@example.com');
+    await page.fill('#f-handle', 'lander');
+    await page.fill('#f-display', '着地 花子');
+    await page.fill('#f-pass', 'correct-horse');
+    await page.click('#auth-submit');
+    await page.waitForTimeout(600);
+    const uid = await page.evaluate(() => PB.auth.user() && PB.auth.user().id);
+    await page.evaluate(() => { PB.auth.signOut(); localStorage.clear(); });
+    await page.goto('about:blank');   // hash だけの遷移は再読み込みされないので、一度離れる
+
+    // ログアウト状態で、Supabase が返すのと同じ形の hash を付けて開く
+    await page.goto(URL + `#access_token=tok_${uid}&refresh_token=ref_${uid}`
+      + '&expires_in=3600&token_type=bearer&type=signup', { waitUntil: 'load' });
+    await page.waitForTimeout(900);
+    const landed = await page.evaluate(() => ({
+      who: document.querySelector('.who__n') && document.querySelector('.who__n').textContent,
+      banner: document.querySelector('.landing__t') && document.querySelector('.landing__t').textContent,
+      hash: location.hash
+    }));
+    console.log('   ', JSON.stringify(landed));
+    if (landed.who !== '着地 花子') fail('確認リンクから戻ってもログインが完了していない');
+    if (!landed.banner || !/確認/.test(landed.banner)) fail('着地の知らせが出ていない');
+    if (landed.hash !== '') fail('URL に認証情報が残っている');
+
+    // 期限切れリンクの場合
+    await page.evaluate(() => { PB.auth.signOut(); localStorage.clear(); });
+    await page.goto('about:blank');
+    await page.goto(URL + '#error=access_denied&error_code=otp_expired'
+      + '&error_description=Email+link+is+invalid+or+has+expired', { waitUntil: 'load' });
+    await page.waitForTimeout(700);
+    const expired = await page.evaluate(() => ({
+      banner: document.querySelector('.landing--bad .landing__t') && document.querySelector('.landing--bad .landing__t').textContent,
+      hash: location.hash
+    }));
+    console.log('   期限切れ →', JSON.stringify(expired));
+    if (!expired.banner || !/有効期限/.test(expired.banner)) fail('期限切れリンクの案内が出ていない');
+    if (expired.hash !== '') fail('URL に誤り情報が残っている');
     await ctx.close();
   }
 
