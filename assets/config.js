@@ -18,6 +18,6 @@ window.PB = window.PB || {};
 window.PB.CONFIG = window.PB.CONFIG || {
   supabase: {
     url: 'https://keevclphgxpqhmszcwyk.supabase.co',      // 例: https://xxxxxxxxxxxx.supabase.co
-    anonKey: ''   // 例: eyJhbGciOi...
+    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtlZXZjbHBoZ3hwcWhtc3pjd3lrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU1NjcwNTMsImV4cCI6MjEwMTE0MzA1M30.fSPOBuv3IMFqWrrB677pFEdmqe0av5rliDeM9DZGVi0'   // 例: eyJhbGciOi...
   }
 };
