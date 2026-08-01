@@ -27,11 +27,12 @@ const HOSTS = [
   'https://boardgamegeek.com/xmlapi2',
   'https://www.boardgamegeek.com/xmlapi2'
 ];
-/* 名乗りは、申請した名前を先に出す。ブラウザのふりを先に試すのは、
-   利用申請をしておきながら素性を隠すことになって筋が通らない。 */
+/* 名乗りはこれ1つだけ。ブラウザのふりをする経路は置かない。
+   利用申請で「素性を明かして使いたい」と書いている以上、
+   コードに逃げ道を残すのは筋が通らない。
+   申請文（docs/bgg-api-application.md）に書いた名乗りと同じものにしておく。 */
 const UAS = [
-  'playbench/1.0 (+https://github.com/shunshun0904/playbench)',
-  'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
+  'playbench/1.0 (+https://github.com/shunshun0904/playbench)'
 ];
 let API = null, UA = UAS[0];   // 一度通った組み合わせを使い回す
 

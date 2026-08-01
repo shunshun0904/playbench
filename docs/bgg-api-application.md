@@ -1,152 +1,208 @@
 # BoardGameGeek XML API 利用申請
 
-<https://boardgamegeek.com/applications> への申請に使う文面です。
+<https://boardgamegeek.com/applications> のフォームに、**項目ごとにそのまま貼れる**形で
+まとめてあります。
 
-**そのまま貼れます。** 項目名がここと違う場合は、近い項目に読み替えてください。
-下に日本語訳を併記してあるので、何を申告しているかを確かめてから出せます。
-
-内容はすべて `tools/fetch-bgg.mjs` の実装と一致させてあります。実装を変えたら
-ここも直してください。**申告と実際の振る舞いがずれるのが、いちばんまずい形です。**
+内容はすべて `tools/fetch-bgg.mjs` の実装と一致させてあります。
+**実装を変えたらここも直してください。** 申告と実際の振る舞いがずれるのが、
+いちばんまずい形です。
 
 ---
 
-## 短く答える項目
+## 短い項目
 
-| 項目 | 記入する内容 |
+| フォームの項目 | 記入内容 |
 | --- | --- |
 | Application name | `PLAYBENCH` |
-| Application URL | `https://shunshun0904.github.io/playbench/` |
-| Source code | `https://github.com/shunshun0904/playbench` |
-| Type | Personal, non-commercial |
-| Platform | Static website (GitHub Pages) + a command-line fetch script (Node.js) |
-| User-Agent | `playbench/1.0 (+https://github.com/shunshun0904/playbench)` |
-| Contact e-mail | （ご自分のアドレス） |
+| Your full legal name | （本名） |
+| Your organization's name, if applicable | 空欄（個人のため） |
+| Your organization's website | `https://shunshun0904.github.io/playbench/` |
+| Your organization's location (City/town) | （お住まいの市区町村を検索して選ぶ） |
+| Contact email | （日常的に見るアドレス） |
+| Is your application available to the public? | **Yes** |
+| Your API client(s), comma separated list | `https://shunshun0904.github.io/playbench/` |
+| Is your endeavor commercial in nature? | **No** |
+
+`Is your application available to the public?` は **Yes** です。
+フォームの注記どおり「コードを公開リポジトリに置いている」時点で public に当たります。
 
 ---
 
-## 本文（英語・そのままコピー）
+## Describe your organization's (or your own) activities as they relate to BoardGameGeek and your use of the XML API.
 
-### What the application is
+> 補足: 3段落目の「BGG をどう使っているか」は、ご自身の実際の使い方に合わせて
+> 直してください。事実と違うことは書かないほうがよいです。
 
-PLAYBENCH is a small personal website that hosts browser implementations of four
-classic board games — Big Shot, Acquire, High Society and Imperial. Each game is
-written from scratch in dependency-free JavaScript, and each ships with a computer
-opponent whose playing strength has been measured over hundreds of games and
-published alongside it.
+```
+I am a board game hobbyist and a software developer, writing as an individual —
+there is no organization behind this.
 
-The site is non-commercial. It carries no advertising, sells nothing, and does not
-track visitors. Every game entry names the designer and states plainly that the
-implementation is an unofficial fan project containing no trademarks and no
-original artwork.
+Over the past months I have been reimplementing board games I love as small,
+self-contained browser versions, and writing computer opponents for them. There are
+four so far: Big Shot, Acquire, High Society and Imperial. Each one is a study
+project. I read the rules carefully, implement them exactly, then build an opponent
+and measure how strong it actually is over hundreds of games instead of guessing.
+Where the rules left something genuinely ambiguous, I say so in writing rather than
+quietly picking an interpretation.
 
-### What data I would like to read
+I use BoardGameGeek as a reader — to check rules questions, to read the threads
+that settle edge cases, and to work out what a game is really like before trying
+it.
 
-For exactly four games, using only the official XML API2:
+I would like to use the XML API for one narrow purpose: to show, on each game's
+page, the community's average rating and average weight, credited to BGG and linked
+back to that game's entry.
+```
 
-- `GET /xmlapi2/search?type=boardgame&exact=1&query=<title>`
-  — to resolve a title to its BGG id, once per game.
-- `GET /xmlapi2/thing?id=<id>&stats=1`
-  — to read six fields: the primary `name`, `yearpublished`, and from
-  `statistics/ratings`: `average`, `bayesaverage`, `usersrated` and `averageweight`.
+---
 
-I do not scrape HTML pages, and I do not read user accounts, collections, forums,
-images, or any personal data.
+## Detailed description of your application(s), and how you will use our API
 
-### How the data is used
+> フォームには「非技術的な説明を入れてください」とあるので、ここでは
+> 技術の話は書きません。数字や仕組みは最後の欄に回します。
 
-The average rating and the average weight are shown on each game's card, so that a
-visitor can see how the wider community rates a game and how complex it is, next to
-my own measured figures for the computer opponent's strength.
+```
+PLAYBENCH is a website where anyone can play four classic board games in their
+browser — free, with no account and no installation. Alongside each game I publish
+how strong its computer opponent is, measured over hundreds of games and shown
+against the line where an evenly matched game would sit.
 
-Every BoardGameGeek figure on the site is:
+What those pages lack is context about the game itself. My own numbers say "this
+opponent wins 78% of the time", but they say nothing about whether the game is a
+light filler or a heavy three-hour negotiation, or whether people who have actually
+played it enjoyed it. That is what I would like to borrow from BoardGameGeek.
 
-- labelled as coming from BoardGameGeek,
-- shown together with the number of ratings it is based on,
-- shown together with the date it was retrieved, and
-- accompanied by a link to that game's page on boardgamegeek.com.
+On each game's card I would show two figures from BGG:
 
-They are also styled differently from my own measurements, so that a reader can
-tell at a glance which numbers are mine and which are yours.
+- the average weight (complexity), on its 1-5 scale
+- the average rating, on its 1-10 scale
 
-### Request volume
+Each is shown with the number of ratings behind it, the date I retrieved it, and a
+link to that game's page on boardgamegeek.com. They are deliberately styled
+differently from my own measurements, so a visitor can tell at a glance which
+numbers are mine and which are BGG's. The intent is that anyone curious about a
+game is sent to BoardGameGeek to learn more, not kept on my site.
 
-Very low, and — importantly — it does not grow with the site's traffic.
+I would not republish descriptions, images, reviews, forum content or user data —
+only those two community averages, with attribution.
+```
 
-- At most **8 requests per refresh** (4 games × 2 endpoints).
-- Refreshed **manually, at most once a week**.
-- At least **1.5 seconds between requests**; `202` and `429` responses are
-  respected with increasing back-off.
+---
 
-The results are written into the repository as a static snapshot and served from
-GitHub Pages. **Visitors' browsers never contact BoardGameGeek.** However many
-people visit the site, the number of requests reaching your servers stays the same.
+## Please add any other information you think would be useful for us in evaluating your request for XML API access.
 
-### Why I am applying
+```
+The main thing worth knowing is how little I would be asking of your servers.
 
-Requests from data-centre addresses are refused with `401`. I confirmed this
-against `api.geekdo.com`, `boardgamegeek.com` and `www.boardgamegeek.com`. I would
-rather register the application and identify it honestly than work around the
-block, so I am asking for access on the terms above. If the volume or the fields
-listed here are not acceptable, I am happy to reduce them.
+- Two endpoints only: /xmlapi2/search (to resolve a title to an id, once per game)
+  and /xmlapi2/thing?id=<id>&stats=1 (to read the figures).
+- Six fields read: name, yearpublished, average, bayesaverage, usersrated,
+  averageweight.
+- At most 8 requests per refresh — four games, two calls each.
+- Refreshed manually, at most once a week.
+- At least 1.5 seconds between requests, and 202 / 429 responses are honoured with
+  increasing back-off.
+
+Crucially, this does not scale with my traffic. The results are written into my
+repository as a static snapshot and served from GitHub Pages, so visitors' browsers
+never contact BoardGameGeek at all. However popular the site becomes, the number of
+requests reaching your servers stays exactly the same.
+
+I do not scrape HTML pages.
+
+Everything is open source, so all of the above can be verified:
+https://github.com/shunshun0904/playbench
+
+The fetching code is a single file, tools/fetch-bgg.mjs. The description I have
+given here is kept next to it in docs/bgg-api-application.md, specifically so the
+two cannot drift apart. Requests are sent with one User-Agent and no other:
+
+  playbench/1.0 (+https://github.com/shunshun0904/playbench)
+
+One note on why I am applying rather than simply calling the API: requests from
+data-centre addresses are refused with 401 — I confirmed this against
+api.geekdo.com, boardgamegeek.com and www.boardgamegeek.com. I would rather
+register and identify myself honestly than route around that, so the code contains
+no browser-impersonating fallback.
+
+If the volume or the fields above are more than you are comfortable granting, I am
+glad to reduce them. The site works without this data; it is simply less useful to
+the reader.
+```
 
 ---
 
 ## 日本語訳（提出はしません。内容確認用）
 
-### これは何か
+### 活動について
 
-PLAYBENCH は、4つの古典的ボードゲーム（ビッグショット／アクワイア／ハイソサエティ／
-インペリアル）をブラウザで遊べるようにした個人サイトです。どれも外部依存のない
-JavaScript で一から実装しており、相手のCPUの強さを数百局にわたって実測し、
-その数字も一緒に公開しています。
+ボードゲーム愛好家であり、ソフトウェアを書く個人です。背後に組織はありません。
 
-非商用です。広告を出さず、何も販売せず、閲覧者を追跡しません。各作品には作者名を
-明記し、商標もアートワークも含まない非公式のファン実装であることを断っています。
+ここ数か月、好きなボードゲームを外部依存のないブラウザ版として作り直し、
+相手のCPUを書いてきました。いまのところ4作（ビッグショット／アクワイア／
+ハイソサエティ／インペリアル）。どれも勉強のための実装です。ルールを丁寧に読み、
+その通りに実装し、相手を作って、**当て推量ではなく数百局の実測で強さを測ります**。
+ルールが本当に曖昧だった箇所は、黙って解釈を決めるのではなく、そう書き残しています。
 
-### 何を読みたいか
+BGG は読み手として日常的に使っています ── ルールの疑問を確かめ、細かい裁定が
+決着している議論を読み、そのゲームが実際どんなものかを知るために。
 
-4作品ぶんだけ、公式の XML API2 のみを使います。
+XML API は1点だけに使いたいです。各ゲームのページに、コミュニティの平均評価と
+平均の重さを、BGG の出典を明記し、当該ページへリンクした上で表示すること。
 
-- `search`（完全一致）── 題名から BGG の id を引く。1作につき1回
-- `thing?stats=1` ── 6項目だけ読む：正式名、発行年、平均評価、ベイズ平均、
-  評価人数、平均の重さ
+### 使い方
 
-HTMLのスクレイピングはしません。利用者アカウント・コレクション・フォーラム・画像・
-個人情報のたぐいは一切読みません。
+PLAYBENCH は、4つの古典的ボードゲームをブラウザで遊べるサイトです。無料、
+アカウント不要、インストール不要。各ゲームには、相手CPUの強さを数百局の実測で示し、
+互角ならどこに来るかの線と一緒に載せています。
 
-### どう使うか
+**それらのページに欠けているのは、ゲームそのものの手触りです。** こちらの数字は
+「この相手は78%勝つ」とは言えても、そのゲームが軽い20分のつまみなのか、重い3時間の
+交渉ゲームなのか、実際に遊んだ人が楽しんだのかは何も語りません。そこを BGG から
+お借りしたい。
 
-平均評価と重さを各ゲームのカードに出します。こちらが実測したCPUの強さの隣に置いて、
-「広く遊ばれている評価」と「この相手の強さ」を並べて見られるようにするためです。
+各カードに BGG から2つの数値を出します ── 重さ（1〜5）と評価（1〜10）。それぞれに
+評価人数・取得日・該当ページへのリンクを添えます。こちらの実測とは見た目も分けて、
+どちらの数字かが一目で分かるようにします。**狙いは、興味を持った人を BGG へ送ること**
+であって、自分のサイトに留めることではありません。
 
-BGG 由来の数値には必ず、出典が BGG であること・評価人数・取得日・該当ページへの
-リンクを添えます。こちらの実測とは見た目も分けて、どちらの数字かが一目で分かるように
-しています。
+説明文・画像・レビュー・フォーラムの内容・利用者データは一切再掲しません。
+この2つの平均値だけです。
 
-### どれくらい叩くか
+### その他
 
-非常に少なく、しかも**サイトの人気とは無関係**です。
+いちばん知っていただきたいのは、**負荷がどれだけ小さいか**です。
 
+- 使う口は2つだけ（search と thing?stats=1）
+- 読む項目は6つだけ
 - 1回の更新につき最大8要求（4作 × 2口）
-- 更新は手動で、多くても週1回
-- 要求間隔は1.5秒以上。202・429 は待ち時間を増やしながら従う
+- 更新は手動、多くても週1回
+- 要求間隔1.5秒以上。202・429 には待ち時間を増やして従う
 
-取得結果はリポジトリに静的なスナップショットとして置き、GitHub Pages から配信します。
-**閲覧者のブラウザは BGG に一切接続しません。** 何人が訪れても、BGG に届く要求の数は
-変わりません。
+**そして、これはサイトの人気とは無関係です。** 結果はリポジトリに静的なスナップ
+ショットとして置き、GitHub Pages から配信するので、閲覧者のブラウザは BGG に一切
+接続しません。何人が訪れても、BGG に届く要求の数は変わりません。
 
-### なぜ申請するか
+HTMLのスクレイピングはしません。すべて公開なので検証できます。
 
-データセンターからの要求は 401 で拒否されます（3つの宛先で確認済み）。回避策を探すより、
-申請して素性を明らかにして使いたいので、上記の条件でお願いしています。分量や項目が
-受け入れられない場合は、減らします。
+データセンターからの要求が 401 で拒否されることは3つの宛先で確認しました。回避策を
+探すより素性を明らかにして使いたいので、**コードにブラウザのふりをする経路は置いて
+いません**。
+
+分量や項目が受け入れられない場合は減らします。このデータが無くてもサイトは動きます。
+読み手にとって少し不便になるだけです。
 
 ---
 
 ## 通ったあとにやること
 
-BGG から鍵や識別子が発行された場合は、`tools/fetch-bgg.mjs` の要求に足してください。
+鍵や識別子が発行されたら `tools/fetch-bgg.mjs` の要求に足してください。
 いまは名乗り（User-Agent）だけで識別しています。
 
-`data/bgg.js` が実データで埋まれば、各カードに重さと評価が出ます。空のあいだは
-その行が出ないだけで、画面は壊れません。
+```sh
+npm run bgg                              # 取得して data/bgg.js を書き換える
+git add data/bgg.js && git commit && git push
+```
+
+`data/bgg.js` が埋まれば各カードに重さと評価が出ます。空のあいだはその行が
+出ないだけで、画面は壊れません。
