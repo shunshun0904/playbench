@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Search Console の「サイトマップ」に sitemap.xml と入れて送信する。
+     ここに載せられるのは /playbench/ 配下だけ。ゲーム本体（/bigshot/ など）は
+     別のパスなので、この場所からは申告できない。ドメイン全体をまとめたいなら
+     shunshun0904.github.io リポジトリを作り、そのルートに置く。 -->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://shunshun0904.github.io/playbench/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+</urlset>
