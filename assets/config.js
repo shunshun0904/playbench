@@ -17,7 +17,7 @@ window.PB = window.PB || {};
 /* すでに入っていれば、そちらを優先する（検査で差し込むため） */
 window.PB.CONFIG = window.PB.CONFIG || {
   supabase: {
-    url: '',      // 例: https://xxxxxxxxxxxx.supabase.co
+    url: 'https://keevclphgxpqhmszcwyk.supabase.co',      // 例: https://xxxxxxxxxxxx.supabase.co
     anonKey: ''   // 例: eyJhbGciOi...
   }
 };
