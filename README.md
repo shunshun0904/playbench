@@ -159,6 +159,7 @@ Supabase 版は**模擬サーバを立てて**検査します（`test/shots.js` 
 | 02 | [アクワイア](https://shunshun0904.github.io/aquire/) | 期待ドルへの換算（ルールベース） | 4人戦 **.500** |
 | 03 | [ハイソサエティ](https://shunshun0904.github.io/highsociety/) | 自己対戦PPO＋先読み | 対 既存CPU3人 **.621** |
 | 04 | [インペリアル](https://shunshun0904.github.io/imperial/) | ロンデルを巡回の設計として採点 | 対 素人筋3人 **.780** |
+| 05 | [ミッション・レッドプラネット](https://shunshun0904.github.io/redplanet/) | エリアの取り分の差分で採点 | 対 素人筋3人 **.823** |
 
 ## BGG の数字について
 
@@ -230,7 +231,8 @@ JSON ではなく JS で書き出すのは、`fetch` を使わずに読めるよ
 ## 権利について
 
 Big Shot はアレックス・ランドルフ、Acquire はシド・サクソン、
-High Society はライナー・クニツィア、Imperial はマック・ゲルツによるゲームです。
+High Society はライナー・クニツィア、Imperial はマック・ゲルツ、
+Mission: Red Planet はブルーノ・フェドゥッティとブルーノ・カタラによるゲームです。
 本サイトの実装はいずれも学習目的の非公式なファンメイドで、商標もアートワークも含みません。
 
 個人による非商用のサイトです。何も販売せず、何も追跡せず、広告も出しません。

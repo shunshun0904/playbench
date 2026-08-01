@@ -179,7 +179,51 @@
     return s;
   }
 
-  var FIGS = { blocks: figBlocks, grid: figGrid, cards: figCards, rondel: figRondel };
+  /* 火星の区画図 ── ミッション・レッドプラネット */
+  function figMars() {
+    var s = svg(100, 100), ink = 'currentColor';
+    var cx = 48, cy = 54, R = 40, r = 17, n = 7;
+    var pt = function (rad, ang) { return [cx + rad * Math.cos(ang), cy + rad * Math.sin(ang)]; };
+    /* 外周7エリア */
+    for (var i = 0; i < n; i++) {
+      var a0 = (i * 360 / n - 90 - 180 / n) * Math.PI / 180;
+      var a1 = ((i + 1) * 360 / n - 90 - 180 / n) * Math.PI / 180;
+      var o0 = pt(R, a0), o1 = pt(R, a1), i1 = pt(r, a1), i0 = pt(r, a0);
+      sh(s, 'path', {
+        d: 'M' + o0[0].toFixed(2) + ' ' + o0[1].toFixed(2) +
+           ' A' + R + ' ' + R + ' 0 0 1 ' + o1[0].toFixed(2) + ' ' + o1[1].toFixed(2) +
+           ' L' + i1[0].toFixed(2) + ' ' + i1[1].toFixed(2) +
+           ' A' + r + ' ' + r + ' 0 0 0 ' + i0[0].toFixed(2) + ' ' + i0[1].toFixed(2) + ' Z',
+        fill: ink, 'fill-opacity': (i % 2 ? .05 : .11),
+        stroke: ink, 'stroke-width': .55, 'stroke-opacity': .7
+      });
+    }
+    /* 中央2エリア。水平線で上下に割れている */
+    sh(s, 'path', {
+      d: 'M' + (cx - r) + ' ' + cy + ' A' + r + ' ' + r + ' 0 0 1 ' + (cx + r) + ' ' + cy + ' Z',
+      fill: ink, 'fill-opacity': .17, stroke: ink, 'stroke-width': .55, 'stroke-opacity': .75
+    });
+    sh(s, 'path', {
+      d: 'M' + (cx + r) + ' ' + cy + ' A' + r + ' ' + r + ' 0 0 1 ' + (cx - r) + ' ' + cy + ' Z',
+      fill: ink, 'fill-opacity': .09, stroke: ink, 'stroke-width': .55, 'stroke-opacity': .75
+    });
+    /* 着陸した宇宙飛行士。多数派を争っている区画にだけ置く */
+    [[28, 30], [33, 30], [62, 33], [67, 33], [71.5, 33], [45.5, 44], [50.5, 44]]
+      .forEach(function (p) {
+        sh(s, 'circle', { cx: p[0], cy: p[1], r: 2, fill: ink, 'fill-opacity': .55 });
+      });
+    /* 衛星フォボス。どのエリアにも隣接しない */
+    sh(s, 'circle', {
+      cx: 88, cy: 12, r: 8,
+      fill: ink, 'fill-opacity': .1, stroke: ink, 'stroke-width': .5, 'stroke-opacity': .6
+    });
+    sh(s, 'circle', { cx: 88, cy: 12, r: 2, fill: ink, 'fill-opacity': .5 });
+    return s;
+  }
+
+  var FIGS = {
+    blocks: figBlocks, grid: figGrid, cards: figCards, rondel: figRondel, mars: figMars
+  };
 
   /* ------------------------------------------------------------ BGG */
   /* 他人が付けた数字。こちらの実測とは別物なので、色も置き場所も分ける。

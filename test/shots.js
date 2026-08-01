@@ -156,6 +156,8 @@ function serve() {
       err: document.querySelectorAll('.srow__err').length,
       wantGames: window.PB.WORKS.length,
       wantBars: window.PB.WORKS.reduce((n, w) => n + w.plate.rows.length, 0),
+      wantErr: window.PB.WORKS.reduce(
+        (n, w) => n + w.plate.rows.filter(r => r.ci != null).length, 0),
       wantSteps: window.PB.ROADMAP.length,
       wantTenets: window.PB.PRINCIPLES.length
     }));
@@ -176,9 +178,9 @@ function serve() {
         + `・強さ ${c.chips}/${c.wantGames}・棒 ${c.bars}/${c.wantBars}`
         + `・段階 ${c.steps}/${c.wantSteps}・作り ${c.tenets}/${c.wantTenets}）`);
     }
-    // data/bgg.js が空のあいだは 0、CI が取ってきたら 4。中途半端はおかしい
-    if (c.bgg !== 0 && c.bgg !== 4) fail('BGG の行が一部の作品にしか出ていない');
-    if (c.err !== 5) fail('信頼区間のひげが出ていない（インペリアルの5行）');
+    // data/bgg.js が空のあいだは 0、取ってきたら全作品ぶん。中途半端はおかしい
+    if (c.bgg !== 0 && c.bgg !== c.wantGames) fail('BGG の行が一部の作品にしか出ていない');
+    if (c.err !== c.wantErr) fail(`信頼区間のひげの数が合わない（${c.err}/${c.wantErr}）`);
     if (c.invite !== 1 || c.rank !== 1) fail('未ログインの勧誘またはランキング枠が出ていない');
     if (Math.abs(ratio - bar.v) > 0.02) fail('棒の幅が値と合っていない');
     await ctx.close();
