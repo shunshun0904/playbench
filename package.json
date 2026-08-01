@@ -9,7 +9,8 @@
     "serve": "python3 -m http.server 8080",
     "bgg": "node tools/fetch-bgg.mjs",
     "test:parse": "node test/bgg-parse.mjs",
-    "bgg:print": "node tools/fetch-bgg.mjs --print"
+    "bgg:print": "node tools/fetch-bgg.mjs --print",
+    "stamp": "node tools/stamp-assets.mjs"
   },
   "devDependencies": {
     "playwright": "^1.49.1"

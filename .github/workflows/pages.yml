@@ -22,6 +22,16 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # 参照するURLを配備ごとに変える。これが無いと GitHub Pages の
+      # max-age=600 のせいで、配備は成功しているのに閲覧者の画面が
+      # 古いままになる（ゲームを増やしたときに実際に起きた）。
+      - name: アセットの参照に版を打つ
+        run: node tools/stamp-assets.mjs "${{ github.sha }}"
+
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
