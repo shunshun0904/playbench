@@ -254,6 +254,79 @@ window.PB.WORKS = [
     play: 'https://shunshun0904.github.io/imperial/',
     repo: 'https://github.com/shunshun0904/imperial',
     figure: 'rondel'
+  },
+
+  /* ---------------------------------------------------------------- 05 */
+  {
+    id: 'redplanet',
+    bggName: 'Mission: Red Planet',
+    no: 5,
+    title: 'ミッション・レッドプラネット',
+    titleEn: 'Mission: Red Planet',
+    latin: 'MISSION: RED PLANET',
+    designer: 'ブルーノ・フェドゥッティ／ブルーノ・カタラ',
+    designerEn: 'Bruno Faidutti / Bruno Cathala',
+    players: '2〜6人',
+    playersEn: '2–6 players',
+    genre: '役割選択・エリアマジョリティ',
+    genreEn: 'Role selection / Area majority',
+    hook: '全員が伏せたキャラクターを9から1へ数え下げて公開する。宇宙船の破壊も暗殺も、番号の若い者ほど後出しになる。',
+    hookEn: 'Everyone commits a character face down, then they are revealed counting down from 9 to 1. The lower your number, the later you act — and the more you have seen.',
+    opponents: 'CPU 1〜5人（ルールベース）',
+    opponentsEn: '1–5 CPU (rule-based)',
+    lead: '9人の腹心を送り込み、宇宙船を火星へ飛ばして各エリアの多数派を握る。2015年の第2版に準拠。',
+    leadEn: 'Send nine agents aboard rockets to Mars and hold the majority in each zone. Follows the 2015 second edition.',
+
+    /* 相手の作り */
+    method: 'エリアの取り分の差分で測る',
+    methodEn: 'Priced as a change in share',
+    methodBody:
+      '学習も探索木も使っていない。このゲームの価値はすべて「そのエリアの得点トークンを誰が取るか」に' +
+      '集まっているので、あらゆる選択を〈取り分の変化 × エリアの期待価値〉という1つの尺度に落としている。' +
+      '取り分は単独最多なら 1、n人同数なら 1/n、それ以外は 0。' +
+      'エリアの期待価値は資源の点数（未公開なら1.73）に残りの生産回数を掛けたもの。' +
+      '宇宙船に1人乗せる価値は、その船の乗員全員が着陸したあとの取り分と、' +
+      'そこへ自分をもう1人足したときの取り分の差で測る。' +
+      '工作員の破壊も、軍人の排除も、パイロットの行き先変更も、同じ差分で比べられる。',
+    methodBodyEn:
+      'No learning and no search tree. All the value in this game sits in who collects a zone\'s point tokens, ' +
+      'so every choice is reduced to one quantity: the change in share, times the zone\'s expected value. ' +
+      'Share is 1 for a sole majority, 1/n for an n-way tie, 0 otherwise; a zone is worth its resource value ' +
+      '(1.73 while still face down) times the number of productions left. Putting one astronaut aboard a rocket ' +
+      'is priced by simulating the whole rocket landing, then asking what one more of your own would add. ' +
+      'Sabotage, assassination and re-targeting are all compared on that same difference.',
+
+    plate: {
+      caption: '実測勝率',
+      captionEn: 'Measured win rate',
+      note: '4人戦・席順ローテーション・各400局（括弧内は95%信頼区間）',
+      noteEn: '4 players, seats rotated, 400 games each (95% CI)',
+      baseline: 0.25,
+      rows: [
+        { label: 'AI 1人 対 素人筋 3人', labelEn: 'AI vs 3 naive', v: 0.823, ci: 0.037, lead: true },
+        { label: 'AI 1人 対 乱択 3人', labelEn: 'AI vs 3 random', v: 0.930, ci: 0.025 },
+        { label: '素人筋 1人 対 AI 3人', labelEn: 'Naive vs 3 AI', v: 0.065, ci: 0.024 },
+        { label: '乱択 1人 対 AI 3人', labelEn: 'Random vs 3 AI', v: 0.025, ci: 0.015 },
+        { label: '［参考］素人筋 対 乱択3人', labelEn: '[ref] Naive vs 3 random', v: 0.435, ci: 0.049 }
+      ]
+    },
+
+    remark:
+      '比較用の「素人筋」は、初心者がまず思いつく方針だけで打つ相手 ── ' +
+      '宇宙飛行士を多く出せるカードを選び、資源の高いエリア行きの船に乗せ、いちばん数の多い相手を狙う。' +
+      '抜けているのは多数派の読みだけで、それだけで .435 → .065 に落ちる。' +
+      'なお実測の途中で、AI の同点崩しに Math.random() が1か所だけ残っていて同じ種でも勝率が ±.003 揺れていたのを' +
+      '見つけて直した。いまは種から1手まで再現する。',
+    remarkEn:
+      'The naive yardstick plays on beginner instincts alone — pick the character that places the most ' +
+      'astronauts, board the rocket bound for the richest resource, hit whoever has the most pieces. The only ' +
+      'thing missing is reading the majority, and that alone costs .435 → .065. Measuring it also turned up a ' +
+      'single stray Math.random() in the AI\'s tie-break, which made win rates drift ±.003 even from a fixed ' +
+      'seed; it now reproduces move for move.',
+
+    play: 'https://shunshun0904.github.io/redplanet/',
+    repo: 'https://github.com/shunshun0904/redplanet',
+    figure: 'mars'
   }
 ];
 
@@ -314,11 +387,13 @@ window.PB.PRINCIPLES = [
     titleEn: 'No dependencies',
     body:
       'どれもライブラリもフォントも読み込まない。盤面も駒も手書きの SVG と CSS で、' +
-      '最初の3作は index.html を開くだけで動く。' +
+      '5作のうち4作は index.html を開くだけで動く。' +
+      'ミッション・レッドプラネットは効果音まで Web Audio で合成しているので、音声ファイルも持たない。' +
       '例外はインペリアルで、持ち込みの盤面画像を1枚使い、ES モジュールのため配信が要る。',
     bodyEn:
-      'None of them loads a library or a font. Boards and pieces are hand-written SVG and CSS, and the first ' +
-      'three run by opening index.html. Imperial is the exception: it uses one supplied board image and, being ' +
+      'None of them loads a library or a font. Boards and pieces are hand-written SVG and CSS, and four of the ' +
+      'five run by opening index.html. Mission: Red Planet synthesises even its sound effects with Web Audio, so ' +
+      'it ships no audio files either. Imperial is the exception: it uses one supplied board image and, being ' +
       'ES modules, needs to be served.'
   },
   {
