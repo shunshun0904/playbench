@@ -177,15 +177,24 @@ function serve() {
     await ctx.close();
   }
 
-  /* ------------------------------------------------------- アカウント */
+  /* ------------------------------------- アカウント（この端末だけの版） */
   {
     const ctx = await browser.newContext({ viewport: { width: 1280, height: 1000 }, deviceScaleFactor: 2 });
     const page = await ctx.newPage();
     const errs = [];
     page.on('pageerror', e => errs.push(String(e)));
+    /* assets/config.js に本番の Supabase 設定が入っていても、ここは
+       LocalProvider を見る検査なので、空の設定を先に差し込んで固定する。
+       配備先の設定に検査結果が左右されてはいけない。 */
+    await page.addInitScript(() => {
+      window.PB = { CONFIG: { supabase: { url: '', anonKey: '' } } };
+    });
     await page.goto(URL, { waitUntil: 'load' });
 
-    console.log('── アカウント');
+    console.log('── アカウント（この端末だけ）');
+    const kind0 = await page.evaluate(() => PB.auth.kind);
+    console.log('   プロバイダ →', kind0);
+    if (kind0 !== 'local') fail('LocalProvider に固定できていない');
 
     // 開く
     await page.click('[data-auth-open="signin"]');
@@ -403,7 +412,61 @@ function serve() {
     console.log('   使用済みハンドル名 →', JSON.stringify(e2));
     if (!/すでに使われて/.test(e2 || '')) fail('ハンドル名の重複が弾かれていない');
 
+    /* スキーマを流し忘れたときに、生の英語ではなく次の一手が出るか。
+       立ち上げで一番つまずくところなので、ここは必ず案内にする。 */
+    await page.evaluate(() => {
+      PB.auth.signOut();
+      document.getElementById('auth-modal').close();   // 前の手順で開いたままなので閉じる
+    });
+    await page.waitForTimeout(200);
+    await page.route('**/rest/v1/profiles**', r => r.fulfill({
+      status: 404, contentType: 'application/json',
+      body: JSON.stringify({ code: 'PGRST205', message: "Could not find the table 'public.profiles' in the schema cache" })
+    }));
+    await page.click('[data-auth-open="signin"]');
+    await page.click('.tab[data-tab="signup"]');
+    await page.fill('#f-email', 'x@example.com');
+    await page.fill('#f-handle', 'someone');
+    await page.fill('#f-display', 'だれか');
+    await page.fill('#f-pass', 'correct-horse');
+    await page.click('#auth-submit');
+    await page.waitForTimeout(600);
+    const e3 = await page.textContent('#auth-err');
+    console.log('   テーブル未作成 →', JSON.stringify(e3));
+    if (!/schema\.sql/.test(e3 || '')) fail('スキーマ未適用のときに次の一手が出ていない');
+    await page.unroute('**/rest/v1/profiles**');
+
     if (errs.length) fail('例外: ' + errs.slice(0, 3).join(' | '));
+    await ctx.close();
+  }
+
+  /* ------------------------------- 配備時の設定が効いているか（通信なし） */
+  {
+    const ctx = await browser.newContext({ viewport: { width: 1280, height: 1000 } });
+    const page = await ctx.newPage();
+    await page.goto(URL, { waitUntil: 'load' });   // 設定を差し込まず、素のまま
+    const cfg = await page.evaluate(() => {
+      const c = (PB.CONFIG && PB.CONFIG.supabase) || {};
+      let ref = null, role = null;
+      if (c.anonKey) {
+        try {
+          const p = JSON.parse(atob(c.anonKey.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+          ref = p.ref; role = p.role;
+        } catch (e) { /* 解けなければ null のまま */ }
+      }
+      return { kind: PB.auth.kind, url: c.url, ref: ref, role: role,
+               urlRef: (c.url || '').replace('https://', '').split('.')[0] };
+    });
+    console.log('── 配備時の設定');
+    console.log('   プロバイダ →', cfg.kind, '/ role →', cfg.role, '/ 参照 →', cfg.ref);
+    if (cfg.url) {
+      if (cfg.kind !== 'supabase') fail('設定が入っているのに Supabase に切り替わっていない');
+      if (cfg.role !== 'anon') fail('anon 以外の鍵が置かれている（service_role は絶対に置かない）');
+      if (cfg.ref !== cfg.urlRef) fail('URL と鍵のプロジェクトが食い違っている');
+    } else {
+      console.log('   （未設定。この端末だけの版で動く）');
+      if (cfg.kind !== 'local') fail('未設定なのに local になっていない');
+    }
     await ctx.close();
   }
 

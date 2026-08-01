@@ -243,6 +243,23 @@ window.PB = window.PB || {};
   /* Supabase の英語メッセージを、こちらの言葉に置き換える */
   function translate(msg, status) {
     var m = String(msg);
+
+    /* 立ち上げの取りこぼしは、原因と次の一手をそのまま出す。
+       ここが一番つまずくところなので、生の英語を見せない。 */
+    if (/PGRST205/i.test(m) || /Could not find the table/i.test(m) ||
+        /relation .*profiles.* does not exist/i.test(m)) {
+      return 'profiles テーブルがまだありません。Supabase の SQL Editor で supabase/schema.sql を実行してください';
+    }
+    if (/PGRST301/i.test(m) || /JWSError|JWT/i.test(m)) {
+      return '鍵が受け付けられません。assets/config.js の anonKey と URL が同じプロジェクトのものか確かめてください';
+    }
+    if (/row-level security|violates row-level/i.test(m)) {
+      return '行レベルセキュリティに弾かれました。supabase/schema.sql のポリシーが入っているか確かめてください';
+    }
+    if (/Signups not allowed|signup is disabled/i.test(m)) {
+      return 'このプロジェクトは新規登録を受け付けない設定です。Authentication → Providers を確かめてください';
+    }
+
     if (/Invalid login credentials/i.test(m)) return 'メールアドレスかパスワードが違います';
     if (/Email not confirmed/i.test(m)) return 'メールアドレスの確認がまだ済んでいません。届いた確認メールのリンクを開いてください';
     if (/User already registered|already been registered/i.test(m)) return 'そのメールアドレスはすでに登録されています';
