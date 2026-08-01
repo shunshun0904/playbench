@@ -88,16 +88,46 @@ async function get(pathq, tries = 6) {
 }
 
 /* 必要な項目は数えるほどしかなく、XML の形も安定している。
-   ライブラリを足さずに属性を1つずつ拾う。 */
-const attr = (xml, tag, name = 'value') => {
-  const m = xml.match(new RegExp(`<${tag}[^>]*\\b${name}="([^"]*)"`));
+   ライブラリを足さずに属性を1つずつ拾う。
+
+   タグ名の直後に境界を要求するのが肝。これが無いと <average> の検索が
+   <averageweight> に当たってしまい、評価点のつもりで複雑さを拾う。
+   いまの BGG は average を先に出すので偶然そうならないだけで、
+   順序が変わった瞬間に「それらしい別の数字」が黙って表示される。 */
+export const attr = (xml, tag, name = 'value') => {
+  const m = xml.match(new RegExp(`<${tag}(?=[\\s/>])[^>]*\\b${name}="([^"]*)"`));
   return m ? m[1] : null;
 };
-const num = (xml, tag) => {
+/* 空文字を弾くのが肝。Number('') は 0 になるので、
+   値が入っていない属性が「実測された 0」として画面に出てしまう。
+   本当に 0 のとき（評価が1件も無い新作など）とは区別する。 */
+export const num = (xml, tag) => {
   const v = attr(xml, tag);
-  const n = v === null ? NaN : Number(v);
+  if (v === null || String(v).trim() === '') return null;
+  const n = Number(v);
   return Number.isFinite(n) ? n : null;
 };
+
+/* 正式名は type="primary" のもの。属性の並び順は決め打ちにしない */
+export function primaryName(xml) {
+  const m = xml.match(/<name\b[^>]*\btype="primary"[^>]*\bvalue="([^"]*)"/)
+        || xml.match(/<name\b[^>]*\bvalue="([^"]*)"[^>]*\btype="primary"/)
+        || xml.match(/<name\b[^>]*\bvalue="([^"]*)"/);
+  return m ? m[1] : null;
+}
+
+/* 取り出しをひとまとめに。検査から直接呼べるように分けてある */
+export function parseThing(xml, id) {
+  return {
+    id,
+    name: primaryName(xml),
+    year: num(xml, 'yearpublished'),
+    weight: num(xml, 'averageweight'),   // 1〜5 の複雑さ
+    rating: num(xml, 'average'),         // 1〜10 の平均評価
+    bayes: num(xml, 'bayesaverage'),     // 少数票を薄めた評価
+    ratings: num(xml, 'usersrated')      // 評価した人数
+  };
+}
 
 /* ------------------------------------------------------------ 名前で引く */
 async function resolveId(name) {
@@ -110,19 +140,17 @@ async function resolveId(name) {
 }
 
 async function fetchThing(id) {
-  const xml = await get(`/thing?id=${id}&stats=1`);
-  return {
-    id,
-    name: attr(xml, 'name type="primary"') || attr(xml, 'name'),
-    year: num(xml, 'yearpublished'),
-    weight: num(xml, 'averageweight'),   // 1〜5 の複雑さ
-    rating: num(xml, 'average'),         // 1〜10 の平均評価
-    bayes: num(xml, 'bayesaverage'),     // 少数票を薄めた評価
-    ratings: num(xml, 'usersrated')      // 評価した人数
-  };
+  return parseThing(await get(`/thing?id=${id}&stats=1`), id);
 }
 
 /* --------------------------------------------------------------- 本体 */
+/* 検査から読み込まれたときは、ここから下を走らせない */
+if (process.argv[1] && !process.argv[1].endsWith('fetch-bgg.mjs')) {
+  // import されただけ。何もしない
+} else {
+
+const PRINT_ONLY = process.argv.includes('--print');
+
 const works = await (async () => {
   const src = fs.readFileSync(path.join(ROOT, 'data', 'works.js'), 'utf8');
   const sandbox = { PB: {} };
@@ -182,9 +210,16 @@ if (fs.existsSync(file)) {
     catch (e) { changed = true; }
   }
 }
-if (changed) {
+/* --print なら書き込まず中身だけ出す。別の回線の機械で走らせて、
+   出てきたものを data/bgg.js に貼れば済むようにするため。 */
+if (PRINT_ONLY) {
+  console.log('\n----- ここから下を data/bgg.js に貼る -----');
+  console.log(next);
+} else if (changed) {
   fs.writeFileSync(file, next);
   console.log(`\n✅ data/bgg.js を更新（${got}/${works.length} 件${failed ? `・失敗 ${failed} 件` : ''}）`);
 } else {
   console.log(`\n○ 値に変化なし。書き換えない（${got} 件）`);
+}
+
 }
