@@ -25,30 +25,39 @@ URL プレフィックスでも、所有を示すものが要ります。用意�
 - `googleXXXX.html` … 無し
 - `<meta name="google-site-verification">` … 無し
 
-いまは `index.html` の `<head>` に**貼る場所を作ってあります**（コメントの直下）。
+**いまは解決済みです。** リポジトリ直下の `google2e24f8e4be168c53.html`
+（ファイル方式）で確認が通っています。
+
+> ⚠ このファイルは**消さないでください。** 消すと所有確認が外れ、
+> 蓄積したデータごとプロパティが使えなくなります。中身は1行だけで、
+> `https://shunshun0904.github.io/playbench/google2e24f8e4be168c53.html`
+> として配信されます。
 
 ---
 
-## 手順
+## 手順（済み。他のサイトを足すときのために残す）
 
 1. Search Console で **URL プレフィックス**を選ぶ
 2. `https://shunshun0904.github.io/playbench/` を入れる
 3. 確認方法は次のどちらか
 
-   **HTML タグ**（おすすめ・1行で済む）
-   出てきた `<meta name="google-site-verification" content="..." >` を
-   `index.html` の `<head>`、コメントの直下に貼って push。
-
-   **HTML ファイル**
+   **HTML ファイル**（← playbench はこちらで通した）
    ダウンロードした `googleXXXX.html` を**リポジトリ直下**に置いて push。
    `https://shunshun0904.github.io/playbench/googleXXXX.html` で配信されます。
 
+   **HTML タグ**
+   出てきた `<meta name="google-site-verification" content="..." >` を
+   `index.html` の `<head>`、コメントの直下に貼って push。
+
 4. 配備が終わってから「確認」を押す
 
-> 配備の直後は `index.html` が最大10分キャッシュされます。
+> 配備の直後は最大10分キャッシュされます。
 > 確認に失敗したら、少し待って再読み込みしてから押し直してください。
 
 5. 通ったら **サイトマップ**に `sitemap.xml` と入れて送信
+
+残りの5サイト（`/bigshot/` など）も同じ手順で1つずつ登録できます。
+まとめたい場合は下の「`shunshun0904.github.io` リポジトリを作る」を参照。
 
 ---
 
