@@ -1,3 +1,7 @@
 node_modules/
 dist/shots/
 *.tmp.js
+
+# 検査用に playwright を入れると出る。固定すると、環境に先に入っている
+# Chromium の版と食い違って検査が動かなくなるので、追わない。
+package-lock.json
