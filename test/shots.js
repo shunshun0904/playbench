@@ -115,13 +115,23 @@ function serve() {
   let bad = 0;
   const fail = m => { console.log('   ❌ ' + m); bad++; };
 
+  /* assets/config.js に測定IDが入っている以上、素で開くと gtag.js を取りに行く。
+     検査を通信に依存させないため、本物には当てず空で返す。
+     解析そのものを見る節では page.route（こちらが優先される）で数えている。 */
+  const newContext = async opts => {
+    const ctx = await browser.newContext(opts);
+    await ctx.route(u => u.hostname === 'www.googletagmanager.com', r =>
+      r.fulfill({ status: 200, contentType: 'application/javascript', body: '' }));
+    return ctx;
+  };
+
   /* ---------------------------------------------------- 見た目 3面 */
   for (const view of [
     { name: 'desktop-light', w: 1280, h: 1000, scheme: 'light' },
     { name: 'desktop-dark', w: 1280, h: 1000, scheme: 'dark' },
     { name: 'mobile-light', w: 390, h: 844, scheme: 'light' }
   ]) {
-    const ctx = await browser.newContext({
+    const ctx = await newContext({
       viewport: { width: view.w, height: view.h },
       colorScheme: view.scheme, deviceScaleFactor: 2
     });
@@ -188,7 +198,7 @@ function serve() {
 
   /* ------------------------------------- アカウント（この端末だけの版） */
   {
-    const ctx = await browser.newContext({ viewport: { width: 1280, height: 1000 }, deviceScaleFactor: 2 });
+    const ctx = await newContext({ viewport: { width: 1280, height: 1000 }, deviceScaleFactor: 2 });
     const page = await ctx.newPage();
     const errs = [];
     page.on('pageerror', e => errs.push(String(e)));
@@ -318,7 +328,7 @@ function serve() {
 
   /* --------------------------------------------- Supabase（模擬サーバ） */
   {
-    const ctx = await browser.newContext({ viewport: { width: 1280, height: 1000 } });
+    const ctx = await newContext({ viewport: { width: 1280, height: 1000 } });
     const page = await ctx.newPage();
     const errs = [];
     page.on('pageerror', e => errs.push(String(e)));
@@ -451,7 +461,7 @@ function serve() {
 
   /* --------------------- 確認メールのリンクから戻ってきたとき（模擬） */
   {
-    const ctx = await browser.newContext({ viewport: { width: 1280, height: 1000 } });
+    const ctx = await newContext({ viewport: { width: 1280, height: 1000 } });
     const page = await ctx.newPage();
     await page.addInitScript(u => {
       window.PB = { CONFIG: { supabase: { url: u, anonKey: 'anon-test-key' } } };
@@ -505,7 +515,7 @@ function serve() {
 
   /* ------------------------------- 配備時の設定が効いているか（通信なし） */
   {
-    const ctx = await browser.newContext({ viewport: { width: 1280, height: 1000 } });
+    const ctx = await newContext({ viewport: { width: 1280, height: 1000 } });
     const page = await ctx.newPage();
     await page.goto(URL, { waitUntil: 'load' });   // 設定を差し込まず、素のまま
     const cfg = await page.evaluate(() => {
@@ -518,10 +528,15 @@ function serve() {
         } catch (e) { /* 解けなければ null のまま */ }
       }
       return { kind: PB.auth.kind, url: c.url, ref: ref, role: role,
-               urlRef: (c.url || '').replace('https://', '').split('.')[0] };
+               urlRef: (c.url || '').replace('https://', '').split('.')[0],
+               ga: PB.analytics.id, gaState: PB.analytics.state() };
     });
     console.log('── 配備時の設定');
     console.log('   プロバイダ →', cfg.kind, '/ role →', cfg.role, '/ 参照 →', cfg.ref);
+    console.log('   測定ID →', JSON.stringify(cfg.ga), '/', cfg.gaState);
+    /* 測定IDは6か所（ここ＋ゲーム5作）に同じものが入っている。
+       形が崩れていたら、ゲーム側と食い違っている可能性が高い */
+    if (cfg.ga && !/^G-[A-Z0-9]{6,}$/.test(cfg.ga)) fail('測定IDが GA4 の形になっていない');
     if (cfg.url) {
       if (cfg.kind !== 'supabase') fail('設定が入っているのに Supabase に切り替わっていない');
       if (cfg.role !== 'anon') fail('anon 以外の鍵が置かれている（service_role は絶対に置かない）');
@@ -639,7 +654,7 @@ function serve() {
 
   /* ------------------------------------------------------------- 英語 */
   {
-    const ctx = await browser.newContext({ viewport: { width: 1280, height: 1000 }, deviceScaleFactor: 2 });
+    const ctx = await newContext({ viewport: { width: 1280, height: 1000 }, deviceScaleFactor: 2 });
     const page = await ctx.newPage();
     await page.goto(URL, { waitUntil: 'load' });
     await page.click('#lang');

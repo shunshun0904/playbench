@@ -1005,7 +1005,10 @@ window.PB.CONFIG = window.PB.CONFIG || {
     anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtlZXZjbHBoZ3hwcWhtc3pjd3lrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU1NjcwNTMsImV4cCI6MjEwMTE0MzA1M30.fSPOBuv3IMFqWrrB677pFEdmqe0av5rliDeM9DZGVi0'   // 例: eyJhbGciOi...
   },
   analytics: {
-    measurementId: ''        // 例: G-XXXXXXXXXX（GA4 の「データストリーム」に出る）
+    /* 収録ゲーム5作の index.html にも同じ測定IDを入れてある。
+       6サイトとも同一オリジン（shunshun0904.github.io）なので、
+       止める設定（localStorage の pb-analytics）も共有される。 */
+    measurementId: 'G-L76Z1LVWX6'
   }
 };
 </script>
@@ -1497,12 +1500,15 @@ window.PB.PRINCIPLES = [
       'どれもライブラリもフォントも読み込まない。盤面も駒も手書きの SVG と CSS で、' +
       '5作のうち4作は index.html を開くだけで動く。' +
       'ミッション・レッドプラネットは効果音まで Web Audio で合成しているので、音声ファイルも持たない。' +
-      '例外はインペリアルで、持ち込みの盤面画像を1枚使い、ES モジュールのため配信が要る。',
+      '例外はインペリアルで、持ち込みの盤面画像を1枚使い、ES モジュールのため配信が要る。' +
+      '外から読むのはアクセス解析の1本だけ。それも web で配信しているときに限り、' +
+      'ファイルとして開けば、どれも外へは何も出さない。',
     bodyEn:
       'None of them loads a library or a font. Boards and pieces are hand-written SVG and CSS, and four of the ' +
       'five run by opening index.html. Mission: Red Planet synthesises even its sound effects with Web Audio, so ' +
       'it ships no audio files either. Imperial is the exception: it uses one supplied board image and, being ' +
-      'ES modules, needs to be served.'
+      'ES modules, needs to be served. The one thing loaded from outside is analytics, and only when served ' +
+      'over the web — opened as a file, none of them reaches out at all.'
   },
   {
     title: '遊ぶコードと測るコードを分けない',

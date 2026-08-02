@@ -25,6 +25,9 @@ window.PB.CONFIG = window.PB.CONFIG || {
     anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtlZXZjbHBoZ3hwcWhtc3pjd3lrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU1NjcwNTMsImV4cCI6MjEwMTE0MzA1M30.fSPOBuv3IMFqWrrB677pFEdmqe0av5rliDeM9DZGVi0'   // 例: eyJhbGciOi...
   },
   analytics: {
-    measurementId: ''        // 例: G-XXXXXXXXXX（GA4 の「データストリーム」に出る）
+    /* 収録ゲーム5作の index.html にも同じ測定IDを入れてある。
+       6サイトとも同一オリジン（shunshun0904.github.io）なので、
+       止める設定（localStorage の pb-analytics）も共有される。 */
+    measurementId: 'G-L76Z1LVWX6'
   }
 };

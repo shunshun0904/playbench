@@ -389,12 +389,15 @@ window.PB.PRINCIPLES = [
       'どれもライブラリもフォントも読み込まない。盤面も駒も手書きの SVG と CSS で、' +
       '5作のうち4作は index.html を開くだけで動く。' +
       'ミッション・レッドプラネットは効果音まで Web Audio で合成しているので、音声ファイルも持たない。' +
-      '例外はインペリアルで、持ち込みの盤面画像を1枚使い、ES モジュールのため配信が要る。',
+      '例外はインペリアルで、持ち込みの盤面画像を1枚使い、ES モジュールのため配信が要る。' +
+      '外から読むのはアクセス解析の1本だけ。それも web で配信しているときに限り、' +
+      'ファイルとして開けば、どれも外へは何も出さない。',
     bodyEn:
       'None of them loads a library or a font. Boards and pieces are hand-written SVG and CSS, and four of the ' +
       'five run by opening index.html. Mission: Red Planet synthesises even its sound effects with Web Audio, so ' +
       'it ships no audio files either. Imperial is the exception: it uses one supplied board image and, being ' +
-      'ES modules, needs to be served.'
+      'ES modules, needs to be served. The one thing loaded from outside is analytics, and only when served ' +
+      'over the web — opened as a file, none of them reaches out at all.'
   },
   {
     title: '遊ぶコードと測るコードを分けない',
