@@ -37,7 +37,11 @@
       noRecord: 'まだ記録がありません。ゲームを遊ぶと、ここに残ります。',
       noRank: 'まだ対戦が行われていません。エージェント機能ができると、ここに並びます。',
       joined: '登録', save: '保存する', del: 'アカウントを削除', exportD: '書き出す',
-      displayName: '表示名', localOnly: 'この端末のみ'
+      displayName: '表示名', localOnly: 'この端末のみ',
+      measOn: 'この端末では計測しています', measOff: 'この端末では計測を止めています',
+      measDnt: 'ブラウザが追跡拒否（DNT）を出しているので、計測していません',
+      measUnset: '測定IDを入れていないので、いまは何も計測していません',
+      measStop: '止める', measAllow: '許可する', measAnyway: 'それでも許可する'
     },
     en: {
       play: 'Play', soon: 'Coming soon', repo: 'Source', opponent: 'Opponents',
@@ -50,7 +54,11 @@
       noRecord: 'No games yet. Your results will appear here once you play.',
       noRank: 'No matches yet. Once agents arrive, they will be ranked here.',
       joined: 'Joined', save: 'Save', del: 'Delete account', exportD: 'Export',
-      displayName: 'Display name', localOnly: 'this device only'
+      displayName: 'Display name', localOnly: 'this device only',
+      measOn: 'Measuring on this device', measOff: 'Measurement is off on this device',
+      measDnt: 'Your browser asks not to be tracked, so nothing is measured',
+      measUnset: 'No measurement ID is set, so nothing is being measured',
+      measStop: 'Stop', measAllow: 'Allow', measAnyway: 'Allow anyway'
     }
   };
   function t(k) { return T[lang][k]; }
@@ -685,6 +693,40 @@
     return box;
   }
 
+  /* ------------------------------------------- 計測しているかどうか（奥付）
+     方針は index.html に書いてある。ここに出すのは「いまこの端末で
+     実際に計測しているか」と、その場で止める手段。書いてあることと
+     していることが食い違わないよう、状態から文言を作る。 */
+  function buildPrivacyState() {
+    var host = document.getElementById('privacy-state');
+    var a = PB.analytics;
+    if (!host || !a) return;
+
+    var st = a.state();
+    host.textContent = '';
+    host.className = 'pstate' + (st === 'on' ? ' pstate--on' : '');
+
+    var dot = el('span', 'pstate__d');
+    dot.setAttribute('aria-hidden', 'true');
+    host.appendChild(dot);
+    host.appendChild(el('span', null,
+      st === 'on' ? t('measOn')
+        : st === 'off' ? t('measOff')
+        : st === 'dnt' ? t('measDnt')
+        : t('measUnset')));
+
+    if (st === 'unset') return;        // 押せる意味がない
+
+    var b = el('button', 'lnk',
+      st === 'on' ? t('measStop') : st === 'dnt' ? t('measAnyway') : t('measAllow'));
+    b.type = 'button';
+    b.addEventListener('click', function () {
+      a.set(st !== 'on');
+      buildPrivacyState();
+    });
+    host.appendChild(b);
+  }
+
   function buildTenets() {
     var wrap = el('div', 'cells tenets');
     PB.PRINCIPLES.forEach(function (p) {
@@ -736,6 +778,7 @@
     buildRanking();
     buildAccountSlot();
     buildAccountPanel();
+    buildPrivacyState();
     watchPlates(document);
   }
 

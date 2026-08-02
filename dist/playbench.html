@@ -761,6 +761,25 @@ a { color: inherit; }
 .colophon a { color: var(--ink-mid); text-decoration-color: var(--rule); text-underline-offset: .2em; }
 .colophon a:hover { color: var(--vermilion); }
 
+/* いま計測しているか。朱く点いていれば送っている、という読み方にする */
+.pstate { display: flex; flex-wrap: wrap; align-items: baseline; gap: .1rem .5rem; }
+.pstate__d {
+  width: .48rem; height: .48rem; flex: none;
+  align-self: center;
+  border: 1px solid var(--ink-mute);
+}
+.pstate--on .pstate__d { background: var(--vermilion); border-color: var(--vermilion); }
+
+.lnk {
+  font: inherit; color: var(--ink-mid);
+  background: none; border: 0; padding: 0;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: var(--rule);
+  text-underline-offset: .2em;
+}
+.lnk:hover { color: var(--vermilion); text-decoration-color: currentColor; }
+
 /* --------------------------------------------------------------- 動き */
 @media (prefers-reduced-motion: no-preference) {
   .srow__bar { width: 0; transition: width .8s cubic-bezier(.16, .84, .34, 1); }
@@ -907,9 +926,17 @@ a { color: inherit; }
 <footer class="sheet colophon">
   <div>
     <p class="colophon__t" data-en="About">このサイトについて</p>
-    <p data-en="PLAYBENCH is personal and non-commercial. Nothing is sold, nothing is tracked, and there are no ads.">
-      PLAYBENCH は個人による非商用のサイトです。何も販売せず、何も追跡せず、広告も出しません。
+    <p data-en="PLAYBENCH is personal and non-commercial. Nothing is sold and there are no ads.">
+      PLAYBENCH は個人による非商用のサイトです。何も販売せず、広告も出しません。
     </p>
+
+    <!-- 何を集めるかの方針。いま実際に計測しているかは下の行に出る（assets/site.js）。
+         方針と実状を分けてあるので、測定IDを入れ替えても、ここは直さなくてよい。 -->
+    <p data-en="For analytics it uses Google Analytics: which pages were read, plus a rough region and device type. Your games and what you type are never sent.">
+      アクセス解析には Google アナリティクスを使います。集めるのは読まれたページと、
+      おおまかな地域・機器の別だけで、棋譜も入力した文字も送りません。
+    </p>
+    <p class="pstate" id="privacy-state"></p>
   </div>
   <div>
     <p class="colophon__t" data-en="Rights">権利について</p>
@@ -989,6 +1016,10 @@ a { color: inherit; }
    秘密にすべきなのは service_role キーのほうで、それはここに書かない。
 
    立ち上げ手順は supabase/README.md を参照。
+
+   アクセス解析（Google アナリティクス 4）も同じくここで決める。
+   measurementId が空のあいだは gtag.js を読み込まない ── 外部への通信は起きない。
+   取り方は docs/analytics.md を参照。
    ========================================================================== */
 'use strict';
 
@@ -999,8 +1030,107 @@ window.PB.CONFIG = window.PB.CONFIG || {
   supabase: {
     url: 'https://keevclphgxpqhmszcwyk.supabase.co',      // 例: https://xxxxxxxxxxxx.supabase.co
     anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtlZXZjbHBoZ3hwcWhtc3pjd3lrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU1NjcwNTMsImV4cCI6MjEwMTE0MzA1M30.fSPOBuv3IMFqWrrB677pFEdmqe0av5rliDeM9DZGVi0'   // 例: eyJhbGciOi...
+  },
+  analytics: {
+    measurementId: ''        // 例: G-XXXXXXXXXX（GA4 の「データストリーム」に出る）
   }
 };
+</script>
+<script>
+/* ==========================================================================
+   PLAYBENCH ─ アクセス解析（Google アナリティクス 4）
+
+   何をするか:
+     assets/config.js に測定ID（G- で始まる）が入っていれば gtag.js を読み込む。
+     入っていなければ何もしない。外部への通信も1本も起きない。
+
+   止め方（3つとも実際に効く）:
+     1. ブラウザが追跡拒否を出していれば、最初から読み込まない
+        （Global Privacy Control、または DNT）
+     2. 奥付の「止める」を押すと localStorage に残り、以後は読み込まない
+     3. すでに読み込んだ後でも ga-disable-<測定ID> を立てるので、その場で送信が止まる
+        （GA が公式に用意している逃げ道）
+
+   なぜ1ファイルに切り出すか:
+     このサイトは外部から何も読み込まない作りで来た。GA はその唯一の例外なので、
+     どこへ何を出しているかが1ファイルを読めば分かるようにしておく。
+     読みに行く先は https://www.googletagmanager.com/gtag/js だけ。
+
+   立ち上げ手順は docs/analytics.md を参照。
+   ========================================================================== */
+'use strict';
+
+(function () {
+  var PB = window.PB = window.PB || {};
+  var cfg = (PB.CONFIG && PB.CONFIG.analytics) || {};
+  var id = String(cfg.measurementId || '').trim();
+  var KEY = 'pb-analytics';
+
+  function saved() { try { return localStorage.getItem(KEY); } catch (e) { return null; } }
+  function keep(v) { try { localStorage.setItem(KEY, v); } catch (e) {} }
+
+  /* ブラウザからの拒否表明。DNT は仕様としては廃れたが、
+     いま出している人は明確に「やめてほしい」と言っている。 */
+  function refused() {
+    if (navigator.globalPrivacyControl) return true;
+    var d = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+    return d === '1' || d === 'yes';
+  }
+
+  /*  unset … 測定IDが無い（何もしない）
+      dnt   … ブラウザが拒否を出している
+      off   … 本人が止めた
+      on    … 計測する                                        */
+  function decide() {
+    if (!id) return 'unset';
+    var s = saved();
+    if (s === 'off') return 'off';
+    if (s === 'on') return 'on';        // 本人の明示は DNT より優先する
+    return refused() ? 'dnt' : 'on';
+  }
+
+  var state = decide();
+  var loaded = false;
+  var subs = [];
+
+  function load() {
+    if (loaded) return;
+    loaded = true;
+
+    window.dataLayer = window.dataLayer || [];
+    window.gtag = window.gtag || function () { window.dataLayer.push(arguments); };
+    window.gtag('js', new Date());
+    /* GA4 は IP を既定で丸める。効かない設定を足して「やっている風」にしない */
+    window.gtag('config', id);
+
+    var s = document.createElement('script');
+    s.async = true;
+    s.src = 'https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(id);
+    document.head.appendChild(s);
+  }
+
+  function halt(off) { if (id) window['ga-disable-' + id] = !!off; }
+
+  PB.analytics = {
+    id: id,
+    configured: !!id,
+    state: function () { return state; },
+    /* 本人の指示。true で許す、false で止める。押した結果を返す */
+    set: function (want) {
+      if (!id) return state;
+      keep(want ? 'on' : 'off');
+      state = want ? 'on' : 'off';
+      halt(!want);
+      if (want) load();
+      subs.forEach(function (f) { try { f(state); } catch (e) {} });
+      return state;
+    },
+    onChange: function (f) { subs.push(f); }
+  };
+
+  halt(state !== 'on');
+  if (state === 'on') load();
+})();
 </script>
 <script>
 /* ==========================================================================
@@ -1999,7 +2129,11 @@ window.PB = window.PB || {};
       noRecord: 'まだ記録がありません。ゲームを遊ぶと、ここに残ります。',
       noRank: 'まだ対戦が行われていません。エージェント機能ができると、ここに並びます。',
       joined: '登録', save: '保存する', del: 'アカウントを削除', exportD: '書き出す',
-      displayName: '表示名', localOnly: 'この端末のみ'
+      displayName: '表示名', localOnly: 'この端末のみ',
+      measOn: 'この端末では計測しています', measOff: 'この端末では計測を止めています',
+      measDnt: 'ブラウザが追跡拒否（DNT）を出しているので、計測していません',
+      measUnset: '測定IDを入れていないので、いまは何も計測していません',
+      measStop: '止める', measAllow: '許可する', measAnyway: 'それでも許可する'
     },
     en: {
       play: 'Play', soon: 'Coming soon', repo: 'Source', opponent: 'Opponents',
@@ -2012,7 +2146,11 @@ window.PB = window.PB || {};
       noRecord: 'No games yet. Your results will appear here once you play.',
       noRank: 'No matches yet. Once agents arrive, they will be ranked here.',
       joined: 'Joined', save: 'Save', del: 'Delete account', exportD: 'Export',
-      displayName: 'Display name', localOnly: 'this device only'
+      displayName: 'Display name', localOnly: 'this device only',
+      measOn: 'Measuring on this device', measOff: 'Measurement is off on this device',
+      measDnt: 'Your browser asks not to be tracked, so nothing is measured',
+      measUnset: 'No measurement ID is set, so nothing is being measured',
+      measStop: 'Stop', measAllow: 'Allow', measAnyway: 'Allow anyway'
     }
   };
   function t(k) { return T[lang][k]; }
@@ -2647,6 +2785,40 @@ window.PB = window.PB || {};
     return box;
   }
 
+  /* ------------------------------------------- 計測しているかどうか（奥付）
+     方針は index.html に書いてある。ここに出すのは「いまこの端末で
+     実際に計測しているか」と、その場で止める手段。書いてあることと
+     していることが食い違わないよう、状態から文言を作る。 */
+  function buildPrivacyState() {
+    var host = document.getElementById('privacy-state');
+    var a = PB.analytics;
+    if (!host || !a) return;
+
+    var st = a.state();
+    host.textContent = '';
+    host.className = 'pstate' + (st === 'on' ? ' pstate--on' : '');
+
+    var dot = el('span', 'pstate__d');
+    dot.setAttribute('aria-hidden', 'true');
+    host.appendChild(dot);
+    host.appendChild(el('span', null,
+      st === 'on' ? t('measOn')
+        : st === 'off' ? t('measOff')
+        : st === 'dnt' ? t('measDnt')
+        : t('measUnset')));
+
+    if (st === 'unset') return;        // 押せる意味がない
+
+    var b = el('button', 'lnk',
+      st === 'on' ? t('measStop') : st === 'dnt' ? t('measAnyway') : t('measAllow'));
+    b.type = 'button';
+    b.addEventListener('click', function () {
+      a.set(st !== 'on');
+      buildPrivacyState();
+    });
+    host.appendChild(b);
+  }
+
   function buildTenets() {
     var wrap = el('div', 'cells tenets');
     PB.PRINCIPLES.forEach(function (p) {
@@ -2698,6 +2870,7 @@ window.PB = window.PB || {};
     buildRanking();
     buildAccountSlot();
     buildAccountPanel();
+    buildPrivacyState();
     watchPlates(document);
   }
 

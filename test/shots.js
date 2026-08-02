@@ -533,6 +533,110 @@ function serve() {
     await ctx.close();
   }
 
+  /* --------------------------------------------- アクセス解析（GA・通信なし）
+     本物の googletagmanager には当てない。要求だけ数えて空で返す。
+     見たいのは「どういう条件で読みに行くか」であって、GA の中身ではない。 */
+  {
+    console.log('── アクセス解析');
+    const ID = 'G-TEST000000';
+
+    async function open(opt) {
+      opt = opt || {};
+      const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+      const page = await ctx.newPage();
+      const hits = [];
+      await page.route(u => u.hostname === 'www.googletagmanager.com', r => {
+        hits.push(r.request().url());
+        r.fulfill({ status: 200, contentType: 'application/javascript', body: '' });
+      });
+      if (opt.dnt) {
+        await page.addInitScript(() => {
+          Object.defineProperty(navigator, 'doNotTrack', { get: () => '1' });
+        });
+      }
+      await page.addInitScript(id => {
+        window.PB = { CONFIG: { supabase: { url: '', anonKey: '' }, analytics: { measurementId: id } } };
+      }, 'id' in opt ? opt.id : ID);
+      await page.goto(URL, { waitUntil: 'load' });
+      await page.waitForTimeout(350);
+      return { ctx, page, hits };
+    }
+    const state = p => p.evaluate(() => PB.analytics.state());
+
+    /* 1. 測定IDが無ければ、外部へ1本も出さない */
+    {
+      const { ctx, page, hits } = await open({ id: '' });
+      const st = await state(page);
+      const said = await page.textContent('#privacy-state');
+      console.log('   測定IDなし →', st, '/ 要求', hits.length, '/', JSON.stringify(said));
+      if (st !== 'unset') fail('測定IDが無いのに unset になっていない');
+      if (hits.length) fail('測定IDが無いのに外部を読みに行った');
+      if (!/計測していません/.test(said)) fail('計測していないことが奥付に出ていない');
+      await ctx.close();
+    }
+
+    /* 2. 測定IDがあれば読みに行く。押せばその場で止まり、次に開いても入らない */
+    {
+      const { ctx, page, hits } = await open();
+      const st = await state(page);
+      console.log('   測定IDあり →', st, '/', hits[0]);
+      if (st !== 'on') fail('測定IDを入れても on にならない');
+      if (hits.length !== 1 || hits[0].indexOf(ID) < 0) fail('gtag.js を測定ID付きで読みに行っていない');
+      if (!(await page.evaluate(() => (window.dataLayer || [])
+        .some(a => a[0] === 'config' && a[1] === PB.analytics.id)))) {
+        fail('gtag config が測定IDで積まれていない');
+      }
+
+      await page.click('#privacy-state .lnk');
+      await page.waitForTimeout(150);
+      const after = await page.evaluate(() => ({
+        st: PB.analytics.state(),
+        off: window['ga-disable-' + PB.analytics.id] === true,
+        txt: document.getElementById('privacy-state').textContent
+      }));
+      console.log('   止める →', JSON.stringify(after));
+      if (after.st !== 'off' || !after.off) fail('「止める」を押しても送信が止まっていない');
+      if (!/止めています/.test(after.txt)) fail('止めたことが奥付に出ていない');
+
+      hits.length = 0;
+      await page.reload({ waitUntil: 'load' });
+      await page.waitForTimeout(350);
+      console.log('   止めたまま再読込 →', await state(page), '/ 要求', hits.length);
+      if (hits.length) fail('止めたのに次の読み込みでまた読みに行った');
+      if (await state(page) !== 'off') fail('止めた設定が残っていない');
+      await ctx.close();
+    }
+
+    /* 3. 追跡拒否を出しているブラウザには読み込まない。本人が許せば入る */
+    {
+      const { ctx, page, hits } = await open({ dnt: true });
+      console.log('   DNT あり →', await state(page), '/ 要求', hits.length);
+      if (await state(page) !== 'dnt') fail('DNT を無視している');
+      if (hits.length) fail('DNT を出しているのに読みに行った');
+      await page.click('#privacy-state .lnk');
+      await page.waitForTimeout(400);
+      console.log('   それでも許可 →', await state(page), '/ 要求', hits.length);
+      if (await state(page) !== 'on' || !hits.length) fail('本人が許可しても入らない');
+      await ctx.close();
+    }
+
+    /* 4. 奥付が「何も追跡せず」と言い続けていないこと */
+    {
+      const { ctx, page } = await open();
+      const foot = () => page.evaluate(() => document.querySelector('.colophon').textContent);
+      const ja = await foot();
+      await page.click('#lang');
+      await page.waitForTimeout(300);
+      const en = await foot();
+      if (/何も追跡せず/.test(ja)) fail('奥付が「何も追跡せず」と言ったまま');
+      if (/nothing is tracked/i.test(en)) fail('英語の奥付が nothing is tracked のまま');
+      if (!/Google アナリティクス/.test(ja) || !/Google Analytics/.test(en)) {
+        fail('何で計測しているかが奥付に出ていない');
+      }
+      await ctx.close();
+    }
+  }
+
   /* ------------------------------------------------------------- 英語 */
   {
     const ctx = await browser.newContext({ viewport: { width: 1280, height: 1000 }, deviceScaleFactor: 2 });

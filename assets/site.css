@@ -735,6 +735,25 @@ a { color: inherit; }
 .colophon a { color: var(--ink-mid); text-decoration-color: var(--rule); text-underline-offset: .2em; }
 .colophon a:hover { color: var(--vermilion); }
 
+/* いま計測しているか。朱く点いていれば送っている、という読み方にする */
+.pstate { display: flex; flex-wrap: wrap; align-items: baseline; gap: .1rem .5rem; }
+.pstate__d {
+  width: .48rem; height: .48rem; flex: none;
+  align-self: center;
+  border: 1px solid var(--ink-mute);
+}
+.pstate--on .pstate__d { background: var(--vermilion); border-color: var(--vermilion); }
+
+.lnk {
+  font: inherit; color: var(--ink-mid);
+  background: none; border: 0; padding: 0;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: var(--rule);
+  text-underline-offset: .2em;
+}
+.lnk:hover { color: var(--vermilion); text-decoration-color: currentColor; }
+
 /* --------------------------------------------------------------- 動き */
 @media (prefers-reduced-motion: no-preference) {
   .srow__bar { width: 0; transition: width .8s cubic-bezier(.16, .84, .34, 1); }

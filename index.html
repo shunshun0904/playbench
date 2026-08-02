@@ -126,9 +126,17 @@
 <footer class="sheet colophon">
   <div>
     <p class="colophon__t" data-en="About">このサイトについて</p>
-    <p data-en="PLAYBENCH is personal and non-commercial. Nothing is sold, nothing is tracked, and there are no ads.">
-      PLAYBENCH は個人による非商用のサイトです。何も販売せず、何も追跡せず、広告も出しません。
+    <p data-en="PLAYBENCH is personal and non-commercial. Nothing is sold and there are no ads.">
+      PLAYBENCH は個人による非商用のサイトです。何も販売せず、広告も出しません。
     </p>
+
+    <!-- 何を集めるかの方針。いま実際に計測しているかは下の行に出る（assets/site.js）。
+         方針と実状を分けてあるので、測定IDを入れ替えても、ここは直さなくてよい。 -->
+    <p data-en="For analytics it uses Google Analytics: which pages were read, plus a rough region and device type. Your games and what you type are never sent.">
+      アクセス解析には Google アナリティクスを使います。集めるのは読まれたページと、
+      おおまかな地域・機器の別だけで、棋譜も入力した文字も送りません。
+    </p>
+    <p class="pstate" id="privacy-state"></p>
   </div>
   <div>
     <p class="colophon__t" data-en="Rights">権利について</p>
@@ -197,6 +205,7 @@
 </dialog>
 
 <script src="assets/config.js"></script>
+<script src="assets/analytics.js"></script>
 <script src="data/works.js"></script>
 <script src="data/bgg.js"></script>
 <script src="assets/auth.js"></script>

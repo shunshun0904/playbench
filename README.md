@@ -16,7 +16,8 @@ index.html          サイト本体
 assets/site.css     版面。色・書体・実測プレート
 assets/site.js      組版。ゲームデータから画面を組む
 assets/auth.js      アカウント（Local / Supabase の差し替え式）
-assets/config.js    接続先。空なら「この端末だけ」で動く
+assets/analytics.js アクセス解析。唯一の外部読み込み。空なら何もしない
+assets/config.js    接続先と測定ID。空なら「この端末だけ」で動く
 supabase/           スキーマ・RLS・立ち上げ手順
 data/works.js       ゲームの目録  ← ゲームを増やすときはここだけ
 data/bgg.js         BGG の重さと評価のスナップショット（tools が書き換える。手で触らない）
@@ -24,7 +25,7 @@ tools/fetch-bgg.mjs BGG から取ってくる道具
 games/              各ゲーム本体（取り込みはこれから）
 build.js            単一ファイルへの結合
 tools/stamp-assets.mjs  配備時にアセット参照へ版を打つ（キャッシュ対策）
-test/shots.js       実ブラウザでの検査（見た目とアカウント）
+test/shots.js       実ブラウザでの検査（見た目・アカウント・解析の入切）
 ```
 
 ### ゲームを1つ増やす
@@ -169,8 +170,19 @@ node tools/stamp-assets.mjs --check   # 版が付いているか確かめる
 手順と、`robots.txt` を置けない件、6サイトをまとめる方法は
 [`docs/search-console.md`](docs/search-console.md) にまとめました。
 
-**アクセス解析を入れる前に、奥付の「何も追跡せず」を直してください。**
-Google アナリティクスを入れると、いま画面に出ている記述が事実でなくなります。
+アクセス解析は **Google アナリティクス 4**（[`docs/analytics.md`](docs/analytics.md)）。
+`assets/config.js` の `analytics.measurementId` に測定IDを入れると動き、
+**空のあいだは gtag.js を読み込みません**（外部への通信が1本も出ません）。
+実装は [`assets/analytics.js`](assets/analytics.js) の1ファイルだけです。
+
+止め方を3つ用意してあります。ブラウザが追跡拒否（GPC / DNT）を出していれば
+最初から読み込まず、奥付の「止める」を押せば `localStorage` に残って以後も読み込まず、
+読み込み済みでも `ga-disable-<測定ID>` を立ててその場で送信を止めます。
+そのぶん **GA の数字は実際の訪問より少なめに出ます**。
+
+これに合わせて、奥付の「何も追跡せず」は消しました。
+いまは何を集めるかを書き、**いまこの端末で実際に計測しているか**を状態から
+書き出しています。書いてあることと、していることを食い違わせないためです。
 
 ## これから
 
@@ -269,4 +281,7 @@ High Society はライナー・クニツィア、Imperial はマック・ゲル�
 Mission: Red Planet はブルーノ・フェドゥッティとブルーノ・カタラによるゲームです。
 本サイトの実装はいずれも学習目的の非公式なファンメイドで、商標もアートワークも含みません。
 
-個人による非商用のサイトです。何も販売せず、何も追跡せず、広告も出しません。
+個人による非商用のサイトです。何も販売せず、広告も出しません。
+アクセス解析には Google アナリティクスを使います。集めるのは読まれたページと、
+おおまかな地域・機器の別だけで、棋譜も入力した文字も送りません。
+止め方は [`docs/analytics.md`](docs/analytics.md) と、サイトの奥付に出しています。
