@@ -19,9 +19,16 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+    # environment: github-pages は宣言しない。
+    #
+    # 宣言すると、その環境の保護ルール（配備を許可するブランチの指定など）が
+    # 配備に掛かる。引っかかると Pages 側は配備を受け取ったまま
+    # deployment_queued から進まず、10分の上限で打ち切られる。
+    # 2026-08-06 に6回続けてそうなった（#36 #37 #39 #40 #41）。
+    #
+    # 同じことが 2026-07-31 に aquire で起きていて、そちらは
+    # 「配備ジョブから environment の宣言を外す」(1912eed) で直っている。
+    # 引き換えに Actions の画面へ配備先URLが出なくなるが、それだけ。
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -41,15 +48,8 @@ jobs:
       - id: deployment
         uses: actions/deploy-pages@v4
         with:
-          # Pages 側の配備待ちが混むことがある。deployment_queued のまま
-          # 10分たって打ち切られる（2026-08-06 に #36 #37 #39 が続けて落ちた）。
-          #
           # 待ち時間は伸ばせない。deploy-pages@v4 は timeout を内部で
           # 600000ms に丸めるので、900000 と書いても10分で切れる。
           # 上限そのものを書いておく。
-          #
-          # 原因はこちらの push の間隔ではない。#39 は他の run を
-          # 止めて単独で走らせても、同じように queued のまま落ちた。
-          # Pages 側が詰まっているときは、待つか、後で再実行するしかない。
           timeout: 600000        # 10分（これが上限。伸ばせない）
           error_count: 20
