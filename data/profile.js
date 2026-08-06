@@ -71,8 +71,8 @@ window.PB.PROFILE = {
           + '読んだものには「ハイソサエティに適用できるか」を書き添えている。',
         bodyEn: 'Self-play RL, search combined with learning, imperfect-information games, opponent '
           + 'modelling. Each entry carries a note on whether it could apply to High Society.',
-        url: 'https://app.notion.com/p/74bb68df48114e959775cc05dab9b919',
-        published: false
+        url: 'https://app.notion.com/p/74bb68df48114e959775cc05dab9b919?v=c629e1ec87784c898017839943589429',
+        published: true
       },
       {
         title: '金融工学 / ML・マクロ', titleEn: 'Quantitative finance, ML and macro',
@@ -80,8 +80,10 @@ window.PB.PROFILE = {
           + 'マーケットインパクト。経済のページで見ている数字の裏側。',
         bodyEn: 'Volatility forecasting, portfolio optimisation, inflation forecasting from micro data, '
           + 'market impact — the reasoning behind the figures on the Economy page.',
-        url: 'https://app.notion.com/p/4ba5af8498f643ada8d69d589db485cf',
-        published: false
+        /* 本人がウェブ公開したうえで渡してくれたリンク。?v= は表示するビューの指定
+           なので残し、source=copy_link（コピー元の記録）だけ落としてある。 */
+        url: 'https://app.notion.com/p/4ba5af8498f643ada8d69d589db485cf?v=6e73d4cc5ee34cb98826991f26ec6f57',
+        published: true
       },
       {
         title: 'AIアラインメント・哲学', titleEn: 'AI alignment and philosophy',
