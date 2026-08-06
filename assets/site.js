@@ -756,11 +756,350 @@
     Array.prototype.forEach.call(nodes, function (n) { io.observe(n); });
   }
 
+  /* ═══════════════════════════════════════════════════ 全ページ共通の天地
+     4ページあるので、天と地は HTML に写さず、ここから組む。
+     文言を直す場所が1つで済む。 */
+  var PAGES = [
+    { file: 'index.html', ja: 'トップ',       en: 'Home' },
+    { file: 'about.html', ja: '自己紹介',     en: 'About' },
+    { file: 'macro.html', ja: 'マクロ経済',   en: 'Macro' },
+    { file: 'games.html', ja: '盤上',         en: 'Board games' }
+  ];
+  function here() {
+    var f = (location.pathname.split('/').pop() || '').split('?')[0];
+    return f === '' ? 'index.html' : f;
+  }
+  function who() {
+    var p = PB.PROFILE && PB.PROFILE.name;
+    return (p && p.fill && pick2(p)) || 'shunshun0904';
+  }
+  /* {fill, ja, en} を言語で選ぶ。埋まっていなければ null */
+  function pick2(o) {
+    if (!o || !o.fill) return null;
+    var v = (lang === 'en' && o.en) ? o.en : o.ja;
+    return v || null;
+  }
+
+  function buildHead() {
+    var host = document.getElementById('head');
+    if (!host) return;
+    host.textContent = '';
+    var box = el('div', 'sheet masthead__in');
+
+    var mark = el('a', 'masthead__mark', who());
+    mark.href = 'index.html';
+    box.appendChild(mark);
+
+    var nav = el('nav', 'masthead__nav');
+    var cur = here();
+    PAGES.forEach(function (p) {
+      if (p.file === 'index.html') return;          // 名乗りが入口を兼ねる
+      var a = el('a', p.file === cur ? 'is-here' : null, lang === 'en' ? p.en : p.ja);
+      a.href = p.file;
+      if (p.file === cur) a.setAttribute('aria-current', 'page');
+      nav.appendChild(a);
+    });
+    box.appendChild(nav);
+
+    var tools = el('div', 'masthead__tools');
+    var lb = el('button', 'ctl'); lb.type = 'button'; lb.id = 'lang';
+    var tb = el('button', 'ctl'); tb.type = 'button'; tb.id = 'theme';
+    tools.appendChild(lb);
+    tools.appendChild(tb);
+    /* アカウントは対戦の記録のためだけにある。盤上のページにしか出さない */
+    if (cur === 'games.html') {
+      var slot = el('div'); slot.id = 'account-slot';
+      tools.appendChild(slot);
+    }
+    box.appendChild(tools);
+    host.appendChild(box);
+  }
+
+  function buildFoot() {
+    var host = document.getElementById('foot');
+    if (!host) return;
+    host.textContent = '';
+    var en = lang === 'en';
+
+    function col(title, paras) {
+      var d = el('div');
+      d.appendChild(el('p', 'colophon__t', title));
+      paras.forEach(function (p) { d.appendChild(p); });
+      return d;
+    }
+
+    host.appendChild(col(en ? 'About this site' : 'このサイトについて', [
+      el('p', null, en
+        ? 'A personal site. Nothing is sold and there are no ads.'
+        : '個人のサイトです。何も販売せず、広告も出しません。'),
+      el('p', null, en
+        ? 'For analytics it uses Google Analytics: which pages were read, plus a rough region and device type. Nothing you type is ever sent.'
+        : 'アクセス解析には Google アナリティクスを使います。集めるのは読まれたページと、'
+          + 'おおまかな地域・機器の別だけで、入力した文字は送りません。'),
+      (function () { var p = el('p', 'pstate'); p.id = 'privacy-state'; return p; })()
+    ]));
+
+    host.appendChild(col(en ? 'Rights' : '権利について', [
+      el('p', null, en
+        ? 'Acquire is a game by Sid Sackson; High Society by Reiner Knizia; Imperial by Mac Gerdts. The implementations here are unofficial fan work made for study, containing no trademarks and no original artwork.'
+        : 'Acquire はシド・サクソン、High Society はライナー・クニツィア、'
+          + 'Imperial はマック・ゲルツによるゲームです。ここの実装はいずれも学習目的の'
+          + '非公式なファンメイドで、商標もアートワークも含みません。'),
+      el('p', null, en
+        ? 'Macro figures come from Alpha Vantage. Nothing here is investment advice.'
+        : 'マクロの数字は Alpha Vantage から取っています。投資助言ではありません。')
+    ]));
+
+    var link = el('p');
+    var a = el('a', null, 'github.com/shunshun0904');
+    a.href = 'https://github.com/shunshun0904';
+    a.rel = 'noopener';
+    link.appendChild(a);
+    host.appendChild(col(en ? 'Source' : '置き場所', [
+      el('p', null, en
+        ? 'Everything here is public, including the measurements behind every bar.'
+        : 'すべて公開しています。棒グラフの裏にある実測も含めて。'),
+      link
+    ]));
+  }
+
+  /* ═════════════════════════════════════════════════════════ トップページ */
+  function buildHello() {
+    var n = document.getElementById('hello-name');
+    if (!n) return;
+    n.textContent = who();
+
+    var host = document.getElementById('hello-intro');
+    host.textContent = '';
+    var pr = PB.PROFILE || {};
+    var line = pick2(pr.tagline);
+    if (line) host.appendChild(el('p', 'hello__tag', line));
+
+    var paras = (pr.intro && pr.intro.fill)
+      ? ((lang === 'en' && pr.intro.en && pr.intro.en.length) ? pr.intro.en : pr.intro.ja)
+      : null;
+    if (paras && paras.length) {
+      paras.forEach(function (s) { host.appendChild(el('p', null, s)); });
+    } else {
+      host.appendChild(el('p', null, lang === 'en'
+        ? 'A place for things I look into on my own time. Three shelves: who I am, the macro figures I keep for investing, and board games.'
+        : '仕事とは別に、自分で確かめたことを置いておく場所です。'
+          + '棚は3つ ── 自分のこと、投資のために見ているマクロの数字、それとボードゲーム。'));
+    }
+  }
+
+  function buildDoors() {
+    var host = document.getElementById('doors');
+    if (!host) return;
+    host.textContent = '';
+    var en = lang === 'en';
+    var n = (PB.WORKS || []).length;
+    [
+      { file: 'about.html', t: en ? 'About me' : '自己紹介と職務経歴',
+        b: en ? 'Who I am, what I have worked on, and the tools I reach for.'
+              : '何をしてきたか、いま何を使っているか。' },
+      { file: 'macro.html', t: en ? 'Macro indicators' : 'マクロ経済指標',
+        b: en ? 'Figures I keep an eye on for my own investing, with source and fetch date.'
+              : '株を持つために自分で見ている数字。出どころと取得日つきで置いています。' },
+      { file: 'games.html', t: en ? 'Board games' : '盤上の自主研究',
+        b: en ? n + ' games rebuilt for the browser, and opponents measured against the parity line. Playable.'
+              : 'ブラウザで動かした ' + n + ' 作と、互角の線と並べて測った相手。遊べます。' }
+    ].forEach(function (d) {
+      var a = el('a', 'door');
+      a.href = d.file;
+      a.appendChild(el('h3', 'door__t', d.t));
+      a.appendChild(el('p', 'door__b', d.b));
+      a.appendChild(el('span', 'door__go', en ? 'Open →' : '開く →'));
+      host.appendChild(a);
+    });
+  }
+
+  /* ═══════════════════════════════════════════════════ 自己紹介・職務経歴 */
+  function notYet() {
+    return el('p', 'blank', lang === 'en'
+      ? 'Not written yet. It lives in data/profile.js.'
+      : 'まだ書いていません。中身は data/profile.js にあります。');
+  }
+
+  function buildProfile() {
+    var pr = PB.PROFILE;
+    var intro = document.getElementById('profile-intro');
+    if (!intro || !pr) return;
+
+    /* ---- 自己紹介 */
+    intro.textContent = '';
+    var line = pick2(pr.tagline);
+    if (line) intro.appendChild(el('p', 'hello__tag', line));
+    var paras = (pr.intro && pr.intro.fill)
+      ? ((lang === 'en' && pr.intro.en && pr.intro.en.length) ? pr.intro.en : pr.intro.ja)
+      : null;
+    if (paras && paras.length) paras.forEach(function (s) { intro.appendChild(el('p', 'lead', s)); });
+    else intro.appendChild(notYet());
+
+    if (pr.links && pr.links.fill && pr.links.rows.length) {
+      var ul = el('div', 'links');
+      pr.links.rows.forEach(function (r) {
+        var a = el('a', 'links__a', r.label);
+        a.href = r.url; a.rel = 'noopener';
+        ul.appendChild(a);
+      });
+      intro.appendChild(ul);
+    }
+
+    /* ---- 職務経歴 */
+    var car = document.getElementById('profile-career');
+    car.textContent = '';
+    if (pr.career && pr.career.fill && pr.career.rows.length) {
+      var list = el('div', 'cv');
+      pr.career.rows.forEach(function (r) {
+        var row = el('div', 'cv__row');
+        var when = el('div', 'cv__when');
+        when.appendChild(el('span', 'num', r.from));
+        when.appendChild(el('span', 'cv__dash', '─'));
+        when.appendChild(el('span', 'num', r.to || (lang === 'en' ? 'now' : '現在')));
+        row.appendChild(when);
+        var body = el('div', 'cv__body');
+        body.appendChild(el('h3', 'cv__org', pick(r, 'org')));
+        if (r.role) body.appendChild(el('p', 'cv__role', pick(r, 'role')));
+        if (r.body) body.appendChild(el('p', 'cv__b', pick(r, 'body')));
+        row.appendChild(body);
+        list.appendChild(row);
+      });
+      car.appendChild(list);
+    } else car.appendChild(notYet());
+
+    /* ---- 道具 */
+    var sk = document.getElementById('profile-skills');
+    sk.textContent = '';
+    if (pr.skills && pr.skills.fill && pr.skills.groups.length) {
+      var g = el('div', 'cells');
+      pr.skills.groups.forEach(function (grp) {
+        var d = el('div', 'tenet');
+        d.appendChild(el('h3', 'tenet__t', pick(grp, 'label')));
+        var row = el('p', 'tags');
+        grp.items.forEach(function (s) { row.appendChild(el('span', 'tag tag--ink', s)); });
+        d.appendChild(row);
+        g.appendChild(d);
+      });
+      sk.appendChild(g);
+    } else sk.appendChild(notYet());
+  }
+
+  /* ═════════════════════════════════════════════════════ マクロ経済指標 */
+  /* 月次の系列を折れ線で。外部ライブラリは使わず、その場で SVG を作る。 */
+  function sparkline(series, unit) {
+    var v = series.v.filter(function (x) { return x != null; });
+    if (v.length < 2) return null;
+
+    var W = 640, H = 150, PADL = 34, PADR = 44, PADB = 18, PADT = 8;
+    var lo = Math.min.apply(null, v), hi = Math.max.apply(null, v);
+    if (hi === lo) { hi += 1; lo -= 1; }
+    var pad = (hi - lo) * .08; hi += pad; lo -= pad;
+
+    var n = series.v.length;
+    var x = function (i) { return PADL + (W - PADL - PADR) * (n === 1 ? 0 : i / (n - 1)); };
+    var y = function (val) { return PADT + (H - PADT - PADB) * (1 - (val - lo) / (hi - lo)); };
+
+    var s = svg(W, H), ink = 'currentColor';
+    s.setAttribute('class', 'spark');
+
+    /* 目盛は上下2本だけ。図面の罫のつもりで薄く */
+    [hi - pad, lo + pad].forEach(function (val) {
+      sh(s, 'line', { x1: PADL, y1: y(val), x2: W - PADR, y2: y(val),
+        stroke: ink, 'stroke-width': .5, 'stroke-opacity': .25, 'stroke-dasharray': '3 3' });
+      var tx = sh(s, 'text', { x: PADL - 5, y: y(val) + 3.5, 'text-anchor': 'end',
+        fill: ink, 'font-size': 9, 'fill-opacity': .55 });
+      tx.textContent = val.toFixed(1);
+    });
+
+    var d = '', started = false;
+    series.v.forEach(function (val, i) {
+      if (val == null) { started = false; return; }      // 欠測はつながない
+      d += (started ? ' L' : ' M') + x(i).toFixed(1) + ' ' + y(val).toFixed(1);
+      started = true;
+    });
+    sh(s, 'path', { d: d.trim(), fill: 'none', stroke: ink, 'stroke-width': 1.2,
+      'stroke-opacity': .75, 'stroke-linejoin': 'round' });
+
+    /* 直近の値を朱で置く。ここだけが「いまの数字」 */
+    var lastI = -1;
+    for (var i = series.v.length - 1; i >= 0; i--) if (series.v[i] != null) { lastI = i; break; }
+    if (lastI >= 0) {
+      var lv = series.v[lastI];
+      sh(s, 'circle', { cx: x(lastI), cy: y(lv), r: 2.6, fill: 'var(--vermilion)' });
+      var lab = sh(s, 'text', { x: Math.min(x(lastI) + 6, W - 4), y: y(lv) + 3.5,
+        fill: 'var(--vermilion)', 'font-size': 11, 'font-weight': 600 });
+      lab.textContent = lv.toFixed(2) + (unit || '');
+    }
+
+    /* 横軸は端の年だけ。細かい目盛は要らない */
+    [[0, series.from], [n - 1, monthAt(series.from, n - 1)]].forEach(function (p, k) {
+      var tx = sh(s, 'text', { x: k === 0 ? PADL : W - PADR, y: H - 4,
+        'text-anchor': k === 0 ? 'start' : 'end', fill: ink, 'font-size': 9, 'fill-opacity': .55 });
+      tx.textContent = p[1];
+    });
+    return s;
+  }
+
+  function monthAt(from, k) {
+    var a = from.split('-'), m = (+a[1] - 1) + k;
+    return (+a[0] + Math.floor(m / 12)) + '-' + String(m % 12 + 1).padStart(2, '0');
+  }
+
+  function buildMacro() {
+    var host = document.getElementById('macro');
+    if (!host || !PB.INDICATORS) return;
+    host.textContent = '';
+    var M = PB.MACRO || { series: {} };
+
+    var when = document.getElementById('macro-when');
+    if (when) when.textContent = M.fetched
+      ? (lang === 'en' ? 'fetched ' + M.fetched : M.fetched + ' 取得')
+      : (lang === 'en' ? 'not fetched' : '未取得');
+
+    PB.INDICATORS.forEach(function (ind) {
+      var card = el('section', 'gauge');
+
+      var head = el('div', 'gauge__head');
+      head.appendChild(el('h3', 'gauge__t', pick(ind, 'title')));
+      var sub = pick(ind, 'sub');
+      if (sub) head.appendChild(el('span', 'gauge__sub', sub));
+      card.appendChild(head);
+
+      card.appendChild(el('p', 'gauge__why', pick(ind, 'why')));
+
+      var s = M.series && M.series[ind.id];
+      if (s && s.v && s.v.length) {
+        var fig = el('div', 'gauge__fig');
+        var g = sparkline(s, ind.unit);
+        if (g) fig.appendChild(g);
+        card.appendChild(fig);
+        card.appendChild(el('p', 'gauge__src', (lang === 'en'
+          ? 'Monthly, ' + s.from + ' to ' + monthAt(s.from, s.v.length - 1) + ' · ' + (M.source || '')
+          : '月次 ' + s.from + ' 〜 ' + monthAt(s.from, s.v.length - 1) + ' ・ 出どころ ' + (M.source || ''))));
+      } else {
+        card.appendChild(el('p', 'blank', lang === 'en'
+          ? 'Not fetched yet. Run tools/fetch-macro.mjs with an API key.'
+          : 'まだ取ってきていません。tools/fetch-macro.mjs を鍵つきで走らせると入ります。'));
+      }
+      host.appendChild(card);
+    });
+  }
+
   /* --------------------------------------------------------------- 描画 */
   function render() {
+    buildHead();
+    buildFoot();
+    buildHello();
+    buildDoors();
+    buildProfile();
+    buildMacro();
+
     var games = document.getElementById('works');
-    games.textContent = '';
-    PB.WORKS.forEach(function (w) { games.appendChild(buildGame(w)); });
+    if (games) {
+      games.textContent = '';
+      PB.WORKS.forEach(function (w) { games.appendChild(buildGame(w)); });
+    }
 
     var cnt = document.getElementById('games-count');
     if (cnt) cnt.textContent = lang === 'en'
@@ -768,12 +1107,10 @@
       : '全 ' + PB.WORKS.length + ' 作';
 
     var plan = document.getElementById('plan');
-    plan.textContent = '';
-    plan.appendChild(buildPlan());
+    if (plan) { plan.textContent = ''; plan.appendChild(buildPlan()); }
 
     var tenets = document.getElementById('tenets');
-    tenets.textContent = '';
-    tenets.appendChild(buildTenets());
+    if (tenets) { tenets.textContent = ''; tenets.appendChild(buildTenets()); }
 
     buildRanking();
     buildAccountSlot();
@@ -837,6 +1174,8 @@
   function wireAuth() {
     modal = document.getElementById('auth-modal');
     form = document.getElementById('auth-form');
+    /* アカウントは対戦の記録のためだけにある。盤上のページ以外には置いていない */
+    if (!modal || !form) { modal = form = null; return; }
 
     document.getElementById('auth-close').addEventListener('click', function () { modal.close(); });
 
@@ -884,17 +1223,33 @@
       if (n.dataset.ja == null) n.dataset.ja = n.innerHTML;
       n.innerHTML = lang === 'en' ? n.dataset.en : n.dataset.ja;
     });
-    /* 狭い画面では「切り替え先」だけを出す。CSS で .ctl__now を隠す */
-    var btn = document.getElementById('lang');
-    if (btn) {
-      btn.textContent = '';
-      btn.appendChild(el('span', 'ctl__now ctl__on', lang === 'en' ? 'EN' : '日本語'));
-      btn.appendChild(el('span', 'ctl__now', ' / '));
-      btn.appendChild(el('span', null, lang === 'en' ? '日本語' : 'EN'));
-      btn.setAttribute('aria-label', lang === 'en' ? 'Switch to Japanese' : '英語に切り替える');
-    }
     if (modal) setMode(mode);
-    render();
+    render();          // 天地ごと組み直す。切替ボタンもここで作り直される
+    paintControls();   // なので文字を入れるのは render のあと
+  }
+
+  /* 天が組み直されるたびに、2つの切替ボタンの見た目を入れ直す。
+     狭い画面では「切り替え先」だけを出す（CSS で .ctl__now を隠す）。 */
+  function paintControls() {
+    var lb = document.getElementById('lang');
+    if (lb) {
+      lb.textContent = '';
+      lb.appendChild(el('span', 'ctl__now ctl__on', lang === 'en' ? 'EN' : '日本語'));
+      lb.appendChild(el('span', 'ctl__now', ' / '));
+      lb.appendChild(el('span', null, lang === 'en' ? '日本語' : 'EN'));
+      lb.setAttribute('aria-label', lang === 'en' ? 'Switch to Japanese' : '英語に切り替える');
+    }
+    var tb = document.getElementById('theme');
+    if (tb) {
+      var cur = document.documentElement.getAttribute('data-theme');
+      var name = cur === 'dark' ? '青焼き' : (cur === 'light' ? '製図用紙' : '地の色');
+      tb.textContent = '';
+      tb.appendChild(el('span', 'ctl__long', name));
+      var short = el('span', 'ctl__short', '◐');
+      short.setAttribute('aria-hidden', 'true');
+      tb.appendChild(short);
+      tb.setAttribute('aria-label', lang === 'en' ? 'Change background (' + name + ')' : '地の色を変える（' + name + '）');
+    }
   }
 
   /* ------------------------------------------------------------ 明暗切替 */
@@ -902,17 +1257,7 @@
     if (m) document.documentElement.setAttribute('data-theme', m);
     else document.documentElement.removeAttribute('data-theme');
     try { m ? localStorage.setItem('pb-theme', m) : localStorage.removeItem('pb-theme'); } catch (e) {}
-    var btn = document.getElementById('theme');
-    if (btn) {
-      var cur = document.documentElement.getAttribute('data-theme');
-      var name = cur === 'dark' ? '青焼き' : (cur === 'light' ? '製図用紙' : '地の色');
-      btn.textContent = '';
-      btn.appendChild(el('span', 'ctl__long', name));
-      var short = el('span', 'ctl__short', '◐');
-      short.setAttribute('aria-hidden', 'true');
-      btn.appendChild(short);
-      btn.setAttribute('aria-label', lang === 'en' ? 'Change background (' + name + ')' : '地の色を変える（' + name + '）');
-    }
+    paintControls();
   }
 
   /* 確認リンクから戻ってきたときに、何が起きたのかを画面上部に出す。
@@ -959,11 +1304,16 @@
       if (landed) showLanding(landed);
     });
 
-    var lb = document.getElementById('lang');
-    if (lb) lb.addEventListener('click', function () { lang = (lang === 'ja' ? 'en' : 'ja'); applyLang(); });
-
-    var tb = document.getElementById('theme');
-    if (tb) tb.addEventListener('click', function () {
+    /* 切替ボタンは天と一緒に作り直されるので、要素に直接ではなく
+       document で受ける。付け直しの漏れが起きない。 */
+    document.addEventListener('click', function (e) {
+      var b = e.target.closest ? e.target.closest('#lang, #theme') : null;
+      if (!b) return;
+      if (b.id === 'lang') {
+        lang = (lang === 'ja' ? 'en' : 'ja');
+        applyLang();
+        return;
+      }
       var cur = document.documentElement.getAttribute('data-theme');
       var dark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
       applyTheme(!cur ? (dark ? 'light' : 'dark')

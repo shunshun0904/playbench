@@ -2,7 +2,7 @@
    index.html の CSS / JS をインライン展開して1枚にまとめる。
      node build.js
    出力:
-     dist/playbench.html          そのまま開ける単一ファイル
+     dist/playbench.html          盤上のページを1枚にまとめたもの
      dist/playbench-artifact.html Artifact 用（doctype/html/head/body を外した本文）
    ========================================================================== */
 'use strict';
@@ -15,7 +15,7 @@ const OUT = path.join(ROOT, 'dist');
 
 const read = rel => fs.readFileSync(path.join(ROOT, rel), 'utf8');
 
-let html = read('index.html');
+let html = read('games.html');
 
 html = html.replace(/<link rel="stylesheet" href="([^"]+)">/g,
   (_, href) => '<style>\n' + read(href).trim() + '\n</style>');

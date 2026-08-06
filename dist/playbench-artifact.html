@@ -1,4 +1,4 @@
-<title>PLAYBENCH ── ボードゲームで遊ぶ</title>
+<title>ボードゲームの自主研究 ── shunshun0904</title>
 <style>
 /* ==========================================================================
    PLAYBENCH ─ 製図シートの上で遊ぶ
@@ -799,133 +799,132 @@ a { color: inherit; }
   .rank__row { grid-template-columns: 2rem 1fr 4.5rem; }
   .rank__row > :nth-child(3) { display: none; }
 }
+
+/* ══════════════════════════════════════════════════ 4ページ構成の追加分 */
+
+/* 現在地。ここにいる、というだけの印なので控えめに */
+.masthead__nav a.is-here { color: var(--ink); text-decoration: underline;
+  text-decoration-color: var(--vermilion); text-underline-offset: .35em; }
+
+/* 前置きの段落。以前の .cover__lead を、扉のない版として置き直したもの */
+.lead {
+  max-width: 46rem; margin: 0 0 var(--s4);
+  font-size: 1rem; line-height: 1.95; color: var(--ink-mid);
+}
+.lead strong { color: var(--ink); font-weight: 600; }
+
+/* ------------------------------------------------------------ トップ */
+.hello { padding-block: var(--s5) var(--s4); }
+.hello__t {
+  margin: 0 0 var(--s2);
+  font-family: var(--mono); font-size: clamp(1.5rem, 4.5vw, 2.1rem);
+  font-weight: 600; letter-spacing: .02em; color: var(--ink);
+}
+.hello__tag { margin: 0 0 var(--s3); color: var(--vermilion); font-size: .92rem; }
+.hello__b p { max-width: 44rem; margin: 0 0 var(--s2); line-height: 1.95; color: var(--ink-mid); }
+
+.doors {
+  margin-top: var(--s2);
+  grid-template-columns: repeat(auto-fit, minmax(min(17rem, 100%), 1fr));
+}
+.door {
+  display: flex; flex-direction: column; gap: var(--s2);
+  padding: var(--s4); text-decoration: none; color: inherit;
+  transition: background .15s;
+}
+.door:hover { background: color-mix(in srgb, var(--ink) 4%, transparent); }
+.door__t { margin: 0; font-size: 1rem; font-weight: 600; color: var(--ink); }
+.door__b { margin: 0; font-size: .86rem; line-height: 1.8; color: var(--ink-mute); flex: 1; }
+.door__go { font-family: var(--mono); font-size: .78rem; color: var(--vermilion); }
+
+/* まだ書いていない・まだ取っていない、と正直に出す枠 */
+.blank {
+  margin: 0; padding: var(--s3) var(--s4);
+  border: 1px dashed var(--rule); color: var(--ink-mute);
+  font-size: .84rem;
+}
+
+/* -------------------------------------------------------- 職務経歴 */
+.cv { display: grid; gap: 1px; }
+.cv__row {
+  display: grid; grid-template-columns: minmax(0, 9rem) 1fr;
+  gap: var(--s2) var(--s4); padding: var(--s3) 0;
+  border-top: 1px solid var(--rule);
+}
+.cv__row:last-child { border-bottom: 1px solid var(--rule); }
+.cv__when { font-size: .8rem; color: var(--ink-mute); white-space: nowrap; }
+.cv__dash { padding-inline: .4em; opacity: .6; }
+.cv__org { margin: 0 0 .2rem; font-size: .96rem; font-weight: 600; color: var(--ink); }
+.cv__role { margin: 0 0 var(--s2); font-size: .84rem; color: var(--vermilion); }
+.cv__b { margin: 0; font-size: .86rem; line-height: 1.85; color: var(--ink-mid); }
+@media (max-width: 34rem) { .cv__row { grid-template-columns: 1fr; } }
+
+.links { display: flex; flex-wrap: wrap; gap: var(--s3); margin-top: var(--s3); }
+.links__a { font-family: var(--mono); font-size: .84rem; color: var(--ink-mid);
+  text-decoration-color: var(--rule); text-underline-offset: .2em; }
+.links__a:hover { color: var(--vermilion); }
+.tags { display: flex; flex-wrap: wrap; gap: .35rem; margin: 0; }
+
+/* ---------------------------------------------------- マクロ経済指標 */
+.gauge { padding: var(--s4) 0; border-top: 1px solid var(--rule); }
+.gauge:last-child { border-bottom: 1px solid var(--rule); }
+.gauge__head { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--s2); }
+.gauge__t { margin: 0; font-size: 1rem; font-weight: 600; color: var(--ink); }
+.gauge__sub { font-size: .8rem; color: var(--ink-mute); }
+.gauge__why { max-width: 44rem; margin: var(--s2) 0 var(--s3);
+  font-size: .86rem; line-height: 1.85; color: var(--ink-mid); }
+.gauge__fig { overflow-x: auto; }
+.gauge__src { margin: var(--s2) 0 0; font-family: var(--mono);
+  font-size: .72rem; color: var(--ink-mute); }
+.spark { display: block; width: 100%; min-width: 22rem; height: auto; color: var(--ink); }
 </style>
-<!-- ══════════════════════════════════════════════════════════════ 天 -->
-<header class="masthead">
-  <div class="sheet masthead__in">
-    <a class="masthead__mark" href="#">PLAY<span>BENCH</span></a>
-
-    <nav class="masthead__nav">
-      <a href="#games" data-en="Games">ゲーム</a>
-      <a href="#ranking" data-en="Ranking">ランキング</a>
-    </nav>
-
-    <div class="masthead__tools">
-      <button class="ctl" id="lang" type="button"></button>
-      <button class="ctl" id="theme" type="button">地の色</button>
-      <div id="account-slot"></div>
-    </div>
-  </div>
-</header>
+<header class="masthead" id="head"></header>
 
 <main>
-
-<!-- ═══════════════════════════════════════════════════════════ 表紙 -->
-<section class="sheet cover">
-  <h1 class="cover__title" data-en="Real board games.<br>Opponents that <em>actually try</em>.">
-    名作ボードゲームを、<br><em>手強い相手</em>と。
-  </h1>
-
-  <p class="cover__lead" data-en="Three classics, rebuilt to run in your browser. <strong>No install, no sign-up, no ads.</strong> Press play and you are in. The computer players are not there to lose politely — each one has been measured, and the numbers are on this page.">
-    ブラウザで開くだけ。<strong>インストールも登録も広告もありません</strong>。
-    押せばもう始まります。相手のCPUは手加減しません。
-    どれくらい強いのかは実際に測ってあって、その数字もこのページに載せています。
-  </p>
-
-  <div class="cover__acts">
-    <a class="btn btn--go" href="#games" data-en="Play now">▶ すぐ遊ぶ</a>
-    <button class="btn" type="button" data-auth-open="signup" data-en="Create an account">アカウントを作る</button>
-    <span class="cover__hint" data-en="An account keeps your results. Playing never requires one.">
-      アカウントがあると成績が残ります。遊ぶだけならいりません
-    </span>
-  </div>
-</section>
-
-<!-- ═══════════════════════════════════════════════════════ ゲーム -->
-<section class="sheet" id="games">
+<section class="sheet">
   <div class="band">
-    <h2 class="band__t" data-en="Games">遊ぶ</h2>
+    <h2 class="band__t" data-en="Board games">盤上の自主研究</h2>
     <span class="band__n"></span>
     <span class="tag" id="games-count"></span>
   </div>
+  <p class="lead" data-en="I like board games, so I rebuilt three of them to run in a browser and spent rather longer building their opponents. What follows is mostly a record of that. If you want a game, the CPU will play you — it is not there to lose politely.">
+    ボードゲームが好きなので、3作をブラウザで動くように書き直し、
+    そのあと相手のCPUのほうに長く時間を使いました。以下はおおむねその記録です。
+    遊びたい方は、そのまま対戦できます。相手は手加減しません。
+  </p>
   <div class="works" id="works"></div>
 </section>
 
-<!-- ═══════════════════════════════════════════════════ あなたの記録 -->
 <section class="sheet" id="me">
   <div class="band">
-    <h2 class="band__t" data-en="Your record">あなたの記録</h2>
+    <h2 class="band__t band__t--sub" data-en="Your record">対戦の記録</h2>
     <span class="band__n"></span>
   </div>
   <div id="account-panel"></div>
 </section>
 
-<!-- ═════════════════════════════════════════════════════ ランキング -->
-<section class="sheet" id="ranking">
-  <div class="band">
-    <h2 class="band__t" data-en="Ranking">ランキング</h2>
-    <span class="band__n"></span>
-  </div>
-  <div id="ranking-panel"></div>
-</section>
-
-<!-- ═══════════════════════════════════════════════ これからできること -->
 <section class="sheet">
   <div class="band">
-    <h2 class="band__t" data-en="Coming next">これからできること</h2>
+    <h2 class="band__t band__t--sub" data-en="What I want to try next">次に試したいこと</h2>
     <span class="band__n"></span>
   </div>
-
-  <p class="cover__lead" data-en="The most interesting opponent is not the strongest one — it is the one that has watched you play. Four steps. <strong>None of it is built yet</strong>; this is the plan, not a promise kept.">
-    いちばん面白い相手は、最強の相手ではなく、<strong>あなたの打ち方を見てきた相手</strong>です。
-    順に4段階。<strong>まだどれも実装していません</strong>。これは予定であって、できている話ではありません。
+  <p class="lead" data-en="The opponent I actually want is not the strongest one — it is the one that has watched me play. Four steps. <strong>None of it is built</strong>; this is a note to myself.">
+    ほしいのは最強の相手ではなく、<strong>自分の打ち方を見てきた相手</strong>です。順に4段階。
+    <strong>まだどれも実装していません</strong>。自分用の覚え書きです。
   </p>
-
   <div id="plan"></div>
 </section>
 
-<!-- ═════════════════════════════════════════════════════ 作りについて -->
 <section class="sheet">
   <div class="band">
-    <h2 class="band__t band__t--sub" data-en="About the build">作りについて</h2>
+    <h2 class="band__t band__t--sub" data-en="How these are built">作りについて</h2>
     <span class="band__n"></span>
   </div>
   <div id="tenets"></div>
 </section>
-
 </main>
 
-<!-- ═════════════════════════════════════════════════════════ 奥付 -->
-<footer class="sheet colophon">
-  <div>
-    <p class="colophon__t" data-en="About">このサイトについて</p>
-    <p data-en="PLAYBENCH is personal and non-commercial. Nothing is sold and there are no ads.">
-      PLAYBENCH は個人による非商用のサイトです。何も販売せず、広告も出しません。
-    </p>
-
-    <!-- 何を集めるかの方針。いま実際に計測しているかは下の行に出る（assets/site.js）。
-         方針と実状を分けてあるので、測定IDを入れ替えても、ここは直さなくてよい。 -->
-    <p data-en="For analytics it uses Google Analytics: which pages were read, plus a rough region and device type. Your games and what you type are never sent.">
-      アクセス解析には Google アナリティクスを使います。集めるのは読まれたページと、
-      おおまかな地域・機器の別だけで、棋譜も入力した文字も送りません。
-    </p>
-    <p class="pstate" id="privacy-state"></p>
-  </div>
-  <div>
-    <p class="colophon__t" data-en="Rights">権利について</p>
-    <p data-en="Big Shot is a game by Alex Randolph; Acquire by Sid Sackson; High Society by Reiner Knizia. These are unofficial fan implementations built for study. They contain no trademarks and no original artwork.">
-      Big Shot はアレックス・ランドルフ、Acquire はシド・サクソン、High Society はライナー・クニツィアによるゲームです。
-      本サイトの実装はいずれも学習目的の非公式なファンメイドで、商標もアートワークも含みません。
-    </p>
-  </div>
-  <div>
-    <p class="colophon__t" data-en="Source">実装</p>
-    <p data-en="Everything is public, including the measurements behind every bar.">
-      すべて公開しています。棒グラフの裏にある実測も含めて。
-    </p>
-    <p><a href="https://github.com/shunshun0904" rel="noopener">github.com/shunshun0904</a></p>
-  </div>
-</footer>
+<footer class="sheet colophon" id="foot"></footer>
 
 <!-- ══════════════════════════════════════════════ ログイン／新規登録 -->
 <dialog class="modal" id="auth-modal" aria-labelledby="auth-title">
@@ -1110,6 +1109,71 @@ window.PB.CONFIG = window.PB.CONFIG || {
 </script>
 <script>
 /* ==========================================================================
+   自己紹介と職務経歴。
+
+   ここだけが「本人にしか書けない」ファイルです。
+   about.html はこの中身をそのまま組みます。HTML には手を入れません。
+
+   ─────────────────────────────────────────────────────────────
+   いまは空欄（fill: false）です。埋めたい項目の中身を書いて、
+   その項目の fill を true にすると、画面に出ます。
+   空欄のままの項目は「まだ書いていません」と正直に出します。
+   勝手に埋めることはしません。
+   ─────────────────────────────────────────────────────────────
+   ========================================================================== */
+'use strict';
+
+window.PB = window.PB || {};
+
+window.PB.PROFILE = {
+
+  /* 名乗り。ハンドルだけでも、本名でも。 */
+  name:   { fill: false, ja: '', en: '' },
+  tagline:{ fill: false, ja: '', en: '' },   // 一行の肩書き（例: ソフトウェアエンジニア）
+
+  /* 自己紹介。段落ごとに配列の1要素。 */
+  intro: {
+    fill: false,
+    ja: [
+      // '例）業務ではこういうことをしています。',
+      // '例）このサイトは、業務とは別に、自分で確かめたいことを置く場所です。'
+    ],
+    en: []
+  },
+
+  /* 職務経歴。新しいものが上。 */
+  career: {
+    fill: false,
+    rows: [
+      // {
+      //   from: '2022-04', to: '在職中',        // to は '' なら「現在」
+      //   org: '会社名', orgEn: '',
+      //   role: '役割', roleEn: '',
+      //   body: 'やっていること・作ったもの・規模・使った技術',
+      //   bodyEn: ''
+      // }
+    ]
+  },
+
+  /* 手に馴染んでいる道具。分類ごとに並べる。 */
+  skills: {
+    fill: false,
+    groups: [
+      // { label: '言語', labelEn: 'Languages', items: ['JavaScript', 'Python'] }
+    ]
+  },
+
+  /* 外に出しているもの。GitHub は既定で入れてあります。 */
+  links: {
+    fill: true,
+    rows: [
+      { label: 'GitHub', url: 'https://github.com/shunshun0904' }
+    ]
+  }
+};
+</script>
+<script>
+/* ==========================================================================
    収録作品の目録。
    作品を1つ増やすときに手を入れるのは、原則このファイルだけ。
 
@@ -1123,70 +1187,12 @@ window.PB = window.PB || {};
 
 window.PB.WORKS = [
   /* ---------------------------------------------------------------- 01 */
-  {
-    id: 'bigshot',
-    bggName: 'Big Shot',
-    no: 1,
-    title: 'ビッグショット',
-    titleEn: 'Big Shot',
-    latin: 'BIG SHOT',
-    designer: 'アレックス・ランドルフ',
-    designerEn: 'Alex Randolph',
-    players: '4人',
-    playersEn: '4 players',
-    genre: '競り・エリアマジョリティ',
-    genreEn: 'Auction / Area majority',
-    hook: '落札した4個には相手の色も混ざっていて、それも落札者が置く。どこへ捨てるかが勝負どころ。',
-    hookEn: 'The four cubes you win include your rivals\' colours — and you place those too. Where you dump them is the game.',
-    opponents: 'CPU 3人（確率計算）',
-    opponentsEn: '3 CPU (exact probability)',
-    lead: '18回の競りで街を分け合う。収入がないので、使った金はそのまま失点になる。',
-    leadEn: 'Eighteen auctions divide a city. There is no income, so every dollar spent is a point lost.',
-
-    /* 相手の作り */
-    method: '確率の数え上げ',
-    methodEn: 'Exhaustive enumeration',
-    methodBody:
-      '学習は使っていない。区画の状態は「4色の個数・合計7以下」の330通りしかないので、' +
-      '残り枠が無作為に埋まると仮定したときの所有確率を起動時に多項分布で全部数え上げて表にしておく。' +
-      '同数無効のルールもこの数え上げの中で処理される。',
-    methodBodyEn:
-      'No learning. A block has only 330 reachable states (four colours, at most seven cubes), so the ' +
-      'ownership probability under random filling is enumerated exactly at start-up with the multinomial ' +
-      'distribution. The tie-voids-the-colour rule falls out of the same enumeration.',
-
-    plate: {
-      caption: '実測勝率',
-      captionEn: 'Measured win rate',
-      note: '4人戦・席順ローテーション・各200局',
-      noteEn: '4 players, seats rotated, 200 games each',
-      baseline: 0.25,
-      rows: [
-        { label: 'AI 1人 対 素人筋 3人',  labelEn: 'AI vs 3 naive',    v: 0.855, lead: true },
-        { label: 'AI 1人 対 浪費家 3人',  labelEn: 'AI vs 3 spenders', v: 0.995 },
-        { label: 'AI 1人 対 乱択 3人',    labelEn: 'AI vs 3 random',   v: 1.000 },
-        { label: '素人筋 1人 対 AI 3人',  labelEn: 'Naive vs 3 AI',    v: 0.055 },
-        { label: '乱択 1人 対 AI 3人',    labelEn: 'Random vs 3 AI',   v: 0.040 }
-      ]
-    },
-
-    remark:
-      '所有確率を「置いた数が多いほど有利」と当てずっぽうで近似していた版は、空き区画に1個置いただけで' +
-      '勝率43%と見積もり、序盤に全財産を注いで沈んだ。数え上げに替えて 0.43 → 0.98。',
-    remarkEn:
-      'An earlier version approximated ownership by "more cubes is better", valued a single cube on an empty ' +
-      'block at 43%, and drowned itself in debt in the opening. Switching to enumeration moved it 0.43 → 0.98.',
-
-    play: 'https://shunshun0904.github.io/bigshot/',
-    repo: 'https://github.com/shunshun0904/bigshot',
-    figure: 'blocks'
-  },
 
   /* ---------------------------------------------------------------- 02 */
   {
     id: 'acquire',
     bggName: 'Acquire',
-    no: 2,
+    no: 1,
     title: 'アクワイア',
     titleEn: 'Acquire',
     latin: 'ACQUIRE',
@@ -1243,7 +1249,7 @@ window.PB.WORKS = [
   {
     id: 'highsociety',
     bggName: 'High Society',
-    no: 3,
+    no: 2,
     title: 'ハイソサエティ',
     titleEn: 'High Society',
     latin: 'HIGH SOCIETY',
@@ -1304,7 +1310,7 @@ window.PB.WORKS = [
   {
     id: 'imperial',
     bggName: 'Imperial',
-    no: 4,
+    no: 3,
     title: 'インペリアル',
     titleEn: 'Imperial',
     latin: 'IMPERIAL',
@@ -1368,77 +1374,6 @@ window.PB.WORKS = [
   },
 
   /* ---------------------------------------------------------------- 05 */
-  {
-    id: 'redplanet',
-    bggName: 'Mission: Red Planet',
-    no: 5,
-    title: 'ミッション・レッドプラネット',
-    titleEn: 'Mission: Red Planet',
-    latin: 'MISSION: RED PLANET',
-    designer: 'ブルーノ・フェドゥッティ／ブルーノ・カタラ',
-    designerEn: 'Bruno Faidutti / Bruno Cathala',
-    players: '2〜6人',
-    playersEn: '2–6 players',
-    genre: '役割選択・エリアマジョリティ',
-    genreEn: 'Role selection / Area majority',
-    hook: '全員が伏せたキャラクターを9から1へ数え下げて公開する。宇宙船の破壊も暗殺も、番号の若い者ほど後出しになる。',
-    hookEn: 'Everyone commits a character face down, then they are revealed counting down from 9 to 1. The lower your number, the later you act — and the more you have seen.',
-    opponents: 'CPU 1〜5人（ルールベース）',
-    opponentsEn: '1–5 CPU (rule-based)',
-    lead: '9人の腹心を送り込み、宇宙船を火星へ飛ばして各エリアの多数派を握る。2015年の第2版に準拠。',
-    leadEn: 'Send nine agents aboard rockets to Mars and hold the majority in each zone. Follows the 2015 second edition.',
-
-    /* 相手の作り */
-    method: 'エリアの取り分の差分で測る',
-    methodEn: 'Priced as a change in share',
-    methodBody:
-      '学習も探索木も使っていない。このゲームの価値はすべて「そのエリアの得点トークンを誰が取るか」に' +
-      '集まっているので、あらゆる選択を〈取り分の変化 × エリアの期待価値〉という1つの尺度に落としている。' +
-      '取り分は単独最多なら 1、n人同数なら 1/n、それ以外は 0。' +
-      'エリアの期待価値は資源の点数（未公開なら1.73）に残りの生産回数を掛けたもの。' +
-      '宇宙船に1人乗せる価値は、その船の乗員全員が着陸したあとの取り分と、' +
-      'そこへ自分をもう1人足したときの取り分の差で測る。' +
-      '工作員の破壊も、軍人の排除も、パイロットの行き先変更も、同じ差分で比べられる。',
-    methodBodyEn:
-      'No learning and no search tree. All the value in this game sits in who collects a zone\'s point tokens, ' +
-      'so every choice is reduced to one quantity: the change in share, times the zone\'s expected value. ' +
-      'Share is 1 for a sole majority, 1/n for an n-way tie, 0 otherwise; a zone is worth its resource value ' +
-      '(1.73 while still face down) times the number of productions left. Putting one astronaut aboard a rocket ' +
-      'is priced by simulating the whole rocket landing, then asking what one more of your own would add. ' +
-      'Sabotage, assassination and re-targeting are all compared on that same difference.',
-
-    plate: {
-      caption: '実測勝率',
-      captionEn: 'Measured win rate',
-      note: '4人戦・席順ローテーション・各400局（括弧内は95%信頼区間）',
-      noteEn: '4 players, seats rotated, 400 games each (95% CI)',
-      baseline: 0.25,
-      rows: [
-        { label: 'AI 1人 対 素人筋 3人', labelEn: 'AI vs 3 naive', v: 0.823, ci: 0.037, lead: true },
-        { label: 'AI 1人 対 乱択 3人', labelEn: 'AI vs 3 random', v: 0.930, ci: 0.025 },
-        { label: '素人筋 1人 対 AI 3人', labelEn: 'Naive vs 3 AI', v: 0.065, ci: 0.024 },
-        { label: '乱択 1人 対 AI 3人', labelEn: 'Random vs 3 AI', v: 0.025, ci: 0.015 },
-        { label: '［参考］素人筋 対 乱択3人', labelEn: '[ref] Naive vs 3 random', v: 0.435, ci: 0.049 }
-      ]
-    },
-
-    remark:
-      '比較用の「素人筋」は、初心者がまず思いつく方針だけで打つ相手 ── ' +
-      '宇宙飛行士を多く出せるカードを選び、資源の高いエリア行きの船に乗せ、いちばん数の多い相手を狙う。' +
-      '抜けているのは多数派の読みだけで、それだけで .435 → .065 に落ちる。' +
-      'なお実測の途中で、AI の同点崩しに Math.random() が1か所だけ残っていて同じ種でも勝率が ±.003 揺れていたのを' +
-      '見つけて直した。いまは種から1手まで再現する。',
-    remarkEn:
-      'The naive yardstick plays on beginner instincts alone — pick the character that places the most ' +
-      'astronauts, board the rocket bound for the richest resource, hit whoever has the most pieces. The only ' +
-      'thing missing is reading the majority, and that alone costs .435 → .065. Measuring it also turned up a ' +
-      'single stray Math.random() in the AI\'s tie-break, which made win rates drift ±.003 even from a fixed ' +
-      'seed; it now reproduces move for move.',
-
-    play: 'https://shunshun0904.github.io/redplanet/',
-    repo: 'https://github.com/shunshun0904/redplanet',
-    figure: 'mars'
-  }
 ];
 
 /* 「これから作るもの」。実装が済んだ段階で state を 'done' にする。 */
@@ -1498,15 +1433,15 @@ window.PB.PRINCIPLES = [
     titleEn: 'No dependencies',
     body:
       'どれもライブラリもフォントも読み込まない。盤面も駒も手書きの SVG と CSS で、' +
-      '5作のうち4作は index.html を開くだけで動く。' +
-      'ミッション・レッドプラネットは効果音まで Web Audio で合成しているので、音声ファイルも持たない。' +
+      'ハイソサエティは index.html 1枚で完結する（学習した重み20KBごと埋め込んである）。' +
+      'アクワイアも単一ファイル版を書き出せる。' +
       '例外はインペリアルで、持ち込みの盤面画像を1枚使い、ES モジュールのため配信が要る。' +
       '外から読むのはアクセス解析の1本だけ。それも web で配信しているときに限り、' +
       'ファイルとして開けば、どれも外へは何も出さない。',
     bodyEn:
-      'None of them loads a library or a font. Boards and pieces are hand-written SVG and CSS, and four of the ' +
-      'five run by opening index.html. Mission: Red Planet synthesises even its sound effects with Web Audio, so ' +
-      'it ships no audio files either. Imperial is the exception: it uses one supplied board image and, being ' +
+      'None of them loads a library or a font. Boards and pieces are hand-written SVG and CSS. High Society is ' +
+      'a single index.html, trained weights and all; Acquire can be exported as one file too. Imperial is the ' +
+      'exception: it uses one supplied board image and, being ' +
       'ES modules, needs to be served. The one thing loaded from outside is analytics, and only when served ' +
       'over the web — opened as a file, none of them reaches out at all.'
   },
@@ -1555,6 +1490,108 @@ window.PB.BGG = {
   "fetchedAt": null,
   "source": "boardgamegeek.com",
   "games": {}
+};
+</script>
+<script>
+/* ==========================================================================
+   マクロ経済指標のスナップショット。
+
+   出どころは Alpha Vantage（無料枠）。取り直しは:
+
+     ALPHAVANTAGE_KEY=xxxx node tools/fetch-macro.mjs
+
+   道具がこのファイルを書き換えます。手で触らないでください。
+   例外は INDICATORS の定義（何を見るか・なぜ見るか）で、そこは手で書きます。
+
+   ─────────────────────────────────────────────────────────────
+   月次の系列は「開始月＋値の並び」で持ちます。日付を1つずつ持つより
+   短く済み、欠測があれば null が入るので、抜けは抜けとして分かります。
+   ─────────────────────────────────────────────────────────────
+   ========================================================================== */
+'use strict';
+
+window.PB = window.PB || {};
+
+/* 何を見るか。順番がそのまま画面の順番になります。
+   ここに項目を足して fetch-macro.mjs を走らせれば、系列が入ります。 */
+window.PB.INDICATORS = [
+  {
+    id: 'fedfunds',
+    title: '米国 政策金利', titleEn: 'US policy rate',
+    sub: 'FF金利（実効）', subEn: 'Effective federal funds rate',
+    unit: '%',
+    why: '株の割引率の土台。ここが動くと、利益が変わらなくても株価の妥当な水準が動く。',
+    whyEn: 'The base of the discount rate. When this moves, fair value moves even if earnings do not.',
+    fn: 'FEDERAL_FUNDS_RATE'
+  },
+  {
+    id: 'dgs10',
+    title: '米国 10年国債利回り', titleEn: 'US 10-year yield',
+    sub: '長期金利', subEn: 'Long-term rate',
+    unit: '%',
+    why: '政策金利との差（イールドカーブ）が景気の織り込みを映す。逆転は歴史的に景気後退の先触れ。',
+    whyEn: 'Its gap to the policy rate is the curve. Inversion has historically preceded recessions.',
+    fn: 'TREASURY_YIELD', maturity: '10year'
+  },
+  {
+    id: 'cpi',
+    title: '米国 消費者物価', titleEn: 'US CPI',
+    sub: 'CPI（前年同月比を計算して表示）', subEn: 'CPI, shown as year-over-year',
+    unit: '%',
+    why: '金利を決めるのはこれ。指数そのものより、前年比の向きを見る。',
+    whyEn: 'This is what sets rates. The direction of the year-over-year change matters more than the level.',
+    fn: 'CPI', transform: 'yoy'
+  },
+  {
+    id: 'unemp',
+    title: '米国 失業率', titleEn: 'US unemployment',
+    sub: '', subEn: '',
+    unit: '%',
+    why: '金融政策のもう一方の目標。上がり始めると利下げが早まる一方、企業収益は落ちる。',
+    whyEn: 'The other half of the mandate. When it starts rising, cuts come sooner but earnings fall.',
+    fn: 'UNEMPLOYMENT'
+  }
+];
+
+/* ここから下は道具が書き換えます。
+   fetched は取得した時刻、series は id ごとの系列。 */
+window.PB.MACRO = {
+  fetched: '2026-08-06',
+  source: 'Alpha Vantage',
+  series: {
+    fedfunds: {
+      from: '2000-01', step: 'month', unit: '%',
+      v: [
+        5.45, 5.73, 5.85, 6.02, 6.27, 6.53, 6.54, 6.50, 6.52, 6.51, 6.51, 6.40,
+        5.98, 5.49, 5.31, 4.80, 4.21, 3.97, 3.77, 3.65, 3.07, 2.49, 2.09, 1.82,
+        1.73, 1.74, 1.73, 1.75, 1.75, 1.75, 1.73, 1.74, 1.75, 1.75, 1.34, 1.24,
+        1.24, 1.26, 1.25, 1.26, 1.26, 1.22, 1.01, 1.03, 1.01, 1.01, 1.00, 0.98,
+        1.00, 1.01, 1.00, 1.00, 1.00, 1.03, 1.26, 1.43, 1.61, 1.76, 1.93, 2.16,
+        2.28, 2.50, 2.63, 2.79, 3.00, 3.04, 3.26, 3.50, 3.62, 3.78, 4.00, 4.16,
+        4.29, 4.49, 4.59, 4.79, 4.94, 4.99, 5.24, 5.25, 5.25, 5.25, 5.25, 5.24,
+        5.25, 5.26, 5.26, 5.25, 5.25, 5.25, 5.26, 5.02, 4.94, 4.76, 4.49, 4.24,
+        3.94, 2.98, 2.61, 2.28, 1.98, 2.00, 2.01, 2.00, 1.81, 0.97, 0.39, 0.16,
+        0.15, 0.22, 0.18, 0.15, 0.18, 0.21, 0.16, 0.16, 0.15, 0.12, 0.12, 0.12,
+        0.11, 0.13, 0.16, 0.20, 0.20, 0.18, 0.18, 0.19, 0.19, 0.19, 0.19, 0.18,
+        0.17, 0.16, 0.14, 0.10, 0.09, 0.09, 0.07, 0.10, 0.08, 0.07, 0.08, 0.07,
+        0.08, 0.10, 0.13, 0.14, 0.16, 0.16, 0.16, 0.13, 0.14, 0.16, 0.16, 0.16,
+        0.14, 0.15, 0.14, 0.15, 0.11, 0.09, 0.09, 0.08, 0.08, 0.09, 0.08, 0.09,
+        0.07, 0.07, 0.08, 0.09, 0.09, 0.10, 0.09, 0.09, 0.09, 0.09, 0.09, 0.12,
+        0.11, 0.11, 0.11, 0.12, 0.12, 0.13, 0.13, 0.14, 0.14, 0.12, 0.12, 0.24,
+        0.34, 0.38, 0.36, 0.37, 0.37, 0.38, 0.39, 0.40, 0.40, 0.40, 0.41, 0.54,
+        0.65, 0.66, 0.79, 0.90, 0.91, 1.04, 1.15, 1.16, 1.15, 1.15, 1.16, 1.30,
+        1.41, 1.42, 1.51, 1.69, 1.70, 1.82, 1.91, 1.91, 1.95, 2.19, 2.20, 2.27,
+        2.40, 2.40, 2.41, 2.42, 2.39, 2.38, 2.40, 2.13, 2.04, 1.83, 1.55, 1.55,
+        1.55, 1.58, 0.65, 0.05, 0.05, 0.08, 0.09, 0.10, 0.09, 0.09, 0.09, 0.09,
+        0.09, 0.08, 0.07, 0.07, 0.06, 0.08, 0.10, 0.09, 0.08, 0.08, 0.08, 0.08,
+        0.08, 0.08, 0.20, 0.33, 0.77, 1.21, 1.68, 2.33, 2.56, 3.08, 3.78, 4.10,
+        4.33, 4.57, 4.65, 4.83, 5.06, 5.08, 5.12, 5.33, 5.33, 5.33, 5.33, 5.33,
+        5.33, 5.33, 5.33, 5.33, 5.33, 5.33, 5.33, 5.33, 5.13, 4.83, 4.64, 4.48,
+        4.33, 4.33, 4.33, 4.33, 4.33, 4.33, 4.33, 4.33, 4.22, 4.09, 3.88, 3.72,
+        3.64, 3.64, 3.64, 3.64, 3.63, 3.63, 3.63
+      ]
+    }
+  }
 };
 </script>
 <script>
@@ -2827,11 +2864,350 @@ window.PB = window.PB || {};
     Array.prototype.forEach.call(nodes, function (n) { io.observe(n); });
   }
 
+  /* ═══════════════════════════════════════════════════ 全ページ共通の天地
+     4ページあるので、天と地は HTML に写さず、ここから組む。
+     文言を直す場所が1つで済む。 */
+  var PAGES = [
+    { file: 'index.html', ja: 'トップ',       en: 'Home' },
+    { file: 'about.html', ja: '自己紹介',     en: 'About' },
+    { file: 'macro.html', ja: 'マクロ経済',   en: 'Macro' },
+    { file: 'games.html', ja: '盤上',         en: 'Board games' }
+  ];
+  function here() {
+    var f = (location.pathname.split('/').pop() || '').split('?')[0];
+    return f === '' ? 'index.html' : f;
+  }
+  function who() {
+    var p = PB.PROFILE && PB.PROFILE.name;
+    return (p && p.fill && pick2(p)) || 'shunshun0904';
+  }
+  /* {fill, ja, en} を言語で選ぶ。埋まっていなければ null */
+  function pick2(o) {
+    if (!o || !o.fill) return null;
+    var v = (lang === 'en' && o.en) ? o.en : o.ja;
+    return v || null;
+  }
+
+  function buildHead() {
+    var host = document.getElementById('head');
+    if (!host) return;
+    host.textContent = '';
+    var box = el('div', 'sheet masthead__in');
+
+    var mark = el('a', 'masthead__mark', who());
+    mark.href = 'index.html';
+    box.appendChild(mark);
+
+    var nav = el('nav', 'masthead__nav');
+    var cur = here();
+    PAGES.forEach(function (p) {
+      if (p.file === 'index.html') return;          // 名乗りが入口を兼ねる
+      var a = el('a', p.file === cur ? 'is-here' : null, lang === 'en' ? p.en : p.ja);
+      a.href = p.file;
+      if (p.file === cur) a.setAttribute('aria-current', 'page');
+      nav.appendChild(a);
+    });
+    box.appendChild(nav);
+
+    var tools = el('div', 'masthead__tools');
+    var lb = el('button', 'ctl'); lb.type = 'button'; lb.id = 'lang';
+    var tb = el('button', 'ctl'); tb.type = 'button'; tb.id = 'theme';
+    tools.appendChild(lb);
+    tools.appendChild(tb);
+    /* アカウントは対戦の記録のためだけにある。盤上のページにしか出さない */
+    if (cur === 'games.html') {
+      var slot = el('div'); slot.id = 'account-slot';
+      tools.appendChild(slot);
+    }
+    box.appendChild(tools);
+    host.appendChild(box);
+  }
+
+  function buildFoot() {
+    var host = document.getElementById('foot');
+    if (!host) return;
+    host.textContent = '';
+    var en = lang === 'en';
+
+    function col(title, paras) {
+      var d = el('div');
+      d.appendChild(el('p', 'colophon__t', title));
+      paras.forEach(function (p) { d.appendChild(p); });
+      return d;
+    }
+
+    host.appendChild(col(en ? 'About this site' : 'このサイトについて', [
+      el('p', null, en
+        ? 'A personal site. Nothing is sold and there are no ads.'
+        : '個人のサイトです。何も販売せず、広告も出しません。'),
+      el('p', null, en
+        ? 'For analytics it uses Google Analytics: which pages were read, plus a rough region and device type. Nothing you type is ever sent.'
+        : 'アクセス解析には Google アナリティクスを使います。集めるのは読まれたページと、'
+          + 'おおまかな地域・機器の別だけで、入力した文字は送りません。'),
+      (function () { var p = el('p', 'pstate'); p.id = 'privacy-state'; return p; })()
+    ]));
+
+    host.appendChild(col(en ? 'Rights' : '権利について', [
+      el('p', null, en
+        ? 'Acquire is a game by Sid Sackson; High Society by Reiner Knizia; Imperial by Mac Gerdts. The implementations here are unofficial fan work made for study, containing no trademarks and no original artwork.'
+        : 'Acquire はシド・サクソン、High Society はライナー・クニツィア、'
+          + 'Imperial はマック・ゲルツによるゲームです。ここの実装はいずれも学習目的の'
+          + '非公式なファンメイドで、商標もアートワークも含みません。'),
+      el('p', null, en
+        ? 'Macro figures come from Alpha Vantage. Nothing here is investment advice.'
+        : 'マクロの数字は Alpha Vantage から取っています。投資助言ではありません。')
+    ]));
+
+    var link = el('p');
+    var a = el('a', null, 'github.com/shunshun0904');
+    a.href = 'https://github.com/shunshun0904';
+    a.rel = 'noopener';
+    link.appendChild(a);
+    host.appendChild(col(en ? 'Source' : '置き場所', [
+      el('p', null, en
+        ? 'Everything here is public, including the measurements behind every bar.'
+        : 'すべて公開しています。棒グラフの裏にある実測も含めて。'),
+      link
+    ]));
+  }
+
+  /* ═════════════════════════════════════════════════════════ トップページ */
+  function buildHello() {
+    var n = document.getElementById('hello-name');
+    if (!n) return;
+    n.textContent = who();
+
+    var host = document.getElementById('hello-intro');
+    host.textContent = '';
+    var pr = PB.PROFILE || {};
+    var line = pick2(pr.tagline);
+    if (line) host.appendChild(el('p', 'hello__tag', line));
+
+    var paras = (pr.intro && pr.intro.fill)
+      ? ((lang === 'en' && pr.intro.en && pr.intro.en.length) ? pr.intro.en : pr.intro.ja)
+      : null;
+    if (paras && paras.length) {
+      paras.forEach(function (s) { host.appendChild(el('p', null, s)); });
+    } else {
+      host.appendChild(el('p', null, lang === 'en'
+        ? 'A place for things I look into on my own time. Three shelves: who I am, the macro figures I keep for investing, and board games.'
+        : '仕事とは別に、自分で確かめたことを置いておく場所です。'
+          + '棚は3つ ── 自分のこと、投資のために見ているマクロの数字、それとボードゲーム。'));
+    }
+  }
+
+  function buildDoors() {
+    var host = document.getElementById('doors');
+    if (!host) return;
+    host.textContent = '';
+    var en = lang === 'en';
+    var n = (PB.WORKS || []).length;
+    [
+      { file: 'about.html', t: en ? 'About me' : '自己紹介と職務経歴',
+        b: en ? 'Who I am, what I have worked on, and the tools I reach for.'
+              : '何をしてきたか、いま何を使っているか。' },
+      { file: 'macro.html', t: en ? 'Macro indicators' : 'マクロ経済指標',
+        b: en ? 'Figures I keep an eye on for my own investing, with source and fetch date.'
+              : '株を持つために自分で見ている数字。出どころと取得日つきで置いています。' },
+      { file: 'games.html', t: en ? 'Board games' : '盤上の自主研究',
+        b: en ? n + ' games rebuilt for the browser, and opponents measured against the parity line. Playable.'
+              : 'ブラウザで動かした ' + n + ' 作と、互角の線と並べて測った相手。遊べます。' }
+    ].forEach(function (d) {
+      var a = el('a', 'door');
+      a.href = d.file;
+      a.appendChild(el('h3', 'door__t', d.t));
+      a.appendChild(el('p', 'door__b', d.b));
+      a.appendChild(el('span', 'door__go', en ? 'Open →' : '開く →'));
+      host.appendChild(a);
+    });
+  }
+
+  /* ═══════════════════════════════════════════════════ 自己紹介・職務経歴 */
+  function notYet() {
+    return el('p', 'blank', lang === 'en'
+      ? 'Not written yet. It lives in data/profile.js.'
+      : 'まだ書いていません。中身は data/profile.js にあります。');
+  }
+
+  function buildProfile() {
+    var pr = PB.PROFILE;
+    var intro = document.getElementById('profile-intro');
+    if (!intro || !pr) return;
+
+    /* ---- 自己紹介 */
+    intro.textContent = '';
+    var line = pick2(pr.tagline);
+    if (line) intro.appendChild(el('p', 'hello__tag', line));
+    var paras = (pr.intro && pr.intro.fill)
+      ? ((lang === 'en' && pr.intro.en && pr.intro.en.length) ? pr.intro.en : pr.intro.ja)
+      : null;
+    if (paras && paras.length) paras.forEach(function (s) { intro.appendChild(el('p', 'lead', s)); });
+    else intro.appendChild(notYet());
+
+    if (pr.links && pr.links.fill && pr.links.rows.length) {
+      var ul = el('div', 'links');
+      pr.links.rows.forEach(function (r) {
+        var a = el('a', 'links__a', r.label);
+        a.href = r.url; a.rel = 'noopener';
+        ul.appendChild(a);
+      });
+      intro.appendChild(ul);
+    }
+
+    /* ---- 職務経歴 */
+    var car = document.getElementById('profile-career');
+    car.textContent = '';
+    if (pr.career && pr.career.fill && pr.career.rows.length) {
+      var list = el('div', 'cv');
+      pr.career.rows.forEach(function (r) {
+        var row = el('div', 'cv__row');
+        var when = el('div', 'cv__when');
+        when.appendChild(el('span', 'num', r.from));
+        when.appendChild(el('span', 'cv__dash', '─'));
+        when.appendChild(el('span', 'num', r.to || (lang === 'en' ? 'now' : '現在')));
+        row.appendChild(when);
+        var body = el('div', 'cv__body');
+        body.appendChild(el('h3', 'cv__org', pick(r, 'org')));
+        if (r.role) body.appendChild(el('p', 'cv__role', pick(r, 'role')));
+        if (r.body) body.appendChild(el('p', 'cv__b', pick(r, 'body')));
+        row.appendChild(body);
+        list.appendChild(row);
+      });
+      car.appendChild(list);
+    } else car.appendChild(notYet());
+
+    /* ---- 道具 */
+    var sk = document.getElementById('profile-skills');
+    sk.textContent = '';
+    if (pr.skills && pr.skills.fill && pr.skills.groups.length) {
+      var g = el('div', 'cells');
+      pr.skills.groups.forEach(function (grp) {
+        var d = el('div', 'tenet');
+        d.appendChild(el('h3', 'tenet__t', pick(grp, 'label')));
+        var row = el('p', 'tags');
+        grp.items.forEach(function (s) { row.appendChild(el('span', 'tag tag--ink', s)); });
+        d.appendChild(row);
+        g.appendChild(d);
+      });
+      sk.appendChild(g);
+    } else sk.appendChild(notYet());
+  }
+
+  /* ═════════════════════════════════════════════════════ マクロ経済指標 */
+  /* 月次の系列を折れ線で。外部ライブラリは使わず、その場で SVG を作る。 */
+  function sparkline(series, unit) {
+    var v = series.v.filter(function (x) { return x != null; });
+    if (v.length < 2) return null;
+
+    var W = 640, H = 150, PADL = 34, PADR = 44, PADB = 18, PADT = 8;
+    var lo = Math.min.apply(null, v), hi = Math.max.apply(null, v);
+    if (hi === lo) { hi += 1; lo -= 1; }
+    var pad = (hi - lo) * .08; hi += pad; lo -= pad;
+
+    var n = series.v.length;
+    var x = function (i) { return PADL + (W - PADL - PADR) * (n === 1 ? 0 : i / (n - 1)); };
+    var y = function (val) { return PADT + (H - PADT - PADB) * (1 - (val - lo) / (hi - lo)); };
+
+    var s = svg(W, H), ink = 'currentColor';
+    s.setAttribute('class', 'spark');
+
+    /* 目盛は上下2本だけ。図面の罫のつもりで薄く */
+    [hi - pad, lo + pad].forEach(function (val) {
+      sh(s, 'line', { x1: PADL, y1: y(val), x2: W - PADR, y2: y(val),
+        stroke: ink, 'stroke-width': .5, 'stroke-opacity': .25, 'stroke-dasharray': '3 3' });
+      var tx = sh(s, 'text', { x: PADL - 5, y: y(val) + 3.5, 'text-anchor': 'end',
+        fill: ink, 'font-size': 9, 'fill-opacity': .55 });
+      tx.textContent = val.toFixed(1);
+    });
+
+    var d = '', started = false;
+    series.v.forEach(function (val, i) {
+      if (val == null) { started = false; return; }      // 欠測はつながない
+      d += (started ? ' L' : ' M') + x(i).toFixed(1) + ' ' + y(val).toFixed(1);
+      started = true;
+    });
+    sh(s, 'path', { d: d.trim(), fill: 'none', stroke: ink, 'stroke-width': 1.2,
+      'stroke-opacity': .75, 'stroke-linejoin': 'round' });
+
+    /* 直近の値を朱で置く。ここだけが「いまの数字」 */
+    var lastI = -1;
+    for (var i = series.v.length - 1; i >= 0; i--) if (series.v[i] != null) { lastI = i; break; }
+    if (lastI >= 0) {
+      var lv = series.v[lastI];
+      sh(s, 'circle', { cx: x(lastI), cy: y(lv), r: 2.6, fill: 'var(--vermilion)' });
+      var lab = sh(s, 'text', { x: Math.min(x(lastI) + 6, W - 4), y: y(lv) + 3.5,
+        fill: 'var(--vermilion)', 'font-size': 11, 'font-weight': 600 });
+      lab.textContent = lv.toFixed(2) + (unit || '');
+    }
+
+    /* 横軸は端の年だけ。細かい目盛は要らない */
+    [[0, series.from], [n - 1, monthAt(series.from, n - 1)]].forEach(function (p, k) {
+      var tx = sh(s, 'text', { x: k === 0 ? PADL : W - PADR, y: H - 4,
+        'text-anchor': k === 0 ? 'start' : 'end', fill: ink, 'font-size': 9, 'fill-opacity': .55 });
+      tx.textContent = p[1];
+    });
+    return s;
+  }
+
+  function monthAt(from, k) {
+    var a = from.split('-'), m = (+a[1] - 1) + k;
+    return (+a[0] + Math.floor(m / 12)) + '-' + String(m % 12 + 1).padStart(2, '0');
+  }
+
+  function buildMacro() {
+    var host = document.getElementById('macro');
+    if (!host || !PB.INDICATORS) return;
+    host.textContent = '';
+    var M = PB.MACRO || { series: {} };
+
+    var when = document.getElementById('macro-when');
+    if (when) when.textContent = M.fetched
+      ? (lang === 'en' ? 'fetched ' + M.fetched : M.fetched + ' 取得')
+      : (lang === 'en' ? 'not fetched' : '未取得');
+
+    PB.INDICATORS.forEach(function (ind) {
+      var card = el('section', 'gauge');
+
+      var head = el('div', 'gauge__head');
+      head.appendChild(el('h3', 'gauge__t', pick(ind, 'title')));
+      var sub = pick(ind, 'sub');
+      if (sub) head.appendChild(el('span', 'gauge__sub', sub));
+      card.appendChild(head);
+
+      card.appendChild(el('p', 'gauge__why', pick(ind, 'why')));
+
+      var s = M.series && M.series[ind.id];
+      if (s && s.v && s.v.length) {
+        var fig = el('div', 'gauge__fig');
+        var g = sparkline(s, ind.unit);
+        if (g) fig.appendChild(g);
+        card.appendChild(fig);
+        card.appendChild(el('p', 'gauge__src', (lang === 'en'
+          ? 'Monthly, ' + s.from + ' to ' + monthAt(s.from, s.v.length - 1) + ' · ' + (M.source || '')
+          : '月次 ' + s.from + ' 〜 ' + monthAt(s.from, s.v.length - 1) + ' ・ 出どころ ' + (M.source || ''))));
+      } else {
+        card.appendChild(el('p', 'blank', lang === 'en'
+          ? 'Not fetched yet. Run tools/fetch-macro.mjs with an API key.'
+          : 'まだ取ってきていません。tools/fetch-macro.mjs を鍵つきで走らせると入ります。'));
+      }
+      host.appendChild(card);
+    });
+  }
+
   /* --------------------------------------------------------------- 描画 */
   function render() {
+    buildHead();
+    buildFoot();
+    buildHello();
+    buildDoors();
+    buildProfile();
+    buildMacro();
+
     var games = document.getElementById('works');
-    games.textContent = '';
-    PB.WORKS.forEach(function (w) { games.appendChild(buildGame(w)); });
+    if (games) {
+      games.textContent = '';
+      PB.WORKS.forEach(function (w) { games.appendChild(buildGame(w)); });
+    }
 
     var cnt = document.getElementById('games-count');
     if (cnt) cnt.textContent = lang === 'en'
@@ -2839,12 +3215,10 @@ window.PB = window.PB || {};
       : '全 ' + PB.WORKS.length + ' 作';
 
     var plan = document.getElementById('plan');
-    plan.textContent = '';
-    plan.appendChild(buildPlan());
+    if (plan) { plan.textContent = ''; plan.appendChild(buildPlan()); }
 
     var tenets = document.getElementById('tenets');
-    tenets.textContent = '';
-    tenets.appendChild(buildTenets());
+    if (tenets) { tenets.textContent = ''; tenets.appendChild(buildTenets()); }
 
     buildRanking();
     buildAccountSlot();
@@ -2908,6 +3282,8 @@ window.PB = window.PB || {};
   function wireAuth() {
     modal = document.getElementById('auth-modal');
     form = document.getElementById('auth-form');
+    /* アカウントは対戦の記録のためだけにある。盤上のページ以外には置いていない */
+    if (!modal || !form) { modal = form = null; return; }
 
     document.getElementById('auth-close').addEventListener('click', function () { modal.close(); });
 
@@ -2955,17 +3331,33 @@ window.PB = window.PB || {};
       if (n.dataset.ja == null) n.dataset.ja = n.innerHTML;
       n.innerHTML = lang === 'en' ? n.dataset.en : n.dataset.ja;
     });
-    /* 狭い画面では「切り替え先」だけを出す。CSS で .ctl__now を隠す */
-    var btn = document.getElementById('lang');
-    if (btn) {
-      btn.textContent = '';
-      btn.appendChild(el('span', 'ctl__now ctl__on', lang === 'en' ? 'EN' : '日本語'));
-      btn.appendChild(el('span', 'ctl__now', ' / '));
-      btn.appendChild(el('span', null, lang === 'en' ? '日本語' : 'EN'));
-      btn.setAttribute('aria-label', lang === 'en' ? 'Switch to Japanese' : '英語に切り替える');
-    }
     if (modal) setMode(mode);
-    render();
+    render();          // 天地ごと組み直す。切替ボタンもここで作り直される
+    paintControls();   // なので文字を入れるのは render のあと
+  }
+
+  /* 天が組み直されるたびに、2つの切替ボタンの見た目を入れ直す。
+     狭い画面では「切り替え先」だけを出す（CSS で .ctl__now を隠す）。 */
+  function paintControls() {
+    var lb = document.getElementById('lang');
+    if (lb) {
+      lb.textContent = '';
+      lb.appendChild(el('span', 'ctl__now ctl__on', lang === 'en' ? 'EN' : '日本語'));
+      lb.appendChild(el('span', 'ctl__now', ' / '));
+      lb.appendChild(el('span', null, lang === 'en' ? '日本語' : 'EN'));
+      lb.setAttribute('aria-label', lang === 'en' ? 'Switch to Japanese' : '英語に切り替える');
+    }
+    var tb = document.getElementById('theme');
+    if (tb) {
+      var cur = document.documentElement.getAttribute('data-theme');
+      var name = cur === 'dark' ? '青焼き' : (cur === 'light' ? '製図用紙' : '地の色');
+      tb.textContent = '';
+      tb.appendChild(el('span', 'ctl__long', name));
+      var short = el('span', 'ctl__short', '◐');
+      short.setAttribute('aria-hidden', 'true');
+      tb.appendChild(short);
+      tb.setAttribute('aria-label', lang === 'en' ? 'Change background (' + name + ')' : '地の色を変える（' + name + '）');
+    }
   }
 
   /* ------------------------------------------------------------ 明暗切替 */
@@ -2973,17 +3365,7 @@ window.PB = window.PB || {};
     if (m) document.documentElement.setAttribute('data-theme', m);
     else document.documentElement.removeAttribute('data-theme');
     try { m ? localStorage.setItem('pb-theme', m) : localStorage.removeItem('pb-theme'); } catch (e) {}
-    var btn = document.getElementById('theme');
-    if (btn) {
-      var cur = document.documentElement.getAttribute('data-theme');
-      var name = cur === 'dark' ? '青焼き' : (cur === 'light' ? '製図用紙' : '地の色');
-      btn.textContent = '';
-      btn.appendChild(el('span', 'ctl__long', name));
-      var short = el('span', 'ctl__short', '◐');
-      short.setAttribute('aria-hidden', 'true');
-      btn.appendChild(short);
-      btn.setAttribute('aria-label', lang === 'en' ? 'Change background (' + name + ')' : '地の色を変える（' + name + '）');
-    }
+    paintControls();
   }
 
   /* 確認リンクから戻ってきたときに、何が起きたのかを画面上部に出す。
@@ -3030,11 +3412,16 @@ window.PB = window.PB || {};
       if (landed) showLanding(landed);
     });
 
-    var lb = document.getElementById('lang');
-    if (lb) lb.addEventListener('click', function () { lang = (lang === 'ja' ? 'en' : 'ja'); applyLang(); });
-
-    var tb = document.getElementById('theme');
-    if (tb) tb.addEventListener('click', function () {
+    /* 切替ボタンは天と一緒に作り直されるので、要素に直接ではなく
+       document で受ける。付け直しの漏れが起きない。 */
+    document.addEventListener('click', function (e) {
+      var b = e.target.closest ? e.target.closest('#lang, #theme') : null;
+      if (!b) return;
+      if (b.id === 'lang') {
+        lang = (lang === 'ja' ? 'en' : 'ja');
+        applyLang();
+        return;
+      }
       var cur = document.documentElement.getAttribute('data-theme');
       var dark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
       applyTheme(!cur ? (dark ? 'light' : 'dark')

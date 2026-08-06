@@ -111,6 +111,9 @@ function serve() {
   fs.mkdirSync(OUT, { recursive: true });
   const { srv, port } = await serve();
   const URL = `http://127.0.0.1:${port}/`;
+  /* 盤上の中身（作品・記録・アカウント）は games.html に移った。
+     トップは名乗りと3つの入口だけなので、検査の入口はこちら。 */
+  const GAMES = URL + 'games.html';
   const browser = await chromium.launch({ executablePath: process.env.PB_CHROME || undefined });
   let bad = 0;
   const fail = m => { console.log('   ❌ ' + m); bad++; };
@@ -140,7 +143,7 @@ function serve() {
     page.on('console', m => { if (m.type() === 'error') errs.push(m.text()); });
     page.on('pageerror', e => errs.push(String(e)));
 
-    await page.goto(URL, { waitUntil: 'load' });
+    await page.goto(GAMES, { waitUntil: 'load' });
     await page.waitForTimeout(300);
     // 畳んである「作りの話」を開いて、中身も撮る
     await page.evaluate(() => {
@@ -191,7 +194,9 @@ function serve() {
     // data/bgg.js が空のあいだは 0、取ってきたら全作品ぶん。中途半端はおかしい
     if (c.bgg !== 0 && c.bgg !== c.wantGames) fail('BGG の行が一部の作品にしか出ていない');
     if (c.err !== c.wantErr) fail(`信頼区間のひげの数が合わない（${c.err}/${c.wantErr}）`);
-    if (c.invite !== 1 || c.rank !== 1) fail('未ログインの勧誘またはランキング枠が出ていない');
+    // ランキングの枠は、個人サイト寄せの際に外した（対戦がまだ無いのに枠だけあるのは嘘に近い）
+    if (c.invite !== 1) fail('未ログインの勧誘が出ていない');
+    if (c.rank !== 0) fail('外したはずのランキング枠が出ている');
     if (Math.abs(ratio - bar.v) > 0.02) fail('棒の幅が値と合っていない');
     await ctx.close();
   }
@@ -208,7 +213,7 @@ function serve() {
     await page.addInitScript(() => {
       window.PB = { CONFIG: { supabase: { url: '', anonKey: '' } } };
     });
-    await page.goto(URL, { waitUntil: 'load' });
+    await page.goto(GAMES, { waitUntil: 'load' });
 
     console.log('── アカウント（この端末だけ）');
     const kind0 = await page.evaluate(() => PB.auth.kind);
@@ -336,7 +341,7 @@ function serve() {
     await page.addInitScript(u => {
       window.PB = { CONFIG: { supabase: { url: u, anonKey: 'anon-test-key' } } };
     }, URL.replace(/\/$/, ''));
-    await page.goto(URL, { waitUntil: 'load' });
+    await page.goto(GAMES, { waitUntil: 'load' });
     await page.waitForTimeout(300);
 
     console.log('── Supabase（模擬）');
@@ -470,7 +475,7 @@ function serve() {
     console.log('── 確認リンクからの着地（模擬）');
 
     // まず登録して、模擬サーバ側に利用者を作る
-    await page.goto(URL, { waitUntil: 'load' });
+    await page.goto(GAMES, { waitUntil: 'load' });
     await page.click('[data-auth-open="signin"]');
     await page.click('.tab[data-tab="signup"]');
     await page.fill('#f-email', 'land@example.com');
@@ -484,7 +489,7 @@ function serve() {
     await page.goto('about:blank');   // hash だけの遷移は再読み込みされないので、一度離れる
 
     // ログアウト状態で、Supabase が返すのと同じ形の hash を付けて開く
-    await page.goto(URL + `#access_token=tok_${uid}&refresh_token=ref_${uid}`
+    await page.goto(GAMES + `#access_token=tok_${uid}&refresh_token=ref_${uid}`
       + '&expires_in=3600&token_type=bearer&type=signup', { waitUntil: 'load' });
     await page.waitForTimeout(900);
     const landed = await page.evaluate(() => ({
@@ -500,7 +505,7 @@ function serve() {
     // 期限切れリンクの場合
     await page.evaluate(() => { PB.auth.signOut(); localStorage.clear(); });
     await page.goto('about:blank');
-    await page.goto(URL + '#error=access_denied&error_code=otp_expired'
+    await page.goto(GAMES + '#error=access_denied&error_code=otp_expired'
       + '&error_description=Email+link+is+invalid+or+has+expired', { waitUntil: 'load' });
     await page.waitForTimeout(700);
     const expired = await page.evaluate(() => ({
@@ -517,7 +522,7 @@ function serve() {
   {
     const ctx = await newContext({ viewport: { width: 1280, height: 1000 } });
     const page = await ctx.newPage();
-    await page.goto(URL, { waitUntil: 'load' });   // 設定を差し込まず、素のまま
+    await page.goto(GAMES, { waitUntil: 'load' });   // 設定を差し込まず、素のまま
     const cfg = await page.evaluate(() => {
       const c = (PB.CONFIG && PB.CONFIG.supabase) || {};
       let ref = null, role = null;
@@ -572,7 +577,7 @@ function serve() {
       await page.addInitScript(id => {
         window.PB = { CONFIG: { supabase: { url: '', anonKey: '' }, analytics: { measurementId: id } } };
       }, 'id' in opt ? opt.id : ID);
-      await page.goto(URL, { waitUntil: 'load' });
+      await page.goto(GAMES, { waitUntil: 'load' });
       await page.waitForTimeout(350);
       return { ctx, page, hits };
     }
@@ -656,7 +661,7 @@ function serve() {
   {
     const ctx = await newContext({ viewport: { width: 1280, height: 1000 }, deviceScaleFactor: 2 });
     const page = await ctx.newPage();
-    await page.goto(URL, { waitUntil: 'load' });
+    await page.goto(GAMES, { waitUntil: 'load' });
     await page.click('#lang');
     await page.waitForTimeout(300);
     await page.evaluate(() => {
@@ -667,14 +672,17 @@ function serve() {
     await page.screenshot({ path: path.join(OUT, 'desktop-en.png'), fullPage: true });
     const en = await page.evaluate(() => ({
       lang: document.documentElement.lang,
-      title: document.querySelector('.cover__title').textContent.trim(),
+      head: document.querySelector('.band__t').textContent.trim(),
+      nav: [...document.querySelectorAll('.masthead__nav a')].map(a => a.textContent).join('/'),
       first: document.querySelector('.game__title').textContent.trim(),
       play: document.querySelector('.game .btn--go').textContent.trim(),
       overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth
     }));
     console.log('── 英語');
     console.log('  ', JSON.stringify(en));
-    if (en.lang !== 'en' || en.first !== 'Big Shot' || !/Play/.test(en.play)) fail('英語に切り替わっていない');
+    // 収録は3作になった。先頭はアクワイア
+    if (en.lang !== 'en' || en.first !== 'Acquire' || !/Play/.test(en.play)) fail('英語に切り替わっていない');
+    if (!/About\/Macro\/Board games/.test(en.nav)) fail('天のナビが英語になっていない');
     if (en.overflow > 1) fail('横スクロールが出ている');
     await ctx.close();
   }

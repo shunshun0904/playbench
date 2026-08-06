@@ -1,32 +1,60 @@
-# PLAYBENCH
+# shunshun0904
 
-名作ボードゲームを、ブラウザで、手強い相手と。
+個人サイト。仕事とは別に、自分で確かめたことを置いておく場所です。
 
-遊ぶ場（play）であり、エージェントを測る台（bench）でもある、という名前です。
+<https://shunshun0904.github.io/playbench/>
 
-- インストールも登録も広告もなし。開けば遊べます
-- 相手のCPUは手加減しません。**どれくらい強いかは実測して載せています**
+棚は3つ。
+
+| ページ | 中身 |
+|---|---|
+| [`about.html`](about.html) | 自己紹介と職務経歴。中身は `data/profile.js` に書く |
+| [`macro.html`](macro.html) | 株式投資のために見ているマクロ経済指標。出どころと取得日つき |
+| [`games.html`](games.html) | ボードゲーム3作の自主研究。遊べる |
+
+- 数値はすべて出典つき。**出典のない数字は載せません**
 - 勝率は必ず**互角の線つき**。4人戦なら .250
-- 数値はすべて各ゲームのリポジトリにある実測値。出典のない数字は載せません
+- リポジトリ名が `playbench` なのは、最初にボードゲームだけで始めたときの名残です
 
 ## 構成
 
 ```
-index.html          サイト本体
+index.html          トップ（名乗りと3つの入口）
+about.html          自己紹介・職務経歴
+macro.html          マクロ経済指標
+games.html          盤上の自主研究
 assets/site.css     版面。色・書体・実測プレート
-assets/site.js      組版。ゲームデータから画面を組む
+assets/site.js      組版。天地も4ページぶんここから組む
 assets/auth.js      アカウント（Local / Supabase の差し替え式）
 assets/analytics.js アクセス解析。唯一の外部読み込み。空なら何もしない
-assets/config.js    接続先と測定ID。空なら「この端末だけ」で動く
+assets/config.js    接続先と測定ID
 supabase/           スキーマ・RLS・立ち上げ手順
-data/works.js       ゲームの目録  ← ゲームを増やすときはここだけ
-data/bgg.js         BGG の重さと評価のスナップショット（tools が書き換える。手で触らない）
-tools/fetch-bgg.mjs BGG から取ってくる道具
-games/              各ゲーム本体（取り込みはこれから）
-build.js            単一ファイルへの結合
-tools/stamp-assets.mjs  配備時にアセット参照へ版を打つ（キャッシュ対策）
+data/profile.js     自己紹介と職務経歴  ← 本人が書く唯一のファイル
+data/works.js       ゲームの目録        ← ゲームを増やすときはここだけ
+data/macro.js       見る指標の定義と、取得した系列（tools が書き換える）
+data/bgg.js         BGG の重さと評価のスナップショット（tools が書き換える）
+tools/fetch-macro.mjs  Alpha Vantage から指標を取ってくる道具
+tools/fetch-bgg.mjs    BGG から取ってくる道具
+tools/stamp-assets.mjs 配備時に4ページぶんの参照へ版を打つ（キャッシュ対策）
 test/shots.js       実ブラウザでの検査（見た目・アカウント・解析の入切）
+build.js            盤上のページを1枚にまとめる
 ```
+
+## マクロ経済指標
+
+`data/macro.js` の `INDICATORS` が「何を見るか」を決め、取ってくるのは道具です。
+
+```sh
+ALPHAVANTAGE_KEY=xxxx node tools/fetch-macro.mjs          # 取って書き換える
+ALPHAVANTAGE_KEY=xxxx node tools/fetch-macro.mjs --print  # 書き換えず出すだけ
+```
+
+鍵は <https://www.alphavantage.co/support/#api-key> で無料で取れます（1日25回）。
+
+BGG のときと同じで、**手元で取る → JSON をコミットする → サイトはそれを読む**、
+に統一しています。CI から外部APIを叩くと詰まりやすいためです。
+いつ時点の数字かは `fetched` に残り、画面にも出ます。
+**まだ取っていない指標は、取っていないと表示します。**
 
 ### ゲームを1つ増やす
 
@@ -147,7 +175,7 @@ GitHub Pages は `Cache-Control: max-age=600` で配ります。`index.html` が
 手元の古い写しを使い続けます。**配備は成功しているのに画面が変わらない**、という
 形になります。実際、ゲームを1つ増やしたときにこれが起きました。
 
-そこで配備のたびに、`tools/stamp-assets.mjs` が `index.html` の自前ファイル参照へ
+そこで配備のたびに、`tools/stamp-assets.mjs` が**4ページすべて**の自前ファイル参照へ
 コミットの SHA を `?v=…` として打ちます。URLが変わるのでブラウザは必ず取り直します。
 
 ```sh
@@ -175,7 +203,7 @@ node tools/stamp-assets.mjs --check   # 版が付いているか確かめる
 **空のあいだは gtag.js を読み込みません**（外部への通信が1本も出ません）。
 実装は [`assets/analytics.js`](assets/analytics.js) の1ファイルだけです。
 
-**収録ゲーム5作にも同じ測定IDを入れてあります。** どのゲームが遊ばれているかを
+**収録ゲーム5作にも同じ測定IDを入れてあります**（サイトに出しているのは3作ですが、タグはbigshot と redplanet にも入ったままです）。 どのゲームが遊ばれているかを
 1つのプロパティで見るためで、GA の「ページとスクリーン」でパスごとに分かれます。
 ゲーム側は各 `index.html` の `<head>` にある `<script>` 1つだけで、
 `file://` で開いたときは何も読み込みません。
@@ -207,11 +235,13 @@ node tools/stamp-assets.mjs --check   # 版が付いているか確かめる
 
 | | ゲーム | 相手の作り | 実測（互角 .250） |
 |---|---|---|---|
-| 01 | [ビッグショット](https://shunshun0904.github.io/bigshot/) | 所有権の確率を厳密に数え上げ | 対 素人筋3人 **.855** |
-| 02 | [アクワイア](https://shunshun0904.github.io/aquire/) | 期待ドルへの換算（ルールベース） | 4人戦 **.500** |
-| 03 | [ハイソサエティ](https://shunshun0904.github.io/highsociety/) | 自己対戦PPO＋先読み | 対 既存CPU3人 **.621** |
-| 04 | [インペリアル](https://shunshun0904.github.io/imperial/) | ロンデルを巡回の設計として採点 | 対 素人筋3人 **.780** |
-| 05 | [ミッション・レッドプラネット](https://shunshun0904.github.io/redplanet/) | エリアの取り分の差分で採点 | 対 素人筋3人 **.823** |
+| 01 | [アクワイア](https://shunshun0904.github.io/aquire/) | 期待ドルへの換算（ルールベース） | 4人戦 **.500** |
+| 02 | [ハイソサエティ](https://shunshun0904.github.io/highsociety/) | 自己対戦PPO＋先読み | 対 既存CPU3人 **.621** |
+| 03 | [インペリアル](https://shunshun0904.github.io/imperial/) | ロンデルを巡回の設計として採点 | 対 素人筋3人 **.780** |
+
+[ビッグショット](https://shunshun0904.github.io/bigshot/) と
+[ミッション・レッドプラネット](https://shunshun0904.github.io/redplanet/) も
+実装してあり、リポジトリと配信は生きています。サイトに載せるのを3作に絞っただけです。
 
 ## BGG の数字について
 

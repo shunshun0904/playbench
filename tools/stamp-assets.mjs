@@ -23,24 +23,34 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
-const FILE = path.join(ROOT, 'index.html');
+/* ページは4枚。1枚でも打ち忘れると、そのページだけ古いJSを掴み続ける */
+const FILES = fs.readdirSync(ROOT)
+  .filter(f => f.endsWith('.html') && !f.startsWith('google'))
+  .sort()
+  .map(f => path.join(ROOT, f));
 
 /* src="assets/…" src="data/…" href="assets/…" を拾う。
    すでに ?v= が付いていれば付け替える。 */
 const REF = /((?:src|href)=")((?:assets|data)\/[^"?#]+)(\?v=[^"]*)?(")/g;
 
-const html = fs.readFileSync(FILE, 'utf8');
-const found = [...html.matchAll(REF)];
+const pages = FILES.map(f => ({ file: f, html: fs.readFileSync(f, 'utf8') }));
+pages.forEach(p => { p.found = [...p.html.matchAll(REF)]; });
+const total = pages.reduce((n, p) => n + p.found.length, 0);
+
+if (!pages.length || !total) {
+  console.error('❌ 参照が1つも見つからない。ページの書き方が変わった可能性がある');
+  process.exit(1);
+}
 
 if (process.argv.includes('--check')) {
-  const bare = found.filter(m => !m[3]);
-  console.log(`自前ファイルの参照 ${found.length} 件 / 版なし ${bare.length} 件`);
-  bare.forEach(m => console.log('   版が付いていない:', m[2]));
-  if (!found.length) {
-    console.error('❌ 参照が1つも見つからない。index.html の書き方が変わった可能性がある');
-    process.exit(1);
-  }
-  process.exit(bare.length ? 1 : 0);
+  let bare = 0;
+  pages.forEach(p => {
+    const b = p.found.filter(m => !m[3]);
+    bare += b.length;
+    console.log(`${path.basename(p.file)}: 参照 ${p.found.length} 件 / 版なし ${b.length} 件`);
+    b.forEach(m => console.log('   版が付いていない:', m[2]));
+  });
+  process.exit(bare ? 1 : 0);
 }
 
 const version = (process.argv[2] || '').trim();
@@ -54,13 +64,8 @@ if (!tag) {
   process.exit(1);
 }
 
-if (!found.length) {
-  console.error('❌ 参照が1つも見つからない。index.html の書き方が変わった可能性がある');
-  process.exit(1);
-}
-
-const out = html.replace(REF, (_, pre, p, __, post) => `${pre}${p}?v=${tag}${post}`);
-fs.writeFileSync(FILE, out);
-
-console.log(`✅ ${found.length} 件の参照に ?v=${tag} を付けた`);
-found.forEach(m => console.log('   ', m[2]));
+pages.forEach(p => {
+  fs.writeFileSync(p.file, p.html.replace(REF, (_, pre, r, __, post) => `${pre}${r}?v=${tag}${post}`));
+  console.log(`   ${path.basename(p.file)} … ${p.found.length} 件`);
+});
+console.log(`✅ ${pages.length} ページ・計 ${total} 件の参照に ?v=${tag} を付けた`);
