@@ -915,6 +915,19 @@ a { color: inherit; }
 .grid__dash { color: var(--ink-mute); }
 .grid__foot { margin: 0 0 var(--s5); font-size: .72rem; color: var(--ink-mute); }
 .grid__last { display: block; font-size: .68rem; color: var(--ink-mute); font-family: var(--serif); opacity: .85; }
+
+/* 論文DB への入口。開けないものは押せる見た目にしない */
+.papers { grid-template-columns: repeat(auto-fit, minmax(min(17rem, 100%), 1fr)); }
+.paper {
+  display: flex; flex-direction: column; gap: var(--s2);
+  padding: var(--s4); text-decoration: none; color: inherit;
+  transition: background .15s;
+}
+a.paper:hover { background: color-mix(in srgb, var(--ink) 4%, transparent); }
+.paper__t { margin: 0; font-size: .96rem; font-weight: 600; color: var(--ink); }
+.paper__b { margin: 0; font-size: .84rem; line-height: 1.8; color: var(--ink-mute); flex: 1; }
+.paper__go { font-family: var(--mono); font-size: .74rem; color: var(--indigo); }
+.paper--shut .paper__go { color: var(--ink-mute); }
 </style>
 <header class="masthead" id="head"></header>
 
@@ -1127,6 +1140,46 @@ window.PB.PROFILE = {
     fill: false,
     groups: [
       // { label: '言語', labelEn: 'Languages', items: ['JavaScript', 'Python'] }
+    ]
+  },
+
+
+  /* 気になっている論文。Notion のデータベースへ。
+
+     published が false のあいだはリンクにせず、題と守備範囲だけを出します。
+     いまの url はワークスペース内のもので、他人が押しても Notion の
+     ログイン画面に着くだけなので、押せるようにはしていません。
+
+     公開するなら Notion 側で 共有 → ウェブで公開 を押し、出てきた
+     .notion.site の URL に差し替えて published: true にしてください。 */
+  papers: {
+    fill: true,
+    rows: [
+      {
+        title: 'ゲームAI / 自己対戦RL', titleEn: 'Game AI and self-play RL',
+        body: '自己対戦RL、探索と学習の統合、不完全情報ゲーム、相手モデリング。'
+          + '読んだものには「ハイソサエティに適用できるか」を書き添えている。',
+        bodyEn: 'Self-play RL, search combined with learning, imperfect-information games, opponent '
+          + 'modelling. Each entry carries a note on whether it could apply to High Society.',
+        url: 'https://app.notion.com/p/74bb68df48114e959775cc05dab9b919',
+        published: false
+      },
+      {
+        title: '金融工学 / ML・マクロ', titleEn: 'Quantitative finance, ML and macro',
+        body: 'ボラティリティ予測、ポートフォリオ最適化、マイクロデータからのインフレ予測、'
+          + 'マーケットインパクト。経済のページで見ている数字の裏側。',
+        bodyEn: 'Volatility forecasting, portfolio optimisation, inflation forecasting from micro data, '
+          + 'market impact — the reasoning behind the figures on the Economy page.',
+        url: 'https://app.notion.com/p/4ba5af8498f643ada8d69d589db485cf',
+        published: false
+      },
+      {
+        title: 'AIアラインメント・哲学', titleEn: 'AI alignment and philosophy',
+        body: 'Constitutional AI、認識論。Amanda Askell の仕事を軸に集めている。',
+        bodyEn: 'Constitutional AI and epistemology, gathered around Amanda Askell\'s work.',
+        url: 'https://app.notion.com/p/4f8a8285b2b04c6d830931697b199d22',
+        published: false
+      }
     ]
   },
 
@@ -2436,6 +2489,44 @@ window.PB.MACRO = {
     } else sk.appendChild(notYet());
   }
 
+
+  /* 気になっている論文。Notion のデータベースへの入口。
+     公開されていないものはリンクにしない ── 押しても入れない先を
+     押せるように見せない。題と守備範囲だけを出す。 */
+  function buildPapers() {
+    var host = document.getElementById('profile-papers');
+    var pr = PB.PROFILE;
+    if (!host || !pr) return;
+    host.textContent = '';
+    var en = lang === 'en';
+
+    if (!pr.papers || !pr.papers.fill || !pr.papers.rows.length) {
+      host.appendChild(notYet());
+      return;
+    }
+
+    var list = el('div', 'cells papers');
+    pr.papers.rows.forEach(function (r) {
+      var open = r.published && r.url;
+      var cell = el(open ? 'a' : 'div', 'paper' + (open ? '' : ' paper--shut'));
+      if (open) { cell.href = r.url; cell.rel = 'noopener'; cell.target = '_blank'; }
+      cell.appendChild(el('h3', 'paper__t', pick(r, 'title')));
+      cell.appendChild(el('p', 'paper__b', pick(r, 'body')));
+      cell.appendChild(el('span', 'paper__go', open
+        ? (en ? 'Open in Notion ↗' : 'Notion で開く ↗')
+        : (en ? 'Not public yet' : 'いまは非公開')));
+      list.appendChild(cell);
+    });
+    host.appendChild(list);
+
+    var shut = pr.papers.rows.filter(function (r) { return !(r.published && r.url); }).length;
+    if (shut) {
+      host.appendChild(el('p', 'grid__foot', en
+        ? shut + ' of these are not published to the web yet, so they are listed without a link.'
+        : 'このうち ' + shut + ' 件はまだウェブに公開していないので、リンクにしていません。'));
+    }
+  }
+
   /* ═════════════════════════════════════════════════════ マクロ経済指標 */
   /* 月次の系列を折れ線で。外部ライブラリは使わず、その場で SVG を作る。 */
   function sparkline(series, unit) {
@@ -2660,6 +2751,7 @@ window.PB.MACRO = {
     buildFoot();
     buildHello();
     buildProfile();
+    buildPapers();
     buildMacroTable();
     buildMacro();
 

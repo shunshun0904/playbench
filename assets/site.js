@@ -749,6 +749,44 @@
     } else sk.appendChild(notYet());
   }
 
+
+  /* 気になっている論文。Notion のデータベースへの入口。
+     公開されていないものはリンクにしない ── 押しても入れない先を
+     押せるように見せない。題と守備範囲だけを出す。 */
+  function buildPapers() {
+    var host = document.getElementById('profile-papers');
+    var pr = PB.PROFILE;
+    if (!host || !pr) return;
+    host.textContent = '';
+    var en = lang === 'en';
+
+    if (!pr.papers || !pr.papers.fill || !pr.papers.rows.length) {
+      host.appendChild(notYet());
+      return;
+    }
+
+    var list = el('div', 'cells papers');
+    pr.papers.rows.forEach(function (r) {
+      var open = r.published && r.url;
+      var cell = el(open ? 'a' : 'div', 'paper' + (open ? '' : ' paper--shut'));
+      if (open) { cell.href = r.url; cell.rel = 'noopener'; cell.target = '_blank'; }
+      cell.appendChild(el('h3', 'paper__t', pick(r, 'title')));
+      cell.appendChild(el('p', 'paper__b', pick(r, 'body')));
+      cell.appendChild(el('span', 'paper__go', open
+        ? (en ? 'Open in Notion ↗' : 'Notion で開く ↗')
+        : (en ? 'Not public yet' : 'いまは非公開')));
+      list.appendChild(cell);
+    });
+    host.appendChild(list);
+
+    var shut = pr.papers.rows.filter(function (r) { return !(r.published && r.url); }).length;
+    if (shut) {
+      host.appendChild(el('p', 'grid__foot', en
+        ? shut + ' of these are not published to the web yet, so they are listed without a link.'
+        : 'このうち ' + shut + ' 件はまだウェブに公開していないので、リンクにしていません。'));
+    }
+  }
+
   /* ═════════════════════════════════════════════════════ マクロ経済指標 */
   /* 月次の系列を折れ線で。外部ライブラリは使わず、その場で SVG を作る。 */
   function sparkline(series, unit) {
@@ -973,6 +1011,7 @@
     buildFoot();
     buildHello();
     buildProfile();
+    buildPapers();
     buildMacroTable();
     buildMacro();
 

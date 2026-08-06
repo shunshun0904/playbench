@@ -913,3 +913,16 @@ a { color: inherit; }
 .grid__dash { color: var(--ink-mute); }
 .grid__foot { margin: 0 0 var(--s5); font-size: .72rem; color: var(--ink-mute); }
 .grid__last { display: block; font-size: .68rem; color: var(--ink-mute); font-family: var(--serif); opacity: .85; }
+
+/* 論文DB への入口。開けないものは押せる見た目にしない */
+.papers { grid-template-columns: repeat(auto-fit, minmax(min(17rem, 100%), 1fr)); }
+.paper {
+  display: flex; flex-direction: column; gap: var(--s2);
+  padding: var(--s4); text-decoration: none; color: inherit;
+  transition: background .15s;
+}
+a.paper:hover { background: color-mix(in srgb, var(--ink) 4%, transparent); }
+.paper__t { margin: 0; font-size: .96rem; font-weight: 600; color: var(--ink); }
+.paper__b { margin: 0; font-size: .84rem; line-height: 1.8; color: var(--ink-mute); flex: 1; }
+.paper__go { font-family: var(--mono); font-size: .74rem; color: var(--indigo); }
+.paper--shut .paper__go { color: var(--ink-mute); }
