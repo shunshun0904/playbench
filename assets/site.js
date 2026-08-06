@@ -785,10 +785,6 @@
     host.textContent = '';
     var box = el('div', 'sheet masthead__in');
 
-    var mark = el('a', 'masthead__mark', who());
-    mark.href = 'index.html';
-    box.appendChild(mark);
-
     /* 3枚の見出し。図面の袋に挿す索引タブのつもりで、いま開いている1枚だけ
        地の色を持たせ、天井に朱の線を引く。 */
     var nav = el('nav', 'masthead__nav');
@@ -1196,15 +1192,27 @@
     }
     var tb = document.getElementById('theme');
     if (tb) {
-      var cur = document.documentElement.getAttribute('data-theme');
-      var name = cur === 'dark' ? '青焼き' : (cur === 'light' ? '製図用紙' : '地の色');
+      /* 白と黒の2つだけ。押したら何になるかを出す */
+      var next = theme() === 'dark' ? 'light' : 'dark';
+      var name = lang === 'en'
+        ? (next === 'dark' ? 'Dark' : 'Light')
+        : (next === 'dark' ? '黒' : '白');
       tb.textContent = '';
       tb.appendChild(el('span', 'ctl__long', name));
-      var short = el('span', 'ctl__short', '◐');
+      var short = el('span', 'ctl__short', next === 'dark' ? '●' : '○');
       short.setAttribute('aria-hidden', 'true');
       tb.appendChild(short);
-      tb.setAttribute('aria-label', lang === 'en' ? 'Change background (' + name + ')' : '地の色を変える（' + name + '）');
+      tb.setAttribute('aria-label', lang === 'en'
+        ? 'Switch to ' + name.toLowerCase() : name + 'に切り替える');
     }
+  }
+
+  /* いまが白か黒か。まだ選んでいなければ、端末の設定に従っているものとして答える */
+  function theme() {
+    var cur = document.documentElement.getAttribute('data-theme');
+    if (cur === 'dark' || cur === 'light') return cur;
+    return (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)
+      ? 'dark' : 'light';
   }
 
   /* ------------------------------------------------------------ 明暗切替 */
@@ -1269,10 +1277,7 @@
         applyLang();
         return;
       }
-      var cur = document.documentElement.getAttribute('data-theme');
-      var dark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-      applyTheme(!cur ? (dark ? 'light' : 'dark')
-        : (cur === (dark ? 'light' : 'dark') ? (dark ? 'dark' : 'light') : null));
+      applyTheme(theme() === 'dark' ? 'light' : 'dark');
     });
   }
 

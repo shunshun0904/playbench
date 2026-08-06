@@ -18,7 +18,7 @@ window.PB = window.PB || {};
 window.PB.PROFILE = {
 
   /* 名乗り。ハンドルだけでも、本名でも。 */
-  name:   { fill: false, ja: '', en: '' },
+  name:   { fill: true,  ja: 'Shun Nakamura', en: 'Shun Nakamura' },
   tagline:{ fill: false, ja: '', en: '' },   // 一行の肩書き（例: ソフトウェアエンジニア）
 
   /* 自己紹介。段落ごとに配列の1要素。 */
