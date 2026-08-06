@@ -41,7 +41,15 @@ jobs:
       - id: deployment
         uses: actions/deploy-pages@v4
         with:
-          # Pages 側の配備待ちが混むことがある。既定のままだと
-          # deployment_queued のまま打ち切られて失敗する（実際に起きた）。
-          timeout: 900000        # 15分待つ
+          # Pages 側の配備待ちが混むことがある。deployment_queued のまま
+          # 10分たって打ち切られる（2026-08-06 に #36 #37 #39 が続けて落ちた）。
+          #
+          # 待ち時間は伸ばせない。deploy-pages@v4 は timeout を内部で
+          # 600000ms に丸めるので、900000 と書いても10分で切れる。
+          # 上限そのものを書いておく。
+          #
+          # 原因はこちらの push の間隔ではない。#39 は他の run を
+          # 止めて単独で走らせても、同じように queued のまま落ちた。
+          # Pages 側が詰まっているときは、待つか、後で再実行するしかない。
+          timeout: 600000        # 10分（これが上限。伸ばせない）
           error_count: 20
