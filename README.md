@@ -4,13 +4,13 @@
 
 <https://shunshun0904.github.io/playbench/>
 
-棚は3つ。
+棚は3つ。上のタブで切り替えます。
 
-| ページ | 中身 |
-|---|---|
-| [`about.html`](about.html) | 自己紹介と職務経歴。中身は `data/profile.js` に書く |
-| [`macro.html`](macro.html) | 株式投資のために見ているマクロ経済指標。出どころと取得日つき |
-| [`games.html`](games.html) | ボードゲーム3作の自主研究。遊べる |
+| タブ | ページ | 中身 |
+|---|---|---|
+| 自己紹介 | [`index.html`](index.html) | 自己紹介と職務経歴。中身は `data/profile.js` に書く |
+| ボードゲーム | [`games.html`](games.html) | ボードゲーム3作の自主研究。遊べる |
+| 経済 | [`macro.html`](macro.html) | 株式投資のために見ているマクロ経済指標。出どころと取得日つき |
 
 - 数値はすべて出典つき。**出典のない数字は載せません**
 - 勝率は必ず**互角の線つき**。4人戦なら .250
@@ -19,12 +19,12 @@
 ## 構成
 
 ```
-index.html          トップ（名乗りと3つの入口）
-about.html          自己紹介・職務経歴
+index.html          トップ＝自己紹介・職務経歴
+games.html          ボードゲームの自主研究
 macro.html          マクロ経済指標
-games.html          盤上の自主研究
+about.html          index.html への転送のみ（旧URL宛て）
 assets/site.css     版面。色・書体・実測プレート
-assets/site.js      組版。天地も4ページぶんここから組む
+assets/site.js      組版。天地とタブもここから組む
 assets/auth.js      アカウント（Local / Supabase の差し替え式）
 assets/analytics.js アクセス解析。唯一の外部読み込み。空なら何もしない
 assets/config.js    接続先と測定ID
@@ -35,7 +35,7 @@ data/macro.js       見る指標の定義と、取得した系列（tools が書
 data/bgg.js         BGG の重さと評価のスナップショット（tools が書き換える）
 tools/fetch-macro.mjs  Alpha Vantage から指標を取ってくる道具
 tools/fetch-bgg.mjs    BGG から取ってくる道具
-tools/stamp-assets.mjs 配備時に4ページぶんの参照へ版を打つ（キャッシュ対策）
+tools/stamp-assets.mjs 配備時に全ページの参照へ版を打つ（キャッシュ対策）
 test/shots.js       実ブラウザでの検査（見た目・アカウント・解析の入切）
 build.js            盤上のページを1枚にまとめる
 ```
@@ -175,7 +175,7 @@ GitHub Pages は `Cache-Control: max-age=600` で配ります。`index.html` が
 手元の古い写しを使い続けます。**配備は成功しているのに画面が変わらない**、という
 形になります。実際、ゲームを1つ増やしたときにこれが起きました。
 
-そこで配備のたびに、`tools/stamp-assets.mjs` が**4ページすべて**の自前ファイル参照へ
+そこで配備のたびに、`tools/stamp-assets.mjs` が**全ページ**の自前ファイル参照へ
 コミットの SHA を `?v=…` として打ちます。URLが変わるのでブラウザは必ず取り直します。
 
 ```sh

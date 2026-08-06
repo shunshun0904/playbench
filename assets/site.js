@@ -760,10 +760,9 @@
      4ページあるので、天と地は HTML に写さず、ここから組む。
      文言を直す場所が1つで済む。 */
   var PAGES = [
-    { file: 'index.html', ja: 'トップ',       en: 'Home' },
-    { file: 'about.html', ja: '自己紹介',     en: 'About' },
-    { file: 'macro.html', ja: 'マクロ経済',   en: 'Macro' },
-    { file: 'games.html', ja: '盤上',         en: 'Board games' }
+    { file: 'index.html', ja: '自己紹介',     en: 'About' },
+    { file: 'games.html', ja: 'ボードゲーム', en: 'Board games' },
+    { file: 'macro.html', ja: '経済',         en: 'Economy' }
   ];
   function here() {
     var f = (location.pathname.split('/').pop() || '').split('?')[0];
@@ -790,10 +789,12 @@
     mark.href = 'index.html';
     box.appendChild(mark);
 
+    /* 3枚の見出し。図面の袋に挿す索引タブのつもりで、いま開いている1枚だけ
+       地の色を持たせ、天井に朱の線を引く。 */
     var nav = el('nav', 'masthead__nav');
+    nav.setAttribute('aria-label', lang === 'en' ? 'Sections' : 'ページ');
     var cur = here();
     PAGES.forEach(function (p) {
-      if (p.file === 'index.html') return;          // 名乗りが入口を兼ねる
       var a = el('a', p.file === cur ? 'is-here' : null, lang === 'en' ? p.en : p.ja);
       a.href = p.file;
       if (p.file === cur) a.setAttribute('aria-current', 'page');
@@ -863,55 +864,10 @@
     ]));
   }
 
-  /* ═════════════════════════════════════════════════════════ トップページ */
+  /* トップ（＝自己紹介）の名乗り。中身は buildProfile が組む */
   function buildHello() {
     var n = document.getElementById('hello-name');
-    if (!n) return;
-    n.textContent = who();
-
-    var host = document.getElementById('hello-intro');
-    host.textContent = '';
-    var pr = PB.PROFILE || {};
-    var line = pick2(pr.tagline);
-    if (line) host.appendChild(el('p', 'hello__tag', line));
-
-    var paras = (pr.intro && pr.intro.fill)
-      ? ((lang === 'en' && pr.intro.en && pr.intro.en.length) ? pr.intro.en : pr.intro.ja)
-      : null;
-    if (paras && paras.length) {
-      paras.forEach(function (s) { host.appendChild(el('p', null, s)); });
-    } else {
-      host.appendChild(el('p', null, lang === 'en'
-        ? 'A place for things I look into on my own time. Three shelves: who I am, the macro figures I keep for investing, and board games.'
-        : '仕事とは別に、自分で確かめたことを置いておく場所です。'
-          + '棚は3つ ── 自分のこと、投資のために見ているマクロの数字、それとボードゲーム。'));
-    }
-  }
-
-  function buildDoors() {
-    var host = document.getElementById('doors');
-    if (!host) return;
-    host.textContent = '';
-    var en = lang === 'en';
-    var n = (PB.WORKS || []).length;
-    [
-      { file: 'about.html', t: en ? 'About me' : '自己紹介と職務経歴',
-        b: en ? 'Who I am, what I have worked on, and the tools I reach for.'
-              : '何をしてきたか、いま何を使っているか。' },
-      { file: 'macro.html', t: en ? 'Macro indicators' : 'マクロ経済指標',
-        b: en ? 'Figures I keep an eye on for my own investing, with source and fetch date.'
-              : '株を持つために自分で見ている数字。出どころと取得日つきで置いています。' },
-      { file: 'games.html', t: en ? 'Board games' : '盤上の自主研究',
-        b: en ? n + ' games rebuilt for the browser, and opponents measured against the parity line. Playable.'
-              : 'ブラウザで動かした ' + n + ' 作と、互角の線と並べて測った相手。遊べます。' }
-    ].forEach(function (d) {
-      var a = el('a', 'door');
-      a.href = d.file;
-      a.appendChild(el('h3', 'door__t', d.t));
-      a.appendChild(el('p', 'door__b', d.b));
-      a.appendChild(el('span', 'door__go', en ? 'Open →' : '開く →'));
-      host.appendChild(a);
-    });
+    if (n) n.textContent = who();
   }
 
   /* ═══════════════════════════════════════════════════ 自己紹介・職務経歴 */
@@ -1091,7 +1047,6 @@
     buildHead();
     buildFoot();
     buildHello();
-    buildDoors();
     buildProfile();
     buildMacro();
 

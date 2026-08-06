@@ -111,8 +111,8 @@ function serve() {
   fs.mkdirSync(OUT, { recursive: true });
   const { srv, port } = await serve();
   const URL = `http://127.0.0.1:${port}/`;
-  /* 盤上の中身（作品・記録・アカウント）は games.html に移った。
-     トップは名乗りと3つの入口だけなので、検査の入口はこちら。 */
+  /* 盤上の中身（作品・記録・アカウント）は games.html にある。
+     トップ（index.html）は自己紹介なので、検査の入口はこちら。 */
   const GAMES = URL + 'games.html';
   const browser = await chromium.launch({ executablePath: process.env.PB_CHROME || undefined });
   let bad = 0;
@@ -740,7 +740,7 @@ function serve() {
     console.log('  ', JSON.stringify(en));
     // 収録は3作。先頭はハイソサエティ
     if (en.lang !== 'en' || en.first !== 'High Society' || !/Play/.test(en.play)) fail('英語に切り替わっていない');
-    if (!/About\/Macro\/Board games/.test(en.nav)) fail('天のナビが英語になっていない');
+    if (!/About\/Board games\/Economy/.test(en.nav)) fail('天のタブが英語になっていない');
     if (en.overflow > 1) fail('横スクロールが出ている');
     await ctx.close();
   }
