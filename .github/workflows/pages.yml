@@ -10,9 +10,11 @@ permissions:
   pages: write
   id-token: write
 
+# 配備は1本ずつ。ただし走っているものを殺さない ──
+# 途中で切ると、直前の変更が配備されないまま残る（実際に2回そうなった）。
 concurrency:
   group: pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   deploy:
@@ -38,3 +40,8 @@ jobs:
           path: .
       - id: deployment
         uses: actions/deploy-pages@v4
+        with:
+          # Pages 側の配備待ちが混むことがある。既定のままだと
+          # deployment_queued のまま打ち切られて失敗する（実際に起きた）。
+          timeout: 900000        # 15分待つ
+          error_count: 20
