@@ -658,6 +658,38 @@ function serve() {
   }
 
 
+  /* --------------------------------------------- 携帯でタブが出ているか
+     以前ここは display:none で畳んでいた（同じページ内へのリンクだった頃の名残）。
+     いまタブはページの切り替えそのものなので、畳むと他のページへ行けなくなる。
+     横あふれが0でも「見えている」ことにはならないので、1枚ずつ位置を見る。 */
+  {
+    console.log('── 携帯でのタブ');
+    for (const w of [430, 390, 375, 360, 320]) {
+      const ctx = await newContext({ viewport: { width: w, height: 760 },
+        deviceScaleFactor: 2, isMobile: true, hasTouch: true });
+      const page = await ctx.newPage();
+      await page.goto(URL, { waitUntil: 'load' });
+      await page.waitForTimeout(350);
+      const tabs = await page.evaluate(() => {
+        const nav = document.querySelector('.masthead__nav');
+        if (!nav) return null;
+        return [...nav.querySelectorAll('a')].map(a => {
+          const r = a.getBoundingClientRect();
+          return { t: a.textContent, ok: r.width > 0 && r.height > 0
+            && r.right <= innerWidth + 0.5 && r.left >= -0.5 };
+        });
+      });
+      console.log(`   ${w}px → ` +
+        (tabs ? tabs.map(x => (x.ok ? '✅' : '❌') + x.t).join(' ') : 'nav が無い'));
+      if (!tabs || tabs.length !== 3) fail(`${w}px でタブが3枚出ていない`);
+      else {
+        const ng = tabs.filter(x => !x.ok);
+        if (ng.length) fail(`${w}px でタブが見えない: ${ng.map(x => x.t).join('/')}`);
+      }
+      await ctx.close();
+    }
+  }
+
   /* ------------------------------------------ BGG の行（見本を差し込んで確認）
      data/bgg.js は空のまま置いてある。空だと画面には何も出ないので、
      取ってきたあとにきちんと出るかを、ここで確かめておく。
