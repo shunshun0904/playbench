@@ -119,6 +119,9 @@ const FROM_YEAR = 2000;
 const inds = loadIndicators();
 const out = {};
 for (const ind of inds) {
+  /* 掲載元へのリンクだけを持つ項目（日本の統計や PCE など、Alpha Vantage に
+     無いもの）は、取りに行かない。fn が無いことがその印。 */
+  if (!ind.fn) { console.log(`── ${ind.id} … 掲載元リンクのみ。取得しない`); continue; }
   process.stdout.write(`── ${ind.id} (${ind.fn}) … `);
   try {
     let s = toSeries(await fetchOne(ind), FROM_YEAR);

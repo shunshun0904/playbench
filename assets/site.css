@@ -881,3 +881,5 @@ a { color: inherit; }
   padding: .05rem .3rem;
   border: 1px solid currentColor; color: var(--indigo); opacity: .85;
 }
+/* 図を持たない項目。空欄とは意味が違うので、点線の枠にはしない */
+.gauge__only { margin: 0; font-size: .82rem; color: var(--ink-mute); }

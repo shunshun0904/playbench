@@ -902,6 +902,8 @@ a { color: inherit; }
   padding: .05rem .3rem;
   border: 1px solid currentColor; color: var(--indigo); opacity: .85;
 }
+/* 図を持たない項目。空欄とは意味が違うので、点線の枠にはしない */
+.gauge__only { margin: 0; font-size: .82rem; color: var(--ink-mute); }
 </style>
 </head>
 <body>
@@ -1534,6 +1536,111 @@ window.PB.INDICATORS = [
         url: 'https://www.bls.gov/schedule/news_release/empsit.htm' }
     ],
     fn: 'UNEMPLOYMENT'
+  },
+  {
+    id: 'pce',
+    title: '米国 PCE 物価指数', titleEn: 'US PCE price index',
+    sub: 'FRB が物価目標に使うのはこちら', subEn: 'The gauge the Fed targets',
+    unit: '%',
+    why: 'FRB の 2% 目標は CPI ではなく PCE。品目の重みの決め方が違うので、CPI とは常にずれる。'
+      + '金利を読むならこちらを見る。',
+    whyEn: 'The Fed\'s 2% target is PCE, not CPI. It weights items differently, so the two never match. '
+      + 'For reading rates, this is the one.',
+    by: '米商務省経済分析局（BEA）', byEn: 'US Bureau of Economic Analysis',
+    sources: [
+      { label: 'PCE 物価指数', labelEn: 'PCE price index',
+        url: 'https://www.bea.gov/data/personal-consumption-expenditures-price-index' },
+      { label: 'コア PCE（食品・エネルギー除く）', labelEn: 'Core PCE (ex food and energy)',
+        url: 'https://www.bea.gov/data/personal-consumption-expenditures-price-index-excluding-food-and-energy' }
+    ]
+  },
+  {
+    id: 'umich',
+    title: 'ミシガン大 消費者信頼感指数', titleEn: 'U. Michigan consumer sentiment',
+    sub: '速報値と確報値が月2回', subEn: 'Preliminary and final, twice a month',
+    why: '消費者に直接きいた指数。実績ではなく気分なので外れることも多いが、'
+      + '期待インフレ率が同時に出るのが効く ── FRB がそこを見ている。',
+    whyEn: 'A survey, not a measurement, so it misses often. What matters is that inflation expectations '
+      + 'come with it — the Fed watches those.',
+    by: 'ミシガン大学 Surveys of Consumers', byEn: 'University of Michigan Surveys of Consumers',
+    sources: [
+      { label: 'データと報告書', labelEn: 'Data and reports',
+        url: 'https://data.sca.isr.umich.edu/' }
+    ]
+  },
+  {
+    id: 'beige',
+    title: '米 ベージュブック', titleEn: 'Beige Book',
+    sub: '数字ではなく、地区連銀が集めた話', subEn: 'Anecdotes, not numbers',
+    why: 'FOMC の約2週間前に年8回。12地区の企業への聞き取りをまとめたもので、'
+      + '統計に出る前の変化がここに先に出ることがある。',
+    whyEn: 'Eight times a year, about two weeks before each FOMC. Interviews across the twelve districts — '
+      + 'shifts sometimes show up here before they reach the statistics.',
+    by: '米連邦準備制度理事会（FRB）', byEn: 'Federal Reserve Board',
+    sources: [
+      { label: 'ベージュブック', labelEn: 'Beige Book',
+        url: 'https://www.federalreserve.gov/monetarypolicy/publications/beige-book-default.htm' }
+    ]
+  },
+  {
+    id: 'usmb',
+    title: '米国 マネーストック', titleEn: 'US money stock',
+    sub: 'H.6（M1・M2）', subEn: 'H.6 (M1, M2)',
+    why: 'マネタリーベースだけを出す統計（H.3）は廃止されているので、'
+      + '公式にたどれる最寄りは H.6 のマネーストックになる。毎月第4火曜。',
+    whyEn: 'The release dedicated to the monetary base (H.3) was discontinued, so the nearest official '
+      + 'source is the H.6 money stock release. Fourth Tuesday of each month.',
+    by: '米連邦準備制度理事会（FRB）', byEn: 'Federal Reserve Board',
+    sources: [
+      { label: 'H.6 マネーストック', labelEn: 'H.6 Money Stock Measures',
+        url: 'https://www.federalreserve.gov/releases/h6/' }
+    ]
+  },
+  {
+    id: 'jpcpi',
+    title: '日本 全国消費者物価', titleEn: 'Japan CPI',
+    sub: '生鮮除く総合（コアCPI）が主役', subEn: 'Core (ex fresh food) is the headline',
+    why: '日銀の物価目標はこれ。日本株を持つなら、円金利の前提がここで決まる。',
+    whyEn: 'This is the Bank of Japan\'s target. If you hold Japanese equities, the premise for yen rates '
+      + 'is set here.',
+    by: '総務省統計局', byEn: 'Statistics Bureau of Japan',
+    sources: [
+      { label: '消費者物価指数 結果', labelEn: 'CPI results',
+        url: 'https://www.stat.go.jp/data/cpi/1.html' },
+      { label: '統計 Viz（図で見る）', labelEn: 'Statistics Viz',
+        url: 'https://www.stat.go.jp/viz/cpi/index.html' }
+    ]
+  },
+  {
+    id: 'jpcgpi',
+    title: '日本 企業物価指数', titleEn: 'Japan corporate goods prices',
+    sub: '国内企業物価・輸出物価・輸入物価', subEn: 'Domestic, export and import price indexes',
+    why: '企業間の値段。消費者物価より先に動くので、CPI の先行きを読む材料になる。'
+      + '輸出入物価は為替の影響がそのまま出る。',
+    whyEn: 'Prices between firms. It moves before consumer prices, so it reads ahead of CPI. The export '
+      + 'and import indexes carry the currency effect directly.',
+    by: '日本銀行', byEn: 'Bank of Japan',
+    sources: [
+      { label: '企業物価指数の公表データ一覧', labelEn: 'CGPI releases',
+        url: 'https://www.boj.or.jp/statistics/pi/cgpi_release/' },
+      { label: '物価関連統計', labelEn: 'Price statistics',
+        url: 'https://www.boj.or.jp/statistics/pi/index.htm' }
+    ]
+  },
+  {
+    id: 'jpmb',
+    title: '日本 マネタリーベース', titleEn: 'Japan monetary base',
+    sub: '', subEn: '',
+    why: '日銀が世の中に出している通貨の量。金融政策の転換が、声明より先に残高に出ることがある。',
+    whyEn: 'The quantity of central bank money outstanding. A turn in policy sometimes shows in the balance '
+      + 'before it shows in the statement.',
+    by: '日本銀行', byEn: 'Bank of Japan',
+    sources: [
+      { label: 'マネタリーベース', labelEn: 'Monetary base',
+        url: 'https://www.boj.or.jp/statistics/boj/other/mb/index.htm' },
+      { label: '時系列統計データ検索', labelEn: 'Time-series data search',
+        url: 'https://www.stat-search.boj.or.jp/' }
+    ]
   }
 ];
 
@@ -2442,10 +2549,16 @@ window.PB.MACRO = {
         card.appendChild(el('p', 'gauge__src', (lang === 'en'
           ? 'Monthly, ' + s.from + ' to ' + monthAt(s.from, s.v.length - 1) + ' · ' + (M.source || '')
           : '月次 ' + s.from + ' 〜 ' + monthAt(s.from, s.v.length - 1) + ' ・ 出どころ ' + (M.source || ''))));
-      } else {
+      } else if (ind.fn) {
+        /* 取ってこられるのに、まだ取っていない */
         card.appendChild(el('p', 'blank', lang === 'en'
           ? 'Not fetched yet. Run tools/fetch-macro.mjs with an API key.'
           : 'まだ取ってきていません。tools/fetch-macro.mjs を鍵つきで走らせると入ります。'));
+      } else {
+        /* そもそも系列を持たない。掲載元を見に行く項目 */
+        card.appendChild(el('p', 'gauge__only', lang === 'en'
+          ? 'No series here — this one is read at the source.'
+          : 'ここに図はありません。掲載元で読む項目です。'));
       }
       host.appendChild(card);
     });

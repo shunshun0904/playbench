@@ -861,10 +861,16 @@
         card.appendChild(el('p', 'gauge__src', (lang === 'en'
           ? 'Monthly, ' + s.from + ' to ' + monthAt(s.from, s.v.length - 1) + ' · ' + (M.source || '')
           : '月次 ' + s.from + ' 〜 ' + monthAt(s.from, s.v.length - 1) + ' ・ 出どころ ' + (M.source || ''))));
-      } else {
+      } else if (ind.fn) {
+        /* 取ってこられるのに、まだ取っていない */
         card.appendChild(el('p', 'blank', lang === 'en'
           ? 'Not fetched yet. Run tools/fetch-macro.mjs with an API key.'
           : 'まだ取ってきていません。tools/fetch-macro.mjs を鍵つきで走らせると入ります。'));
+      } else {
+        /* そもそも系列を持たない。掲載元を見に行く項目 */
+        card.appendChild(el('p', 'gauge__only', lang === 'en'
+          ? 'No series here — this one is read at the source.'
+          : 'ここに図はありません。掲載元で読む項目です。'));
       }
       host.appendChild(card);
     });
