@@ -650,10 +650,10 @@
 
     host.appendChild(col(en ? 'Rights' : '権利について', [
       el('p', null, en
-        ? 'High Society is a game by Reiner Knizia; Big Shot by Alex Randolph; Acquire by Sid Sackson. The implementations here are unofficial fan work made for study, containing no trademarks and no original artwork.'
-        : 'High Society はライナー・クニツィア、Big Shot はアレックス・ランドルフ、'
-          + 'Acquire はシド・サクソンによるゲームです。ここの実装はいずれも学習目的の'
-          + '非公式なファンメイドで、商標もアートワークも含みません。'),
+        ? 'High Society is a game by Reiner Knizia; Acquire by Sid Sackson. The implementations here are unofficial fan work made for study, containing no trademarks and no original artwork.'
+        : 'High Society はライナー・クニツィア、Acquire はシド・サクソンによるゲームです。'
+          + 'ここの実装はいずれも学習目的の非公式なファンメイドで、'
+          + '商標もアートワークも含みません。'),
       el('p', null, en
         ? 'Macro figures come from Alpha Vantage. Nothing here is investment advice.'
         : 'マクロの数字は Alpha Vantage から取っています。投資助言ではありません。')

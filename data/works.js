@@ -73,68 +73,9 @@ window.PB.WORKS = [
   },
   /* ---------------------------------------------------------------- 02 */
   {
-    id: 'bigshot',
-    bggName: 'Big Shot',
-    no: 2,
-    title: 'ビッグショット',
-    titleEn: 'Big Shot',
-    latin: 'BIG SHOT',
-    designer: 'アレックス・ランドルフ',
-    designerEn: 'Alex Randolph',
-    players: '4人',
-    playersEn: '4 players',
-    genre: '競り・エリアマジョリティ',
-    genreEn: 'Auction / Area majority',
-    hook: '落札した4個には相手の色も混ざっていて、それも落札者が置く。どこへ捨てるかが勝負どころ。',
-    hookEn: 'The four cubes you win include your rivals\' colours — and you place those too. Where you dump them is the game.',
-    opponents: 'CPU 3人（確率計算）',
-    opponentsEn: '3 CPU (exact probability)',
-    lead: '18回の競りで街を分け合う。収入がないので、使った金はそのまま失点になる。',
-    leadEn: 'Eighteen auctions divide a city. There is no income, so every dollar spent is a point lost.',
-
-    /* 相手の作り */
-    method: '確率の数え上げ',
-    methodEn: 'Exhaustive enumeration',
-    methodBody:
-      '学習は使っていない。区画の状態は「4色の個数・合計7以下」の330通りしかないので、' +
-      '残り枠が無作為に埋まると仮定したときの所有確率を起動時に多項分布で全部数え上げて表にしておく。' +
-      '同数無効のルールもこの数え上げの中で処理される。',
-    methodBodyEn:
-      'No learning. A block has only 330 reachable states (four colours, at most seven cubes), so the ' +
-      'ownership probability under random filling is enumerated exactly at start-up with the multinomial ' +
-      'distribution. The tie-voids-the-colour rule falls out of the same enumeration.',
-
-    plate: {
-      caption: '実測勝率',
-      captionEn: 'Measured win rate',
-      note: '4人戦・席順ローテーション・各200局',
-      noteEn: '4 players, seats rotated, 200 games each',
-      baseline: 0.25,
-      rows: [
-        { label: 'AI 1人 対 素人筋 3人',  labelEn: 'AI vs 3 naive',    v: 0.855, lead: true },
-        { label: 'AI 1人 対 浪費家 3人',  labelEn: 'AI vs 3 spenders', v: 0.995 },
-        { label: 'AI 1人 対 乱択 3人',    labelEn: 'AI vs 3 random',   v: 1.000 },
-        { label: '素人筋 1人 対 AI 3人',  labelEn: 'Naive vs 3 AI',    v: 0.055 },
-        { label: '乱択 1人 対 AI 3人',    labelEn: 'Random vs 3 AI',   v: 0.040 }
-      ]
-    },
-
-    remark:
-      '所有確率を「置いた数が多いほど有利」と当てずっぽうで近似していた版は、空き区画に1個置いただけで' +
-      '勝率43%と見積もり、序盤に全財産を注いで沈んだ。数え上げに替えて 0.43 → 0.98。',
-    remarkEn:
-      'An earlier version approximated ownership by "more cubes is better", valued a single cube on an empty ' +
-      'block at 43%, and drowned itself in debt in the opening. Switching to enumeration moved it 0.43 → 0.98.',
-
-    play: 'https://shunshun0904.github.io/bigshot/',
-    repo: 'https://github.com/shunshun0904/bigshot',
-    figure: 'blocks'
-  },
-  /* ---------------------------------------------------------------- 03 */
-  {
     id: 'acquire',
     bggName: 'Acquire',
-    no: 3,
+    no: 2,
     title: 'アクワイア',
     titleEn: 'Acquire',
     latin: 'ACQUIRE',
@@ -245,15 +186,14 @@ window.PB.PRINCIPLES = [
     titleEn: 'No dependencies',
     body:
       'どれもライブラリもフォントも読み込まない。盤面も駒も手書きの SVG と CSS で、' +
-      'ハイソサエティとビッグショットは index.html を開くだけで動く。' +
-      'ハイソサエティに至っては、学習した重み20KBごと1枚に収まっている。' +
+      'ハイソサエティは index.html を開くだけで動く。学習した重み20KBごと1枚に収まっている。' +
       'アクワイアは js/ に分けてあるが、単一ファイル版も書き出せる。' +
       '外から読むのはアクセス解析の1本だけ。それも web で配信しているときに限り、' +
       'ファイルとして開けば、どれも外へは何も出さない。',
     bodyEn:
-      'None of them loads a library or a font. Boards and pieces are hand-written SVG and CSS. High Society and ' +
-      'Big Shot each run by opening index.html — High Society with its trained weights, 20 KB, embedded in the ' +
-      'same file. Acquire is split across js/ but exports as one file too. The one thing loaded from outside is ' +
+      'Neither loads a library or a font. Boards and pieces are hand-written SVG and CSS. High Society runs by ' +
+      'opening index.html, trained weights and all — 20 KB, embedded in the same file. Acquire is split across ' +
+      'js/ but exports as one file too. The one thing loaded from outside is ' +
       'analytics, and only when served over the web — opened as a file, none of them reaches out at all.'
   },
   {

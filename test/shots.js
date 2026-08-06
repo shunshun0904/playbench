@@ -273,7 +273,6 @@ function serve() {
       body: `window.PB = window.PB || {};
              window.PB.BGG = { fetchedAt: '2026-08-06', source: 'boardgamegeek.com', games: {
                highsociety: { id: 220,  weight: 1.62, rating: 6.98, ratings: 12345 },
-               bigshot:     { id: 1746, weight: 2.00, rating: 6.40, ratings: 678 },
                acquire:     { id: 5,    weight: 2.50, rating: 7.30, ratings: 34567 }
              } };`
     }));
@@ -296,7 +295,7 @@ function serve() {
     });
     console.log('── BGG の行（見本）');
     console.log('  ', JSON.stringify(bgg));
-    if (bgg.n !== 3) fail(`BGG の行が3作ぶん出ていない（${bgg.n}）`);
+    if (bgg.n !== 2) fail(`BGG の行が2作ぶん出ていない（${bgg.n}）`);
     else {
       if (bgg.meters !== 2) fail('重さと評価の2本が出ていない');
       if (bgg.vals[0] !== '1.62 / 5' || bgg.vals[1] !== '6.98 / 10') fail('値の出し方が合わない: ' + bgg.vals);
