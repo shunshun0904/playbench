@@ -1,4 +1,4 @@
-<title>ボードゲームの自主研究 ── shunshun0904</title>
+<title>ボードゲームの自主研究 ── Shun Nakamura</title>
 <style>
 /* ==========================================================================
    PLAYBENCH ─ 製図シートの上で遊ぶ
@@ -877,14 +877,6 @@ a { color: inherit; }
   <div class="works" id="works"></div>
 </section>
 
-<section class="sheet" id="me">
-  <div class="band">
-    <h2 class="band__t band__t--sub" data-en="Your record">対戦の記録</h2>
-    <span class="band__n"></span>
-  </div>
-  <div id="account-panel"></div>
-</section>
-
 <section class="sheet">
   <div class="band">
     <h2 class="band__t band__t--sub" data-en="What I want to try next">次に試したいこと</h2>
@@ -908,70 +900,11 @@ a { color: inherit; }
 
 <footer class="sheet colophon" id="foot"></footer>
 
-<!-- ══════════════════════════════════════════════ ログイン／新規登録 -->
-<dialog class="modal" id="auth-modal" aria-labelledby="auth-title">
-  <form class="modal__in" id="auth-form" method="dialog" novalidate>
-    <div class="modal__head">
-      <h2 class="modal__t" id="auth-title">ログイン</h2>
-      <button class="modal__x" type="button" id="auth-close" aria-label="閉じる">×</button>
-    </div>
-
-    <div class="tabs" role="tablist">
-      <button class="tab" type="button" role="tab" data-tab="signin" data-en="Sign in">ログイン</button>
-      <button class="tab" type="button" role="tab" data-tab="signup" data-en="Create account">新規登録</button>
-    </div>
-
-    <div class="field" data-field="email">
-      <label class="field__k" for="f-email" data-en="Email">メールアドレス</label>
-      <input class="field__i" id="f-email" name="email" type="email"
-             autocomplete="email" autocapitalize="none" spellcheck="false">
-      <p class="field__note" data-en="Used to sign in. It is never shown to anyone else.">ログインに使います。他の人には見えません</p>
-    </div>
-
-    <div class="field" data-field="handle">
-      <label class="field__k" for="f-handle" data-en="Handle">ハンドル名</label>
-      <div class="field__wrap">
-        <span class="field__at">@</span>
-        <input class="field__i field__i--at" id="f-handle" name="handle" type="text"
-               autocomplete="username" autocapitalize="none" spellcheck="false">
-      </div>
-      <p class="field__note" data-en="Lower-case letters, digits and _ — 3 to 20 characters.">半角の英小文字・数字・_ で 3〜20 文字</p>
-    </div>
-
-    <div class="field" data-field="display">
-      <label class="field__k" for="f-display" data-en="Display name">表示名</label>
-      <input class="field__i" id="f-display" name="display" type="text" autocomplete="nickname" maxlength="24">
-      <p class="field__note" data-en="Shown on the board and the ranking. Japanese is fine.">盤面やランキングに出る名前。日本語で構いません</p>
-    </div>
-
-    <div class="field" data-field="pass">
-      <label class="field__k" for="f-pass" data-en="Password">パスワード</label>
-      <input class="field__i" id="f-pass" name="pass" type="password" minlength="8">
-      <p class="field__note" data-en="8 characters or more.">8文字以上</p>
-    </div>
-
-    <p class="modal__err" id="auth-err" role="alert" hidden></p>
-
-    <button class="btn btn--go btn--wide" type="submit" id="auth-submit">ログイン</button>
-
-    <p class="modal__foot" id="auth-foot"></p>
-  </form>
-</dialog>
-
 <script>
 /* ==========================================================================
-   PLAYBENCH ─ 接続先の設定
+   接続先の設定。
 
-   ここが空のあいだは「この端末だけ」のアカウント（LocalProvider）で動く。
-   Supabase の URL と anon キーを入れると、そちらへ切り替わる。
-
-   anon キーは公開してよいキー。ブラウザに配る前提で作られていて、
-   実際の権限は Supabase 側の RLS（行レベルセキュリティ）で決まる。
-   秘密にすべきなのは service_role キーのほうで、それはここに書かない。
-
-   立ち上げ手順は supabase/README.md を参照。
-
-   アクセス解析（Google アナリティクス 4）も同じくここで決める。
+   いまここにあるのはアクセス解析の測定IDだけ。
    measurementId が空のあいだは gtag.js を読み込まない ── 外部への通信は起きない。
    取り方は docs/analytics.md を参照。
    ========================================================================== */
@@ -981,10 +914,6 @@ window.PB = window.PB || {};
 
 /* すでに入っていれば、そちらを優先する（検査で差し込むため） */
 window.PB.CONFIG = window.PB.CONFIG || {
-  supabase: {
-    url: 'https://keevclphgxpqhmszcwyk.supabase.co',      // 例: https://xxxxxxxxxxxx.supabase.co
-    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtlZXZjbHBoZ3hwcWhtc3pjd3lrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU1NjcwNTMsImV4cCI6MjEwMTE0MzA1M30.fSPOBuv3IMFqWrrB677pFEdmqe0av5rliDeM9DZGVi0'   // 例: eyJhbGciOi...
-  },
   analytics: {
     /* 収録ゲーム5作の index.html にも同じ測定IDを入れてある。
        6サイトとも同一オリジン（shunshun0904.github.io）なので、
@@ -1573,517 +1502,6 @@ window.PB.MACRO = {
 </script>
 <script>
 /* ==========================================================================
-   PLAYBENCH ─ アカウント
-
-   プロバイダを差し替えられる作りにしてある。
-
-     LocalProvider     この端末の localStorage だけ。サーバー不要
-     SupabaseProvider  Supabase の REST を素の fetch で叩く。ライブラリなし
-
-   assets/config.js に URL と anon キーが入っていれば Supabase、
-   空なら Local に落ちる。画面側はどちらでも同じ呼び方で動く。
-
-   画面が知る必要のあること:
-     fields  … その画面で出す入力欄（プロバイダによって違う）
-     ident   … ログインに使う識別子。Local はハンドル名、Supabase はメール
-   ========================================================================== */
-'use strict';
-
-window.PB = window.PB || {};
-
-(function () {
-
-  var KEY_USERS = 'pb.users.v1';
-  var KEY_SESS = 'pb.session.v1';
-  var KEY_SB = 'pb.sb.session.v1';
-
-  /* ------------------------------------------------------------ 補助 */
-  function load(key, fallback) {
-    try { var raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : fallback; }
-    catch (e) { return fallback; }
-  }
-  function save(key, val) {
-    try { localStorage.setItem(key, JSON.stringify(val)); return true; } catch (e) { return false; }
-  }
-  function drop(key) { try { localStorage.removeItem(key); } catch (e) {} }
-
-  function err(code, msg) { var e = new Error(msg); e.code = code; return e; }
-
-  function normHandle(h) { return String(h || '').trim().replace(/^@/, '').toLowerCase(); }
-
-  function bytesToHex(buf) {
-    return Array.prototype.map.call(new Uint8Array(buf),
-      function (b) { return ('0' + b.toString(16)).slice(-2); }).join('');
-  }
-  function randomHex(n) {
-    var a = new Uint8Array(n);
-    crypto.getRandomValues(a);
-    return bytesToHex(a.buffer);
-  }
-
-  /* --------------------------------------------------------- 入力の検査 */
-  var RULES = { handle: /^[a-z0-9_]{3,20}$/, displayMax: 24, passMin: 8 };
-
-  function checkHandle(h) {
-    if (!h) throw err('handle-required', 'ハンドル名を入れてください');
-    if (!RULES.handle.test(h)) {
-      throw err('handle-shape', 'ハンドル名は半角の英小文字・数字・_ で 3〜20 文字にしてください');
-    }
-  }
-  function checkPass(p) {
-    if (!p) throw err('pass-required', 'パスワードを入れてください');
-    if (p.length < RULES.passMin) throw err('pass-short', 'パスワードは ' + RULES.passMin + ' 文字以上にしてください');
-  }
-  function checkEmail(e) {
-    if (!e) throw err('email-required', 'メールアドレスを入れてください');
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.trim())) {
-      throw err('email-shape', 'メールアドレスの形になっていません');
-    }
-  }
-
-  /* ============================================== この端末だけのアカウント */
-  function LocalProvider() {
-    this.kind = 'local';
-    this.label = 'この端末';
-    this.identKey = 'handle';
-    this.fields = { signin: ['handle', 'pass'], signup: ['handle', 'display', 'pass'] };
-  }
-
-  LocalProvider.prototype._users = function () { return load(KEY_USERS, {}); };
-
-  LocalProvider.prototype._public = function (u) {
-    return {
-      id: u.id, handle: u.handle, display: u.display, joined: u.joined,
-      stats: u.stats || { played: 0, won: 0, byGame: {} },
-      agents: u.agents || []
-    };
-  };
-
-  LocalProvider.prototype.start = function () { return Promise.resolve(this.user()); };
-
-  LocalProvider.prototype.user = function () {
-    var id = load(KEY_SESS, null);
-    if (!id) return null;
-    var u = this._users()[id];
-    return u ? this._public(u) : null;
-  };
-
-  /* パスワードは PBKDF2 で伸ばしてから置く。生の文字列を残さないというだけで、
-     端末を触れる人からは守れない。画面にもそう書いてある。 */
-  function derive(pass, saltHex) {
-    var enc = new TextEncoder();
-    return crypto.subtle.importKey('raw', enc.encode(pass), 'PBKDF2', false, ['deriveBits'])
-      .then(function (key) {
-        return crypto.subtle.deriveBits(
-          { name: 'PBKDF2', salt: enc.encode(saltHex), iterations: 120000, hash: 'SHA-256' },
-          key, 256);
-      }).then(bytesToHex);
-  }
-
-  LocalProvider.prototype.signUp = function (o) {
-    var self = this;
-    return Promise.resolve().then(function () {
-      var handle = normHandle(o.handle);
-      checkHandle(handle);
-      checkPass(o.pass);
-
-      var users = self._users();
-      for (var k in users) {
-        if (users[k].handle === handle) throw err('handle-taken', 'その名前はこの端末ですでに使われています');
-      }
-      var salt = randomHex(16);
-      return derive(o.pass, salt).then(function (hash) {
-        var u = {
-          id: 'u_' + randomHex(8), handle: handle,
-          display: String(o.display || o.handle).trim().slice(0, RULES.displayMax) || handle,
-          salt: salt, hash: hash, joined: new Date().toISOString(),
-          stats: { played: 0, won: 0, byGame: {} }, agents: []
-        };
-        users[u.id] = u;
-        if (!save(KEY_USERS, users)) {
-          throw err('storage', 'この端末に保存できませんでした（プライベートモードかもしれません）');
-        }
-        save(KEY_SESS, u.id);
-        return self._public(u);
-      });
-    });
-  };
-
-  LocalProvider.prototype.signIn = function (o) {
-    var self = this;
-    return Promise.resolve().then(function () {
-      var handle = normHandle(o.handle);
-      if (!handle) throw err('handle-required', 'ハンドル名を入れてください');
-      if (!o.pass) throw err('pass-required', 'パスワードを入れてください');
-
-      var users = self._users(), found = null;
-      for (var k in users) if (users[k].handle === handle) found = users[k];
-      if (!found) throw err('no-user', 'その名前のアカウントがこの端末に見つかりません');
-
-      return derive(o.pass, found.salt).then(function (hash) {
-        if (hash !== found.hash) throw err('bad-pass', 'パスワードが違います');
-        save(KEY_SESS, found.id);
-        return self._public(found);
-      });
-    });
-  };
-
-  LocalProvider.prototype.signOut = function () { drop(KEY_SESS); return Promise.resolve(null); };
-
-  LocalProvider.prototype.update = function (patch) {
-    var self = this;
-    return Promise.resolve().then(function () {
-      var id = load(KEY_SESS, null);
-      if (!id) throw err('no-session', 'ログインしていません');
-      var users = self._users(), u = users[id];
-      if (!u) throw err('no-session', 'ログインしていません');
-      if (patch.display != null) {
-        var d = String(patch.display).trim();
-        if (!d) throw err('display-required', '表示名を入れてください');
-        u.display = d.slice(0, RULES.displayMax);
-      }
-      if (patch.stats) u.stats = patch.stats;
-      users[id] = u;
-      save(KEY_USERS, users);
-      return self._public(u);
-    });
-  };
-
-  LocalProvider.prototype.remove = function () {
-    var self = this;
-    return Promise.resolve().then(function () {
-      var id = load(KEY_SESS, null);
-      if (!id) return null;
-      var users = self._users();
-      delete users[id];
-      save(KEY_USERS, users);
-      return self.signOut();
-    });
-  };
-
-  LocalProvider.prototype.exportData = function () {
-    var u = this.user();
-    return u ? JSON.stringify({ exportedAt: new Date().toISOString(), profile: u }, null, 2) : null;
-  };
-
-  /* ====================================================== Supabase 版 */
-  /* ライブラリは使わず REST をそのまま叩く。
-     使う口:
-       POST /auth/v1/signup
-       POST /auth/v1/token?grant_type=password
-       POST /auth/v1/token?grant_type=refresh_token
-       POST /auth/v1/logout
-       GET  /rest/v1/profiles          （公開読み。ハンドル名の重複確認とランキング）
-       PATCH/rest/v1/profiles          （自分の行だけ。RLS で縛る）             */
-  function SupabaseProvider(cfg) {
-    this.kind = 'supabase';
-    this.label = 'Supabase';
-    this.identKey = 'email';
-    this.fields = { signin: ['email', 'pass'], signup: ['email', 'handle', 'display', 'pass'] };
-    this.url = String(cfg.url).replace(/\/+$/, '');
-    this.key = cfg.anonKey;
-    this._me = null;
-    this._sess = load(KEY_SB, null);
-  }
-
-  SupabaseProvider.prototype._headers = function (auth) {
-    var h = { 'apikey': this.key, 'Content-Type': 'application/json' };
-    var tok = auth && this._sess ? this._sess.access_token : null;
-    h['Authorization'] = 'Bearer ' + (tok || this.key);
-    return h;
-  };
-
-  SupabaseProvider.prototype._call = function (path, opt) {
-    opt = opt || {};
-    return fetch(this.url + path, {
-      method: opt.method || 'GET',
-      headers: Object.assign(this._headers(opt.auth !== false), opt.headers || {}),
-      body: opt.body ? JSON.stringify(opt.body) : undefined
-    }).then(function (res) {
-      return res.text().then(function (txt) {
-        var data = null;
-        try { data = txt ? JSON.parse(txt) : null; } catch (e) { data = txt; }
-        if (!res.ok) {
-          var msg = (data && (data.msg || data.message || data.error_description || data.error)) || ('通信に失敗しました（' + res.status + '）');
-          throw err('supabase-' + res.status, translate(msg, res.status));
-        }
-        return data;
-      });
-    }, function () {
-      throw err('network', 'サーバーに接続できませんでした。通信状態を確かめてください');
-    });
-  };
-
-  /* Supabase の英語メッセージを、こちらの言葉に置き換える */
-  function translate(msg, status) {
-    var m = String(msg);
-
-    /* 立ち上げの取りこぼしは、原因と次の一手をそのまま出す。
-       ここが一番つまずくところなので、生の英語を見せない。 */
-    if (/PGRST205/i.test(m) || /Could not find the table/i.test(m) ||
-        /relation .*profiles.* does not exist/i.test(m)) {
-      return 'profiles テーブルがまだありません。Supabase の SQL Editor で supabase/schema.sql を実行してください';
-    }
-    if (/PGRST301/i.test(m) || /JWSError|JWT/i.test(m)) {
-      return '鍵が受け付けられません。assets/config.js の anonKey と URL が同じプロジェクトのものか確かめてください';
-    }
-    if (/row-level security|violates row-level/i.test(m)) {
-      return '行レベルセキュリティに弾かれました。supabase/schema.sql のポリシーが入っているか確かめてください';
-    }
-    if (/Signups not allowed|signup is disabled/i.test(m)) {
-      return 'このプロジェクトは新規登録を受け付けない設定です。Authentication → Providers を確かめてください';
-    }
-    if (/otp_expired|Email link is invalid or has expired/i.test(m)) {
-      return '確認リンクの有効期限が切れています。もう一度登録するか、ログインをやり直してください';
-    }
-    if (/redirect_to|not allowed for this|invalid_request.*redirect/i.test(m)) {
-      return '戻り先が許可されていません。Supabase の Authentication → URL Configuration で、このサイトのURLを Site URL と Redirect URLs に入れてください';
-    }
-
-    if (/Invalid login credentials/i.test(m)) return 'メールアドレスかパスワードが違います';
-    if (/Email not confirmed/i.test(m)) return 'メールアドレスの確認がまだ済んでいません。届いた確認メールのリンクを開いてください';
-    if (/User already registered|already been registered/i.test(m)) return 'そのメールアドレスはすでに登録されています';
-    if (/Password should be at least/i.test(m)) return 'パスワードが短すぎます';
-    if (/duplicate key .*profiles_handle/i.test(m) || /profiles_handle_key/i.test(m)) return 'そのハンドル名はすでに使われています';
-    if (/rate limit|too many/i.test(m)) return '試行が多すぎます。しばらく置いてからもう一度お願いします';
-    if (status === 401 || status === 403) return '権限がありません。設定を確かめてください';
-    return m;
-  }
-
-  SupabaseProvider.prototype._setSession = function (s) {
-    if (!s || !s.access_token) { this._sess = null; drop(KEY_SB); return; }
-    s.expires_at = Date.now() + ((s.expires_in || 3600) - 60) * 1000;
-    this._sess = s;
-    save(KEY_SB, s);
-  };
-
-  SupabaseProvider.prototype._fresh = function () {
-    var self = this;
-    if (!this._sess) return Promise.reject(err('no-session', 'ログインしていません'));
-    if (Date.now() < (this._sess.expires_at || 0)) return Promise.resolve(this._sess);
-    return this._call('/auth/v1/token?grant_type=refresh_token', {
-      method: 'POST', auth: false, body: { refresh_token: this._sess.refresh_token }
-    }).then(function (s) { self._setSession(s); return s; })
-      .catch(function () { self._setSession(null); throw err('no-session', 'ログインの期限が切れました。もう一度ログインしてください'); });
-  };
-
-  SupabaseProvider.prototype._profile = function (uid) {
-    var self = this;
-    return this._call('/rest/v1/profiles?select=*&id=eq.' + encodeURIComponent(uid))
-      .then(function (rows) {
-        var p = rows && rows[0];
-        if (!p) return null;
-        self._me = {
-          id: p.id, handle: p.handle, display: p.display, joined: p.created_at,
-          stats: { played: p.played || 0, won: p.won || 0, byGame: p.by_game || {} },
-          agents: []
-        };
-        return self._me;
-      });
-  };
-
-  /* 確認メールのリンクから戻ってきたときの受け取り。
-
-     Supabase は確認が済むと #access_token=…&refresh_token=… を付けて
-     戻してくる。これを拾わないと、リンクを踏んでもログインしていない状態で
-     元の画面に戻るだけになる（利用者からは「何も起きなかった」に見える）。
-
-     取ったあとは history.replaceState で URL から消す。認証情報を
-     アドレス欄に残したまま共有されるのを避けるため。 */
-  SupabaseProvider.prototype.adoptFromUrl = function () {
-    var h = String(location.hash || '').replace(/^#/, '');
-    if (!h) return null;
-    var q = new URLSearchParams(h);
-
-    var clean = function () {
-      try {
-        history.replaceState(null, '', location.pathname + location.search);
-      } catch (e) { location.hash = ''; }
-    };
-
-    if (q.get('error') || q.get('error_description')) {
-      var code = q.get('error_code') || '';
-      var desc = q.get('error_description') || q.get('error') || '';
-      clean();
-      return { error: translate(code + ' ' + desc, 400) };
-    }
-
-    var at = q.get('access_token');
-    if (!at) return null;
-    this._setSession({
-      access_token: at,
-      refresh_token: q.get('refresh_token'),
-      expires_in: Number(q.get('expires_in') || 3600),
-      token_type: q.get('token_type') || 'bearer'
-    });
-    clean();
-    return { type: q.get('type') || 'signup' };
-  };
-
-  /* 起動時に一度だけ。保存してあるセッションから利用者を取り戻す */
-  SupabaseProvider.prototype.start = function () {
-    var self = this;
-    var landed = this.adoptFromUrl();
-    if (landed && landed.error) {
-      this._landing = { error: landed.error };
-    } else if (landed) {
-      this._landing = { ok: landed.type };
-      /* URL から来た access_token には利用者 id が無いので、まず本人を引く */
-      return this._call('/auth/v1/user')
-        .then(function (u) { return self._profile(u.id); })
-        .catch(function () { self._setSession(null); self._me = null; return null; });
-    }
-    if (!this._sess) return Promise.resolve(null);
-    return this._fresh()
-      .then(function (s) { return self._profile(s.user ? s.user.id : self._sess.user.id); })
-      .catch(function () { self._me = null; return null; });
-  };
-
-  SupabaseProvider.prototype.user = function () { return this._me; };
-
-  SupabaseProvider.prototype.signUp = function (o) {
-    var self = this;
-    return Promise.resolve().then(function () {
-      var handle = normHandle(o.handle);
-      var email = String(o.email || '').trim();
-      checkEmail(email);
-      checkHandle(handle);
-      checkPass(o.pass);
-
-      /* 先にハンドル名の空きを見る。登録してから弾かれるのを避ける */
-      return self._call('/rest/v1/profiles?select=handle&handle=eq.' + encodeURIComponent(handle), { auth: false })
-        .then(function (rows) {
-          if (rows && rows.length) throw err('handle-taken', 'そのハンドル名はすでに使われています');
-          /* 戻り先はいま開いているページ。プロジェクトの既定値
-             （作りたてだと http://localhost:3000）に任せない。
-             ただし Supabase 側の Redirect URLs に入っていないと拒否される。 */
-          var back = location.origin + location.pathname;
-          return self._call('/auth/v1/signup?redirect_to=' + encodeURIComponent(back), {
-            method: 'POST', auth: false,
-            body: {
-              email: email, password: o.pass,
-              data: { handle: handle, display: String(o.display || handle).trim().slice(0, RULES.displayMax) || handle }
-            }
-          });
-        })
-        .then(function (res) {
-          /* メール確認が要る設定だと、ここでセッションが返らない */
-          if (!res || !res.access_token) {
-            throw err('confirm', '確認メールを送りました。届いたリンクを開いてから、ログインしてください');
-          }
-          self._setSession(res);
-          return self._profile(res.user.id);
-        });
-    });
-  };
-
-  SupabaseProvider.prototype.signIn = function (o) {
-    var self = this;
-    return Promise.resolve().then(function () {
-      var email = String(o.email || '').trim();
-      checkEmail(email);
-      if (!o.pass) throw err('pass-required', 'パスワードを入れてください');
-      return self._call('/auth/v1/token?grant_type=password', {
-        method: 'POST', auth: false, body: { email: email, password: o.pass }
-      }).then(function (res) {
-        self._setSession(res);
-        return self._profile(res.user.id);
-      });
-    });
-  };
-
-  SupabaseProvider.prototype.signOut = function () {
-    var self = this;
-    var done = function () { self._setSession(null); self._me = null; return null; };
-    if (!this._sess) return Promise.resolve(done());
-    return this._call('/auth/v1/logout', { method: 'POST' }).then(done, done);
-  };
-
-  SupabaseProvider.prototype.update = function (patch) {
-    var self = this;
-    if (!this._me) return Promise.reject(err('no-session', 'ログインしていません'));
-    var body = {};
-    if (patch.display != null) {
-      var d = String(patch.display).trim();
-      if (!d) return Promise.reject(err('display-required', '表示名を入れてください'));
-      body.display = d.slice(0, RULES.displayMax);
-    }
-    if (patch.stats) {
-      body.played = patch.stats.played;
-      body.won = patch.stats.won;
-      body.by_game = patch.stats.byGame || {};
-    }
-    return this._fresh().then(function () {
-      return self._call('/rest/v1/profiles?id=eq.' + encodeURIComponent(self._me.id), {
-        method: 'PATCH', body: body, headers: { 'Prefer': 'return=representation' }
-      });
-    }).then(function () { return self._profile(self._me.id); });
-  };
-
-  /* 退会は auth.users の削除が要るので、クライアントからは行えない。
-     消せるのは自分のプロフィール行までで、それは正直に伝える。 */
-  SupabaseProvider.prototype.remove = function () {
-    return Promise.reject(err('not-supported',
-      'アカウントの削除は、いまはこの画面からはできません。Supabase の管理画面から消してください'));
-  };
-
-  SupabaseProvider.prototype.exportData = function () {
-    var u = this._me;
-    return u ? JSON.stringify({ exportedAt: new Date().toISOString(), profile: u }, null, 2) : null;
-  };
-
-  /* ============================================================ 窓口 */
-  var listeners = [];
-  var cfg = (window.PB.CONFIG && window.PB.CONFIG.supabase) || {};
-  var provider = (cfg.url && cfg.anonKey) ? new SupabaseProvider(cfg) : new LocalProvider();
-
-  function emit() {
-    var u = PB.auth.user();
-    listeners.forEach(function (fn) { try { fn(u); } catch (e) {} });
-  }
-
-  PB.auth = {
-    get kind() { return provider.kind; },
-    get label() { return provider.label; },
-    get identKey() { return provider.identKey; },
-    fields: function () { return provider.fields; },
-
-    use: function (p) { provider = p; return (p.start ? p.start() : Promise.resolve()).then(function () { emit(); return PB.auth; }); },
-    start: function () { return (provider.start ? provider.start() : Promise.resolve(provider.user())).then(function (u) { emit(); return u; }); },
-
-    user: function () { return provider.user(); },
-    signUp: function (o) { return provider.signUp(o).then(function (u) { emit(); return u; }); },
-    signIn: function (o) { return provider.signIn(o).then(function (u) { emit(); return u; }); },
-    signOut: function () { return provider.signOut().then(function () { emit(); return null; }); },
-    update: function (p) { return provider.update(p).then(function (u) { emit(); return u; }); },
-    remove: function () { return provider.remove().then(function () { emit(); return null; }); },
-    exportData: function () { return provider.exportData ? provider.exportData() : null; },
-
-    onChange: function (fn) {
-      listeners.push(fn);
-      return function () { listeners = listeners.filter(function (f) { return f !== fn; }); };
-    },
-
-    /* 確認リンクから戻ってきた直後だけ、その結果を1回だけ返す */
-    takeLanding: function () {
-      var l = provider._landing;
-      provider._landing = null;
-      return l || null;
-    },
-
-    rules: RULES,
-    LocalProvider: LocalProvider,
-    SupabaseProvider: SupabaseProvider
-  };
-
-  /* 別タブでの出入りに追随する（Local のとき） */
-  window.addEventListener('storage', function (e) {
-    if (e.key === KEY_SESS || e.key === KEY_USERS) emit();
-  });
-})();
-</script>
-<script>
-/* ==========================================================================
    PLAYBENCH ─ 画面の組み立て
 
    ゲームは data/works.js から組む。ゲームを増やすときにこのファイルは触らない。
@@ -2116,13 +1534,7 @@ window.PB = window.PB || {};
       players: '人数', genre: '分類', designer: '作者',
       strength: '相手の強さ', parity: '互角', detail: 'この相手をどう作ったか',
       plate: '実測', remark: '注記', fig: '図', planned: '未実装',
-      signin: 'ログイン', signup: '新規登録', signout: 'ログアウト',
-      account: 'アカウント', guest: 'ゲスト',
-      played: '対戦', won: '勝ち', rate: '勝率', agents: 'エージェント',
-      noRecord: 'まだ記録がありません。ゲームを遊ぶと、ここに残ります。',
       noRank: 'まだ対戦が行われていません。エージェント機能ができると、ここに並びます。',
-      joined: '登録', save: '保存する', del: 'アカウントを削除', exportD: '書き出す',
-      displayName: '表示名', localOnly: 'この端末のみ',
       measOn: 'この端末では計測しています', measOff: 'この端末では計測を止めています',
       measDnt: 'ブラウザが追跡拒否（DNT）を出しているので、計測していません',
       measUnset: '測定IDを入れていないので、いまは何も計測していません',
@@ -2133,13 +1545,7 @@ window.PB = window.PB || {};
       players: 'Players', genre: 'Type', designer: 'Designer',
       strength: 'How strong', parity: 'parity', detail: 'How this opponent was built',
       plate: 'Measured', remark: 'Note', fig: 'Fig.', planned: 'planned',
-      signin: 'Sign in', signup: 'Create account', signout: 'Sign out',
-      account: 'Account', guest: 'Guest',
-      played: 'Played', won: 'Won', rate: 'Win rate', agents: 'Agents',
-      noRecord: 'No games yet. Your results will appear here once you play.',
       noRank: 'No matches yet. Once agents arrive, they will be ranked here.',
-      joined: 'Joined', save: 'Save', del: 'Delete account', exportD: 'Export',
-      displayName: 'Display name', localOnly: 'this device only',
       measOn: 'Measuring on this device', measOff: 'Measurement is off on this device',
       measDnt: 'Your browser asks not to be tracked, so nothing is measured',
       measUnset: 'No measurement ID is set, so nothing is being measured',
@@ -2365,27 +1771,6 @@ window.PB = window.PB || {};
   }
 
   /* アバター。ハンドル名から決まる、左右対称の升目模様 */
-  function identicon(handle, size) {
-    var h = 2166136261;
-    for (var i = 0; i < handle.length; i++) {
-      h ^= handle.charCodeAt(i);
-      h = Math.imul(h, 16777619);
-    }
-    var s = svg(5, 5);
-    s.setAttribute('class', 'idc');
-    if (size) { s.style.width = size; s.style.height = size; }
-    s.setAttribute('aria-hidden', 'true');
-    for (var c = 0; c < 3; c++) for (var r = 0; r < 5; r++) {
-      h = Math.imul(h ^ (h >>> 15), 2246822507);
-      h = (h ^ (h >>> 13)) >>> 0;
-      if ((h & 3) === 0) continue;
-      [c, 4 - c].forEach(function (x) {
-        sh(s, 'rect', { x: x, y: r, width: 1, height: 1, fill: 'currentColor', 'fill-opacity': (h & 4) ? .75 : .4 });
-      });
-    }
-    return s;
-  }
-
   /* ------------------------------------------------------- 実測プレート */
   function buildPlate(p) {
     var fig = el('figure', 'plate');
@@ -2549,156 +1934,6 @@ window.PB = window.PB || {};
     return art;
   }
 
-  /* ----------------------------------------------------------- アカウント */
-  function initials(u) { return (u.display || u.handle).trim().charAt(0); }
-
-  function buildAccountSlot() {
-    var slot = document.getElementById('account-slot');
-    if (!slot) return;
-    slot.textContent = '';
-    var u = PB.auth.user();
-
-    if (!u) {
-      var b = el('button', 'ctl ctl--go', t('signin'));
-      b.type = 'button';
-      b.setAttribute('data-auth-open', 'signin');
-      slot.appendChild(b);
-      return;
-    }
-
-    var link = el('a', 'who');
-    link.href = '#me';
-    link.appendChild(identicon(u.handle, '1.15rem'));
-    link.appendChild(el('span', 'who__n', u.display));
-    slot.appendChild(link);
-  }
-
-  function statTile(k, v, note) {
-    var d = el('div', 'stat');
-    d.appendChild(el('span', 'stat__v num', v));
-    d.appendChild(el('span', 'stat__k', k));
-    if (note) d.appendChild(el('span', 'stat__note', note));
-    return d;
-  }
-
-  function buildAccountPanel() {
-    var host = document.getElementById('account-panel');
-    if (!host) return;
-    host.textContent = '';
-    var u = PB.auth.user();
-
-    /* 未ログイン ── 勧誘。ただし遊ぶのに要らないことを必ず添える */
-    if (!u) {
-      var box = el('div', 'invite');
-      box.appendChild(el('h3', 'invite__t',
-        lang === 'en' ? 'Keep your results' : '成績を残しませんか'));
-      box.appendChild(el('p', 'invite__b', lang === 'en'
-        ? 'An account records what you played and how it went, and later it is what your own agent is trained from. Playing never requires one.'
-        : 'アカウントを作ると、遊んだ記録が残ります。のちのち、あなた専用のエージェントを鍛える材料にもなります。遊ぶだけならアカウントは要りません。'));
-      var acts = el('div', 'invite__acts');
-      var b1 = el('button', 'btn btn--go', t('signup'));
-      b1.type = 'button'; b1.setAttribute('data-auth-open', 'signup');
-      var b2 = el('button', 'btn', t('signin'));
-      b2.type = 'button'; b2.setAttribute('data-auth-open', 'signin');
-      acts.appendChild(b1); acts.appendChild(b2);
-      box.appendChild(acts);
-      host.appendChild(box);
-      return;
-    }
-
-    /* ログイン済み */
-    var card = el('div', 'me');
-
-    var head = el('div', 'me__head');
-    head.appendChild(identicon(u.handle, '2.6rem'));
-    var who = el('div', 'me__who');
-    who.appendChild(el('h3', 'me__n', u.display));
-    who.appendChild(el('p', 'me__h', '@' + u.handle));
-    head.appendChild(who);
-
-    var badge = el('span', 'me__where', PB.auth.kind === 'local' ? t('localOnly') : PB.auth.label);
-    head.appendChild(badge);
-    card.appendChild(head);
-
-    var st = u.stats || { played: 0, won: 0 };
-    var tiles = el('div', 'cells stats');
-    tiles.appendChild(statTile(t('played'), String(st.played || 0)));
-    tiles.appendChild(statTile(t('won'), String(st.won || 0)));
-    tiles.appendChild(statTile(t('rate'), st.played ? fmt(st.won / st.played) : '—'));
-    tiles.appendChild(statTile(t('agents'), String((u.agents || []).length),
-      lang === 'en' ? 'not yet available' : 'これから'));
-    card.appendChild(tiles);
-
-    if (!st.played) card.appendChild(el('p', 'me__empty', t('noRecord')));
-
-    /* 設定 */
-    var form = el('form', 'me__form');
-    var f = el('div', 'field field--row');
-    var lab = el('label', 'field__k', t('displayName'));
-    lab.htmlFor = 'me-display';
-    var inp = el('input', 'field__i');
-    inp.id = 'me-display'; inp.type = 'text'; inp.value = u.display; inp.maxLength = 24;
-    var sv = el('button', 'btn', t('save'));
-    sv.type = 'submit';
-    f.appendChild(lab); f.appendChild(inp); f.appendChild(sv);
-    form.appendChild(f);
-    var msg = el('p', 'me__msg');
-    msg.hidden = true;
-    form.appendChild(msg);
-
-    form.addEventListener('submit', function (e) {
-      e.preventDefault();
-      PB.auth.update({ display: inp.value }).then(function () {
-        msg.hidden = false;
-        msg.textContent = lang === 'en' ? 'Saved.' : '保存しました';
-        msg.className = 'me__msg';
-      }).catch(function (err) {
-        msg.hidden = false;
-        msg.textContent = err.message;
-        msg.className = 'me__msg me__msg--bad';
-      });
-    });
-    card.appendChild(form);
-
-    var foot = el('div', 'me__foot');
-    var out = el('button', 'btn', t('signout'));
-    out.type = 'button';
-    out.addEventListener('click', function () { PB.auth.signOut(); });
-    foot.appendChild(out);
-
-    var exp = el('button', 'btn', t('exportD'));
-    exp.type = 'button';
-    exp.addEventListener('click', function () {
-      var data = PB.auth.exportData();
-      if (!data) return;
-      var url = URL.createObjectURL(new Blob([data], { type: 'application/json' }));
-      var a = document.createElement('a');
-      a.href = url; a.download = 'playbench-' + u.handle + '.json';
-      a.click();
-      setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
-    });
-    foot.appendChild(exp);
-
-    var del = el('button', 'btn btn--danger', t('del'));
-    del.type = 'button';
-    del.addEventListener('click', function () {
-      var ok = window.confirm(lang === 'en'
-        ? 'Delete this account and its record? This cannot be undone.'
-        : 'このアカウントと記録を消します。元に戻せません。よろしいですか。');
-      if (!ok) return;
-      PB.auth.remove().catch(function (e) {
-        msg.hidden = false;
-        msg.textContent = e.message;
-        msg.className = 'me__msg me__msg--bad';
-        msg.scrollIntoView({ block: 'nearest' });
-      });
-    });
-    foot.appendChild(del);
-
-    card.appendChild(foot);
-    host.appendChild(card);
-  }
-
   /* ----------------------------------------------------------- ランキング */
   function buildRanking() {
     var host = document.getElementById('ranking-panel');
@@ -2855,7 +2090,7 @@ window.PB = window.PB || {};
   }
   function who() {
     var p = PB.PROFILE && PB.PROFILE.name;
-    return (p && p.fill && pick2(p)) || 'shunshun0904';
+    return (p && p.fill && pick2(p)) || '';   // 名乗りが無ければ、何も出さない
   }
   /* {fill, ja, en} を言語で選ぶ。埋まっていなければ null */
   function pick2(o) {
@@ -2888,11 +2123,6 @@ window.PB = window.PB || {};
     var tb = el('button', 'ctl'); tb.type = 'button'; tb.id = 'theme';
     tools.appendChild(lb);
     tools.appendChild(tb);
-    /* アカウントは対戦の記録のためだけにある。盤上のページにしか出さない */
-    if (cur === 'games.html') {
-      var slot = el('div'); slot.id = 'account-slot';
-      tools.appendChild(slot);
-    }
     box.appendChild(tools);
     host.appendChild(box);
   }
@@ -2933,7 +2163,7 @@ window.PB = window.PB || {};
     ]));
 
     var link = el('p');
-    var a = el('a', null, 'github.com/shunshun0904');
+    var a = el('a', null, 'GitHub');
     a.href = 'https://github.com/shunshun0904';
     a.rel = 'noopener';
     link.appendChild(a);
@@ -3149,107 +2379,8 @@ window.PB = window.PB || {};
     if (tenets) { tenets.textContent = ''; tenets.appendChild(buildTenets()); }
 
     buildRanking();
-    buildAccountSlot();
-    buildAccountPanel();
     buildPrivacyState();
     watchPlates(document);
-  }
-
-  /* ------------------------------------------------- ログイン／新規登録 */
-  var modal, form, mode = 'signin';
-
-  /* 出す入力欄はプロバイダが決める。
-     Local はハンドル名でログイン、Supabase はメールでログインする。 */
-  function setMode(m) {
-    mode = m;
-    var want = PB.auth.fields()[m] || [];
-    document.getElementById('auth-title').textContent = t(m === 'signup' ? 'signup' : 'signin');
-    document.getElementById('auth-submit').textContent = t(m === 'signup' ? 'signup' : 'signin');
-
-    modal.querySelectorAll('[data-field]').forEach(function (n) {
-      var on = want.indexOf(n.dataset.field) >= 0;
-      n.hidden = !on;
-      var input = n.querySelector('input');
-      if (input) input.disabled = !on;   // 隠した欄は検証にも送信にも入れない
-    });
-    modal.querySelectorAll('.tab').forEach(function (b) {
-      var on = b.dataset.tab === m;
-      b.classList.toggle('tab--on', on);
-      b.setAttribute('aria-selected', on ? 'true' : 'false');
-    });
-
-    var foot = document.getElementById('auth-foot');
-    if (foot) {
-      foot.innerHTML = '';
-      if (PB.auth.kind === 'local') {
-        foot.innerHTML = lang === 'en'
-          ? 'Accounts live in <strong>this browser only</strong> — nothing is sent to a server, and there is nothing to recover if you clear your browser data.'
-          : 'アカウントは<strong>いまのところこのブラウザの中だけ</strong>にあります。サーバーへは何も送っていません。そのぶん、ブラウザのデータを消すと戻せません。';
-      } else {
-        foot.innerHTML = lang === 'en'
-          ? 'Your email is used to sign in and is never shown to anyone. Your handle and display name are public.'
-          : 'メールアドレスはログインにだけ使い、誰にも表示しません。公開されるのはハンドル名と表示名です。';
-      }
-    }
-    showErr(null);
-  }
-
-  function showErr(msg) {
-    var box = document.getElementById('auth-err');
-    box.hidden = !msg;
-    box.textContent = msg || '';
-  }
-
-  function openAuth(m) {
-    setMode(m || 'signin');
-    if (!modal.open) modal.showModal();
-    var first = document.getElementById('f-handle');
-    setTimeout(function () { first.focus(); }, 40);
-  }
-
-  function wireAuth() {
-    modal = document.getElementById('auth-modal');
-    form = document.getElementById('auth-form');
-    /* アカウントは対戦の記録のためだけにある。盤上のページ以外には置いていない */
-    if (!modal || !form) { modal = form = null; return; }
-
-    document.getElementById('auth-close').addEventListener('click', function () { modal.close(); });
-
-    modal.querySelectorAll('.tab').forEach(function (b) {
-      b.addEventListener('click', function () { setMode(b.dataset.tab); });
-    });
-
-    /* 背景を押したら閉じる */
-    modal.addEventListener('click', function (e) {
-      if (e.target === modal) modal.close();
-    });
-
-    form.addEventListener('submit', function (e) {
-      e.preventDefault();
-      var submit = document.getElementById('auth-submit');
-      var o = {};
-      (PB.auth.fields()[mode] || []).forEach(function (k) {
-        if (form[k]) o[k] = form[k].value;
-      });
-      submit.disabled = true;
-      showErr(null);
-
-      var p = (mode === 'signup') ? PB.auth.signUp(o) : PB.auth.signIn(o);
-      p.then(function () {
-        form.reset();
-        modal.close();
-      }).catch(function (err) {
-        showErr(err.message || String(err));
-      }).then(function () {
-        submit.disabled = false;
-      });
-    });
-
-    /* どこからでも開けるようにしておく */
-    document.addEventListener('click', function (e) {
-      var b = e.target.closest ? e.target.closest('[data-auth-open]') : null;
-      if (b) { e.preventDefault(); openAuth(b.getAttribute('data-auth-open')); }
-    });
   }
 
   /* ------------------------------------------------------------ 言語切替 */
@@ -3259,7 +2390,6 @@ window.PB = window.PB || {};
       if (n.dataset.ja == null) n.dataset.ja = n.innerHTML;
       n.innerHTML = lang === 'en' ? n.dataset.en : n.dataset.ja;
     });
-    if (modal) setMode(mode);
     render();          // 天地ごと組み直す。切替ボタンもここで作り直される
     paintControls();   // なので文字を入れるのは render のあと
   }
@@ -3308,27 +2438,6 @@ window.PB = window.PB || {};
     paintControls();
   }
 
-  /* 確認リンクから戻ってきたときに、何が起きたのかを画面上部に出す。
-     黙って元の画面に戻すと「何も起きなかった」ようにしか見えない。 */
-  function showLanding(landed) {
-    var host = document.querySelector('main');
-    if (!host) return;
-    var box = el('div', 'landing' + (landed.error ? ' landing--bad' : ''));
-    var msg = landed.error
-      ? landed.error
-      : (lang === 'en'
-          ? 'Email confirmed. You are signed in.'
-          : 'メールアドレスを確認しました。ログインしています。');
-    box.appendChild(el('span', 'landing__t', msg));
-    var x = el('button', 'landing__x', '×');
-    x.type = 'button';
-    x.setAttribute('aria-label', lang === 'en' ? 'Dismiss' : '閉じる');
-    x.addEventListener('click', function () { box.remove(); });
-    box.appendChild(x);
-    host.insertBefore(box, host.firstChild);
-    box.scrollIntoView({ block: 'nearest' });
-  }
-
   /* --------------------------------------------------------------- 起動 */
   function boot() {
     try {
@@ -3336,21 +2445,8 @@ window.PB = window.PB || {};
       if (saved) document.documentElement.setAttribute('data-theme', saved);
     } catch (e) {}
 
-    wireAuth();
     applyLang();
     applyTheme(document.documentElement.getAttribute('data-theme'));
-
-    PB.auth.onChange(function () {
-      buildAccountSlot();
-      buildAccountPanel();
-    });
-
-    /* 保存してあるセッションから利用者を取り戻す。
-       確認メールのリンクから戻ってきた場合もここで拾われる。 */
-    PB.auth.start().then(function () {
-      var landed = PB.auth.takeLanding && PB.auth.takeLanding();
-      if (landed) showLanding(landed);
-    });
 
     /* 切替ボタンは天と一緒に作り直されるので、要素に直接ではなく
        document で受ける。付け直しの漏れが起きない。 */

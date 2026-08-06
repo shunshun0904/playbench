@@ -31,13 +31,7 @@
       players: '人数', genre: '分類', designer: '作者',
       strength: '相手の強さ', parity: '互角', detail: 'この相手をどう作ったか',
       plate: '実測', remark: '注記', fig: '図', planned: '未実装',
-      signin: 'ログイン', signup: '新規登録', signout: 'ログアウト',
-      account: 'アカウント', guest: 'ゲスト',
-      played: '対戦', won: '勝ち', rate: '勝率', agents: 'エージェント',
-      noRecord: 'まだ記録がありません。ゲームを遊ぶと、ここに残ります。',
       noRank: 'まだ対戦が行われていません。エージェント機能ができると、ここに並びます。',
-      joined: '登録', save: '保存する', del: 'アカウントを削除', exportD: '書き出す',
-      displayName: '表示名', localOnly: 'この端末のみ',
       measOn: 'この端末では計測しています', measOff: 'この端末では計測を止めています',
       measDnt: 'ブラウザが追跡拒否（DNT）を出しているので、計測していません',
       measUnset: '測定IDを入れていないので、いまは何も計測していません',
@@ -48,13 +42,7 @@
       players: 'Players', genre: 'Type', designer: 'Designer',
       strength: 'How strong', parity: 'parity', detail: 'How this opponent was built',
       plate: 'Measured', remark: 'Note', fig: 'Fig.', planned: 'planned',
-      signin: 'Sign in', signup: 'Create account', signout: 'Sign out',
-      account: 'Account', guest: 'Guest',
-      played: 'Played', won: 'Won', rate: 'Win rate', agents: 'Agents',
-      noRecord: 'No games yet. Your results will appear here once you play.',
       noRank: 'No matches yet. Once agents arrive, they will be ranked here.',
-      joined: 'Joined', save: 'Save', del: 'Delete account', exportD: 'Export',
-      displayName: 'Display name', localOnly: 'this device only',
       measOn: 'Measuring on this device', measOff: 'Measurement is off on this device',
       measDnt: 'Your browser asks not to be tracked, so nothing is measured',
       measUnset: 'No measurement ID is set, so nothing is being measured',
@@ -280,27 +268,6 @@
   }
 
   /* アバター。ハンドル名から決まる、左右対称の升目模様 */
-  function identicon(handle, size) {
-    var h = 2166136261;
-    for (var i = 0; i < handle.length; i++) {
-      h ^= handle.charCodeAt(i);
-      h = Math.imul(h, 16777619);
-    }
-    var s = svg(5, 5);
-    s.setAttribute('class', 'idc');
-    if (size) { s.style.width = size; s.style.height = size; }
-    s.setAttribute('aria-hidden', 'true');
-    for (var c = 0; c < 3; c++) for (var r = 0; r < 5; r++) {
-      h = Math.imul(h ^ (h >>> 15), 2246822507);
-      h = (h ^ (h >>> 13)) >>> 0;
-      if ((h & 3) === 0) continue;
-      [c, 4 - c].forEach(function (x) {
-        sh(s, 'rect', { x: x, y: r, width: 1, height: 1, fill: 'currentColor', 'fill-opacity': (h & 4) ? .75 : .4 });
-      });
-    }
-    return s;
-  }
-
   /* ------------------------------------------------------- 実測プレート */
   function buildPlate(p) {
     var fig = el('figure', 'plate');
@@ -464,156 +431,6 @@
     return art;
   }
 
-  /* ----------------------------------------------------------- アカウント */
-  function initials(u) { return (u.display || u.handle).trim().charAt(0); }
-
-  function buildAccountSlot() {
-    var slot = document.getElementById('account-slot');
-    if (!slot) return;
-    slot.textContent = '';
-    var u = PB.auth.user();
-
-    if (!u) {
-      var b = el('button', 'ctl ctl--go', t('signin'));
-      b.type = 'button';
-      b.setAttribute('data-auth-open', 'signin');
-      slot.appendChild(b);
-      return;
-    }
-
-    var link = el('a', 'who');
-    link.href = '#me';
-    link.appendChild(identicon(u.handle, '1.15rem'));
-    link.appendChild(el('span', 'who__n', u.display));
-    slot.appendChild(link);
-  }
-
-  function statTile(k, v, note) {
-    var d = el('div', 'stat');
-    d.appendChild(el('span', 'stat__v num', v));
-    d.appendChild(el('span', 'stat__k', k));
-    if (note) d.appendChild(el('span', 'stat__note', note));
-    return d;
-  }
-
-  function buildAccountPanel() {
-    var host = document.getElementById('account-panel');
-    if (!host) return;
-    host.textContent = '';
-    var u = PB.auth.user();
-
-    /* 未ログイン ── 勧誘。ただし遊ぶのに要らないことを必ず添える */
-    if (!u) {
-      var box = el('div', 'invite');
-      box.appendChild(el('h3', 'invite__t',
-        lang === 'en' ? 'Keep your results' : '成績を残しませんか'));
-      box.appendChild(el('p', 'invite__b', lang === 'en'
-        ? 'An account records what you played and how it went, and later it is what your own agent is trained from. Playing never requires one.'
-        : 'アカウントを作ると、遊んだ記録が残ります。のちのち、あなた専用のエージェントを鍛える材料にもなります。遊ぶだけならアカウントは要りません。'));
-      var acts = el('div', 'invite__acts');
-      var b1 = el('button', 'btn btn--go', t('signup'));
-      b1.type = 'button'; b1.setAttribute('data-auth-open', 'signup');
-      var b2 = el('button', 'btn', t('signin'));
-      b2.type = 'button'; b2.setAttribute('data-auth-open', 'signin');
-      acts.appendChild(b1); acts.appendChild(b2);
-      box.appendChild(acts);
-      host.appendChild(box);
-      return;
-    }
-
-    /* ログイン済み */
-    var card = el('div', 'me');
-
-    var head = el('div', 'me__head');
-    head.appendChild(identicon(u.handle, '2.6rem'));
-    var who = el('div', 'me__who');
-    who.appendChild(el('h3', 'me__n', u.display));
-    who.appendChild(el('p', 'me__h', '@' + u.handle));
-    head.appendChild(who);
-
-    var badge = el('span', 'me__where', PB.auth.kind === 'local' ? t('localOnly') : PB.auth.label);
-    head.appendChild(badge);
-    card.appendChild(head);
-
-    var st = u.stats || { played: 0, won: 0 };
-    var tiles = el('div', 'cells stats');
-    tiles.appendChild(statTile(t('played'), String(st.played || 0)));
-    tiles.appendChild(statTile(t('won'), String(st.won || 0)));
-    tiles.appendChild(statTile(t('rate'), st.played ? fmt(st.won / st.played) : '—'));
-    tiles.appendChild(statTile(t('agents'), String((u.agents || []).length),
-      lang === 'en' ? 'not yet available' : 'これから'));
-    card.appendChild(tiles);
-
-    if (!st.played) card.appendChild(el('p', 'me__empty', t('noRecord')));
-
-    /* 設定 */
-    var form = el('form', 'me__form');
-    var f = el('div', 'field field--row');
-    var lab = el('label', 'field__k', t('displayName'));
-    lab.htmlFor = 'me-display';
-    var inp = el('input', 'field__i');
-    inp.id = 'me-display'; inp.type = 'text'; inp.value = u.display; inp.maxLength = 24;
-    var sv = el('button', 'btn', t('save'));
-    sv.type = 'submit';
-    f.appendChild(lab); f.appendChild(inp); f.appendChild(sv);
-    form.appendChild(f);
-    var msg = el('p', 'me__msg');
-    msg.hidden = true;
-    form.appendChild(msg);
-
-    form.addEventListener('submit', function (e) {
-      e.preventDefault();
-      PB.auth.update({ display: inp.value }).then(function () {
-        msg.hidden = false;
-        msg.textContent = lang === 'en' ? 'Saved.' : '保存しました';
-        msg.className = 'me__msg';
-      }).catch(function (err) {
-        msg.hidden = false;
-        msg.textContent = err.message;
-        msg.className = 'me__msg me__msg--bad';
-      });
-    });
-    card.appendChild(form);
-
-    var foot = el('div', 'me__foot');
-    var out = el('button', 'btn', t('signout'));
-    out.type = 'button';
-    out.addEventListener('click', function () { PB.auth.signOut(); });
-    foot.appendChild(out);
-
-    var exp = el('button', 'btn', t('exportD'));
-    exp.type = 'button';
-    exp.addEventListener('click', function () {
-      var data = PB.auth.exportData();
-      if (!data) return;
-      var url = URL.createObjectURL(new Blob([data], { type: 'application/json' }));
-      var a = document.createElement('a');
-      a.href = url; a.download = 'playbench-' + u.handle + '.json';
-      a.click();
-      setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
-    });
-    foot.appendChild(exp);
-
-    var del = el('button', 'btn btn--danger', t('del'));
-    del.type = 'button';
-    del.addEventListener('click', function () {
-      var ok = window.confirm(lang === 'en'
-        ? 'Delete this account and its record? This cannot be undone.'
-        : 'このアカウントと記録を消します。元に戻せません。よろしいですか。');
-      if (!ok) return;
-      PB.auth.remove().catch(function (e) {
-        msg.hidden = false;
-        msg.textContent = e.message;
-        msg.className = 'me__msg me__msg--bad';
-        msg.scrollIntoView({ block: 'nearest' });
-      });
-    });
-    foot.appendChild(del);
-
-    card.appendChild(foot);
-    host.appendChild(card);
-  }
-
   /* ----------------------------------------------------------- ランキング */
   function buildRanking() {
     var host = document.getElementById('ranking-panel');
@@ -770,7 +587,7 @@
   }
   function who() {
     var p = PB.PROFILE && PB.PROFILE.name;
-    return (p && p.fill && pick2(p)) || 'shunshun0904';
+    return (p && p.fill && pick2(p)) || '';   // 名乗りが無ければ、何も出さない
   }
   /* {fill, ja, en} を言語で選ぶ。埋まっていなければ null */
   function pick2(o) {
@@ -803,11 +620,6 @@
     var tb = el('button', 'ctl'); tb.type = 'button'; tb.id = 'theme';
     tools.appendChild(lb);
     tools.appendChild(tb);
-    /* アカウントは対戦の記録のためだけにある。盤上のページにしか出さない */
-    if (cur === 'games.html') {
-      var slot = el('div'); slot.id = 'account-slot';
-      tools.appendChild(slot);
-    }
     box.appendChild(tools);
     host.appendChild(box);
   }
@@ -848,7 +660,7 @@
     ]));
 
     var link = el('p');
-    var a = el('a', null, 'github.com/shunshun0904');
+    var a = el('a', null, 'GitHub');
     a.href = 'https://github.com/shunshun0904';
     a.rel = 'noopener';
     link.appendChild(a);
@@ -1064,107 +876,8 @@
     if (tenets) { tenets.textContent = ''; tenets.appendChild(buildTenets()); }
 
     buildRanking();
-    buildAccountSlot();
-    buildAccountPanel();
     buildPrivacyState();
     watchPlates(document);
-  }
-
-  /* ------------------------------------------------- ログイン／新規登録 */
-  var modal, form, mode = 'signin';
-
-  /* 出す入力欄はプロバイダが決める。
-     Local はハンドル名でログイン、Supabase はメールでログインする。 */
-  function setMode(m) {
-    mode = m;
-    var want = PB.auth.fields()[m] || [];
-    document.getElementById('auth-title').textContent = t(m === 'signup' ? 'signup' : 'signin');
-    document.getElementById('auth-submit').textContent = t(m === 'signup' ? 'signup' : 'signin');
-
-    modal.querySelectorAll('[data-field]').forEach(function (n) {
-      var on = want.indexOf(n.dataset.field) >= 0;
-      n.hidden = !on;
-      var input = n.querySelector('input');
-      if (input) input.disabled = !on;   // 隠した欄は検証にも送信にも入れない
-    });
-    modal.querySelectorAll('.tab').forEach(function (b) {
-      var on = b.dataset.tab === m;
-      b.classList.toggle('tab--on', on);
-      b.setAttribute('aria-selected', on ? 'true' : 'false');
-    });
-
-    var foot = document.getElementById('auth-foot');
-    if (foot) {
-      foot.innerHTML = '';
-      if (PB.auth.kind === 'local') {
-        foot.innerHTML = lang === 'en'
-          ? 'Accounts live in <strong>this browser only</strong> — nothing is sent to a server, and there is nothing to recover if you clear your browser data.'
-          : 'アカウントは<strong>いまのところこのブラウザの中だけ</strong>にあります。サーバーへは何も送っていません。そのぶん、ブラウザのデータを消すと戻せません。';
-      } else {
-        foot.innerHTML = lang === 'en'
-          ? 'Your email is used to sign in and is never shown to anyone. Your handle and display name are public.'
-          : 'メールアドレスはログインにだけ使い、誰にも表示しません。公開されるのはハンドル名と表示名です。';
-      }
-    }
-    showErr(null);
-  }
-
-  function showErr(msg) {
-    var box = document.getElementById('auth-err');
-    box.hidden = !msg;
-    box.textContent = msg || '';
-  }
-
-  function openAuth(m) {
-    setMode(m || 'signin');
-    if (!modal.open) modal.showModal();
-    var first = document.getElementById('f-handle');
-    setTimeout(function () { first.focus(); }, 40);
-  }
-
-  function wireAuth() {
-    modal = document.getElementById('auth-modal');
-    form = document.getElementById('auth-form');
-    /* アカウントは対戦の記録のためだけにある。盤上のページ以外には置いていない */
-    if (!modal || !form) { modal = form = null; return; }
-
-    document.getElementById('auth-close').addEventListener('click', function () { modal.close(); });
-
-    modal.querySelectorAll('.tab').forEach(function (b) {
-      b.addEventListener('click', function () { setMode(b.dataset.tab); });
-    });
-
-    /* 背景を押したら閉じる */
-    modal.addEventListener('click', function (e) {
-      if (e.target === modal) modal.close();
-    });
-
-    form.addEventListener('submit', function (e) {
-      e.preventDefault();
-      var submit = document.getElementById('auth-submit');
-      var o = {};
-      (PB.auth.fields()[mode] || []).forEach(function (k) {
-        if (form[k]) o[k] = form[k].value;
-      });
-      submit.disabled = true;
-      showErr(null);
-
-      var p = (mode === 'signup') ? PB.auth.signUp(o) : PB.auth.signIn(o);
-      p.then(function () {
-        form.reset();
-        modal.close();
-      }).catch(function (err) {
-        showErr(err.message || String(err));
-      }).then(function () {
-        submit.disabled = false;
-      });
-    });
-
-    /* どこからでも開けるようにしておく */
-    document.addEventListener('click', function (e) {
-      var b = e.target.closest ? e.target.closest('[data-auth-open]') : null;
-      if (b) { e.preventDefault(); openAuth(b.getAttribute('data-auth-open')); }
-    });
   }
 
   /* ------------------------------------------------------------ 言語切替 */
@@ -1174,7 +887,6 @@
       if (n.dataset.ja == null) n.dataset.ja = n.innerHTML;
       n.innerHTML = lang === 'en' ? n.dataset.en : n.dataset.ja;
     });
-    if (modal) setMode(mode);
     render();          // 天地ごと組み直す。切替ボタンもここで作り直される
     paintControls();   // なので文字を入れるのは render のあと
   }
@@ -1223,27 +935,6 @@
     paintControls();
   }
 
-  /* 確認リンクから戻ってきたときに、何が起きたのかを画面上部に出す。
-     黙って元の画面に戻すと「何も起きなかった」ようにしか見えない。 */
-  function showLanding(landed) {
-    var host = document.querySelector('main');
-    if (!host) return;
-    var box = el('div', 'landing' + (landed.error ? ' landing--bad' : ''));
-    var msg = landed.error
-      ? landed.error
-      : (lang === 'en'
-          ? 'Email confirmed. You are signed in.'
-          : 'メールアドレスを確認しました。ログインしています。');
-    box.appendChild(el('span', 'landing__t', msg));
-    var x = el('button', 'landing__x', '×');
-    x.type = 'button';
-    x.setAttribute('aria-label', lang === 'en' ? 'Dismiss' : '閉じる');
-    x.addEventListener('click', function () { box.remove(); });
-    box.appendChild(x);
-    host.insertBefore(box, host.firstChild);
-    box.scrollIntoView({ block: 'nearest' });
-  }
-
   /* --------------------------------------------------------------- 起動 */
   function boot() {
     try {
@@ -1251,21 +942,8 @@
       if (saved) document.documentElement.setAttribute('data-theme', saved);
     } catch (e) {}
 
-    wireAuth();
     applyLang();
     applyTheme(document.documentElement.getAttribute('data-theme'));
-
-    PB.auth.onChange(function () {
-      buildAccountSlot();
-      buildAccountPanel();
-    });
-
-    /* 保存してあるセッションから利用者を取り戻す。
-       確認メールのリンクから戻ってきた場合もここで拾われる。 */
-    PB.auth.start().then(function () {
-      var landed = PB.auth.takeLanding && PB.auth.takeLanding();
-      if (landed) showLanding(landed);
-    });
 
     /* 切替ボタンは天と一緒に作り直されるので、要素に直接ではなく
        document で受ける。付け直しの漏れが起きない。 */

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ボードゲームの自主研究 ── shunshun0904</title>
+<title>ボードゲームの自主研究 ── Shun Nakamura</title>
 <meta name="description" content="名作ボードゲーム3作をブラウザで実装し、CPU の強さを互角の線と並べて実測した記録。遊べます。">
 <meta name="color-scheme" content="light dark">
 <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20fill%3D%22%231b2027%22%2F%3E%3Crect%20x%3D%225%22%20y%3D%2213%22%20width%3D%2222%22%20height%3D%226%22%20fill%3D%22%23e8e9e3%22%20fill-opacity%3D%22.22%22%2F%3E%3Crect%20x%3D%225%22%20y%3D%2213%22%20width%3D%2214%22%20height%3D%226%22%20fill%3D%22%23b03a24%22%2F%3E%3Crect%20x%3D%2210%22%20y%3D%227%22%20width%3D%221.4%22%20height%3D%2218%22%20fill%3D%22%23e8e9e3%22%2F%3E%3C%2Fsvg%3E">
@@ -13,8 +13,8 @@
      リポジトリ直下の google2e24f8e4be168c53.html がそれ。消すと確認が外れる。 -->
 
 <meta property="og:type" content="website">
-<meta property="og:site_name" content="shunshun0904">
-<meta property="og:title" content="ボードゲームの自主研究 ── shunshun0904">
+<meta property="og:site_name" content="Shun Nakamura">
+<meta property="og:title" content="ボードゲームの自主研究 ── Shun Nakamura">
 <meta property="og:description" content="名作ボードゲーム3作をブラウザで実装し、CPU の強さを互角の線と並べて実測した記録。遊べます。">
 <meta property="og:url" content="https://shunshun0904.github.io/playbench/games.html">
 <meta property="og:locale" content="ja_JP">
@@ -37,14 +37,6 @@
     遊びたい方は、そのまま対戦できます。相手は手加減しません。
   </p>
   <div class="works" id="works"></div>
-</section>
-
-<section class="sheet" id="me">
-  <div class="band">
-    <h2 class="band__t band__t--sub" data-en="Your record">対戦の記録</h2>
-    <span class="band__n"></span>
-  </div>
-  <div id="account-panel"></div>
 </section>
 
 <section class="sheet">
@@ -70,63 +62,12 @@
 
 <footer class="sheet colophon" id="foot"></footer>
 
-<!-- ══════════════════════════════════════════════ ログイン／新規登録 -->
-<dialog class="modal" id="auth-modal" aria-labelledby="auth-title">
-  <form class="modal__in" id="auth-form" method="dialog" novalidate>
-    <div class="modal__head">
-      <h2 class="modal__t" id="auth-title">ログイン</h2>
-      <button class="modal__x" type="button" id="auth-close" aria-label="閉じる">×</button>
-    </div>
-
-    <div class="tabs" role="tablist">
-      <button class="tab" type="button" role="tab" data-tab="signin" data-en="Sign in">ログイン</button>
-      <button class="tab" type="button" role="tab" data-tab="signup" data-en="Create account">新規登録</button>
-    </div>
-
-    <div class="field" data-field="email">
-      <label class="field__k" for="f-email" data-en="Email">メールアドレス</label>
-      <input class="field__i" id="f-email" name="email" type="email"
-             autocomplete="email" autocapitalize="none" spellcheck="false">
-      <p class="field__note" data-en="Used to sign in. It is never shown to anyone else.">ログインに使います。他の人には見えません</p>
-    </div>
-
-    <div class="field" data-field="handle">
-      <label class="field__k" for="f-handle" data-en="Handle">ハンドル名</label>
-      <div class="field__wrap">
-        <span class="field__at">@</span>
-        <input class="field__i field__i--at" id="f-handle" name="handle" type="text"
-               autocomplete="username" autocapitalize="none" spellcheck="false">
-      </div>
-      <p class="field__note" data-en="Lower-case letters, digits and _ — 3 to 20 characters.">半角の英小文字・数字・_ で 3〜20 文字</p>
-    </div>
-
-    <div class="field" data-field="display">
-      <label class="field__k" for="f-display" data-en="Display name">表示名</label>
-      <input class="field__i" id="f-display" name="display" type="text" autocomplete="nickname" maxlength="24">
-      <p class="field__note" data-en="Shown on the board and the ranking. Japanese is fine.">盤面やランキングに出る名前。日本語で構いません</p>
-    </div>
-
-    <div class="field" data-field="pass">
-      <label class="field__k" for="f-pass" data-en="Password">パスワード</label>
-      <input class="field__i" id="f-pass" name="pass" type="password" minlength="8">
-      <p class="field__note" data-en="8 characters or more.">8文字以上</p>
-    </div>
-
-    <p class="modal__err" id="auth-err" role="alert" hidden></p>
-
-    <button class="btn btn--go btn--wide" type="submit" id="auth-submit">ログイン</button>
-
-    <p class="modal__foot" id="auth-foot"></p>
-  </form>
-</dialog>
-
 <script src="assets/config.js"></script>
 <script src="assets/analytics.js"></script>
 <script src="data/profile.js"></script>
 <script src="data/works.js"></script>
 <script src="data/bgg.js"></script>
 <script src="data/macro.js"></script>
-<script src="assets/auth.js"></script>
 <script src="assets/site.js"></script>
 </body>
 </html>

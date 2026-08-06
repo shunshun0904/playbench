@@ -25,10 +25,8 @@ macro.html          マクロ経済指標
 about.html          index.html への転送のみ（旧URL宛て）
 assets/site.css     版面。色・書体・実測プレート
 assets/site.js      組版。天地とタブもここから組む
-assets/auth.js      アカウント（Local / Supabase の差し替え式）
 assets/analytics.js アクセス解析。唯一の外部読み込み。空なら何もしない
-assets/config.js    接続先と測定ID
-supabase/           スキーマ・RLS・立ち上げ手順
+assets/config.js    アクセス解析の測定ID
 data/profile.js     自己紹介と職務経歴  ← 本人が書く唯一のファイル
 data/works.js       ゲームの目録        ← ゲームを増やすときはここだけ
 data/macro.js       見る指標の定義と、取得した系列（tools が書き換える）
@@ -36,7 +34,7 @@ data/bgg.js         BGG の重さと評価のスナップショット（tools �
 tools/fetch-macro.mjs  Alpha Vantage から指標を取ってくる道具
 tools/fetch-bgg.mjs    BGG から取ってくる道具
 tools/stamp-assets.mjs 配備時に全ページの参照へ版を打つ（キャッシュ対策）
-test/shots.js       実ブラウザでの検査（見た目・アカウント・解析の入切）
+test/shots.js       実ブラウザでの検査（見た目・タブ・解析の入切・BGGの行）
 build.js            盤上のページを1枚にまとめる
 ```
 
@@ -78,49 +76,6 @@ BGG のときと同じで、**手元で取る → JSON をコミットする →
 `lead: true` の行が朱で描かれ、カード表面の「相手の強さ」にも出ます。
 1つの図につき1行だけにしてください。言いたいことは、たいてい1行のはずです。
 
-## アカウントについて
-
-プロバイダを差し替えられる作りです。`assets/config.js` に Supabase の
-URL と anon キーが入っていれば Supabase、空なら「この端末だけ」に落ちます。
-画面側はどちらでも同じ呼び方で動きます。
-
-| | ログインに使うもの | 保存先 | 別の端末から |
-|---|---|---|---|
-| `LocalProvider` | ハンドル名 | この端末の localStorage | 入れない |
-| `SupabaseProvider` | メールアドレス | Supabase | 入れる |
-
-出す入力欄もプロバイダが決めます（`provider.fields`）。Supabase ではログインが
-メール＋パスワード、新規登録がメール＋ハンドル名＋表示名＋パスワードになります。
-
-```js
-PB.auth = {
-  kind, label, identKey, fields(),
-  start(),                       // 保存したセッションから復帰
-  user(),                        // 現在の利用者 or null
-  signUp({email, handle, display, pass}),
-  signIn({email, pass}),
-  signOut(), update(patch), remove(),
-  exportData(), onChange(fn), use(provider)
-}
-```
-
-Supabase 版はライブラリを使わず、REST を素の `fetch` で叩いています
-（`/auth/v1/signup`、`/auth/v1/token`、`/rest/v1/profiles`）。
-外部依存ゼロのまま本物のアカウントになります。
-
-立ち上げ方は [`supabase/README.md`](supabase/README.md)。スキーマと RLS は
-[`supabase/schema.sql`](supabase/schema.sql) にあります。**メールアドレスは
-`profiles` に置いていません** ── 公開読みを許すテーブルなので、置けば誰でも読めます。
-
-### 「この端末だけ」のほうの限界
-
-パスワードは PBKDF2（12万回・SHA-256・利用者ごとのソルト）で伸ばしてから
-保存しますが、**これは暗号的な保護ではありません**。同じ端末を使う人どうしの
-取り違えを防ぐためのもので、端末を触れる人は localStorage を読めます。
-画面にもそう書いてあります。
-
-遊ぶのにアカウントは要りません。ここは最後まで動かさないつもりです。
-
 ## 見た目について
 
 **明の地は製図用紙、暗の地は青焼き**です。同じ図面の2つの複製方式であって、
@@ -149,24 +104,20 @@ node test/shots.js                # 実ブラウザで検査
 python3 -m http.server 8080       # ローカルで開く
 ```
 
-`file://` では**ブラウザが localStorage を拒否する**のでアカウントは試せません
-（画面には保存できない旨が出ます）。検査は簡易サーバを立てて http で行います。
+検査は簡易サーバを立てて http で行います。
 
 検査が見ているもの:
 
 - コンソールエラーが出ないこと、横スクロールが出ないこと
 - ゲーム・段階・作りの各要素が全部組まれていること
 - **棒の実幅が値と一致していること**
-- 短いパスワード／不正なハンドル名／二重登録／誤ったパスワードが弾かれること
-- 登録・再ログイン・再読み込み後の保持・ログアウトが画面に反映されること
-- ログイン欄に新規登録用の項目が出ていないこと
+- **携帯の幅（430〜320px）でタブが3枚とも見えていること**
+- 測定IDが無ければ外部へ1本も出さず、あれば読みに行くこと
+- 追跡拒否（DNT）を出しているブラウザには読み込まないこと
+- BGG の行が、重さ5点満点・評価10点満点の割合で描かれること
 - 英語に切り替えても崩れないこと
 
-Supabase 版は**模擬サーバを立てて**検査します（`test/shots.js` の `mockSupabase`）。
-本物の鍵がなくても、要求の形・誤りの訳し方・セッションの復帰・ハンドル名の
-重複までひととおり通ります。
-
-明・暗・モバイルの3面と、ログイン画面・マイページを `dist/shots/` に撮ります。
+明・暗・モバイルの3面を `dist/shots/` に撮ります。
 
 ## 配備とキャッシュ
 
