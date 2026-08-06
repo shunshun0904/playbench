@@ -680,8 +680,8 @@ function serve() {
     }));
     console.log('── 英語');
     console.log('  ', JSON.stringify(en));
-    // 収録は3作になった。先頭はアクワイア
-    if (en.lang !== 'en' || en.first !== 'Acquire' || !/Play/.test(en.play)) fail('英語に切り替わっていない');
+    // 収録は3作。先頭はハイソサエティ
+    if (en.lang !== 'en' || en.first !== 'High Society' || !/Play/.test(en.play)) fail('英語に切り替わっていない');
     if (!/About\/Macro\/Board games/.test(en.nav)) fail('天のナビが英語になっていない');
     if (en.overflow > 1) fail('横スクロールが出ている');
     await ctx.close();

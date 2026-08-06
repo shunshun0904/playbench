@@ -12,69 +12,10 @@ window.PB = window.PB || {};
 
 window.PB.WORKS = [
   /* ---------------------------------------------------------------- 01 */
-
-  /* ---------------------------------------------------------------- 02 */
-  {
-    id: 'acquire',
-    bggName: 'Acquire',
-    no: 1,
-    title: 'アクワイア',
-    titleEn: 'Acquire',
-    latin: 'ACQUIRE',
-    designer: 'シド・サクソン',
-    designerEn: 'Sid Sackson',
-    players: '2〜6人',
-    playersEn: '2–6 players',
-    genre: '株式・合併・タイル配置',
-    genreEn: 'Stocks / Mergers / Tile laying',
-    hook: '小さなチェーンは大きなチェーンに呑み込まれる。その瞬間、筆頭株主に株価の10倍が落ちる。',
-    hookEn: 'Small chains get swallowed by big ones — and the moment they do, the largest shareholder is paid ten times the share price.',
-    opponents: '性格4種（バランス／アグレッシブ／キャッシュ重視／マージャー）',
-    opponentsEn: '4 personalities (balanced / aggressive / cautious / merger)',
-    lead: 'ホテルチェーンを設立し、株を買い、合併ボーナスで資産を増やす。Avalon Hill 版に準拠。',
-    leadEn: 'Found hotel chains, buy stock, and grow on merger bonuses. Rules follow the Avalon Hill edition.',
-
-    method: '期待ドルへの換算',
-    methodEn: 'Everything priced in dollars',
-    methodBody:
-      'ルールベース。学習も探索木も使わない。かわりに、すべての選択肢を「期待ドル」に換算して比較する。' +
-      '単位が揃っているので「設立」「拡大」「合併」「捨て牌」を直接比べられる。',
-    methodBodyEn:
-      'Rule-based, with no learning and no search tree. Every option is converted into expected dollars, so ' +
-      'founding, growing, merging and discarding can be compared on one scale.',
-
-    plate: {
-      caption: '実測勝率',
-      captionEn: 'Measured win rate',
-      note: '4人戦・席順ローテーション・400ゲーム',
-      noteEn: '4 players, seats rotated, 400 games',
-      baseline: 0.25,
-      rows: [
-        { label: 'ルールベース CPU',        labelEn: 'Rule-based CPU',   v: 0.500, lead: true },
-        { label: 'ルールベース CPU（2体目）', labelEn: 'Rule-based CPU #2', v: 0.470 },
-        { label: '初期版の CPU',            labelEn: 'First-draft CPU',  v: 0.028 },
-        { label: 'ランダム',                labelEn: 'Random',           v: 0.003 },
-        { label: 'ルールベース 対 乱択 3人',  labelEn: 'Rule-based vs 3 random', v: 0.920 }
-      ]
-    },
-
-    remark:
-      '「相手の利益をどれだけ嫌うか」の係数 rival は総当りで測って決めた ' +
-      '（0.2→22.0% / 0.5→26.4% / 0.7→29.1% / 1.0→26.0% / 1.8→20.0%）。0.7 を採用。',
-    remarkEn:
-      'The rival coefficient — how much a rival\'s gain is disliked — was chosen by measurement ' +
-      '(0.2→22.0% / 0.5→26.4% / 0.7→29.1% / 1.0→26.0% / 1.8→20.0%). 0.7 was adopted.',
-
-    play: 'https://shunshun0904.github.io/aquire/',
-    repo: 'https://github.com/shunshun0904/aquire',
-    figure: 'grid'
-  },
-
-  /* ---------------------------------------------------------------- 03 */
   {
     id: 'highsociety',
     bggName: 'High Society',
-    no: 2,
+    no: 1,
     title: 'ハイソサエティ',
     titleEn: 'High Society',
     latin: 'HIGH SOCIETY',
@@ -130,75 +71,121 @@ window.PB.WORKS = [
     repo: 'https://github.com/shunshun0904/highsociety',
     figure: 'cards'
   },
-
-  /* ---------------------------------------------------------------- 04 */
+  /* ---------------------------------------------------------------- 02 */
   {
-    id: 'imperial',
-    bggName: 'Imperial',
-    no: 3,
-    title: 'インペリアル',
-    titleEn: 'Imperial',
-    latin: 'IMPERIAL',
-    designer: 'マック・ゲルツ',
-    designerEn: 'Mac Gerdts',
-    players: '2〜6人',
-    playersEn: '2–6 players',
-    genre: 'ロンデル・債券・エリア支配',
-    genreEn: 'Rondel / Bonds / Area control',
-    hook: '国を持つのではない。国に一番出資している者が、その国を動かす。出資を抜かれた瞬間、軍も国庫も相手のものになる。',
-    hookEn: 'You do not own a country — whoever has lent it the most money commands it. Get outbid, and its armies and treasury change hands mid-game.',
-    opponents: 'CPU 1〜5人（ルールベース）',
-    opponentsEn: '1–5 CPU (rule-based)',
-    lead: '六帝国の債券を引き受け、その国の政府として盤上を動かす。2006年版・日本語版ルールに準拠。',
-    leadEn: 'Underwrite the bonds of six empires and command whichever one you have funded most. Follows the 2006 edition.',
+    id: 'bigshot',
+    bggName: 'Big Shot',
+    no: 2,
+    title: 'ビッグショット',
+    titleEn: 'Big Shot',
+    latin: 'BIG SHOT',
+    designer: 'アレックス・ランドルフ',
+    designerEn: 'Alex Randolph',
+    players: '4人',
+    playersEn: '4 players',
+    genre: '競り・エリアマジョリティ',
+    genreEn: 'Auction / Area majority',
+    hook: '落札した4個には相手の色も混ざっていて、それも落札者が置く。どこへ捨てるかが勝負どころ。',
+    hookEn: 'The four cubes you win include your rivals\' colours — and you place those too. Where you dump them is the game.',
+    opponents: 'CPU 3人（確率計算）',
+    opponentsEn: '3 CPU (exact probability)',
+    lead: '18回の競りで街を分け合う。収入がないので、使った金はそのまま失点になる。',
+    leadEn: 'Eighteen auctions divide a city. There is no income, so every dollar spent is a point lost.',
 
     /* 相手の作り */
-    method: '巡回の設計として解く',
-    methodEn: 'Solved as a scheduling problem',
+    method: '確率の数え上げ',
+    methodEn: 'Exhaustive enumeration',
     methodBody:
-      '学習も探索木も使っていない。このゲームの行動選択はロンデル（8マスの輪）で行われ、' +
-      '同じマスに留まれず、時計回りにしか進めず、4マス目以降は1マスにつき2かかる。' +
-      'つまり「何をするか」ではなく「どの順で回るか」を決める問題になっている。' +
-      'そこで各マスについて、いま止まった場合の効果（徴税なら上がる国力、生産なら妨害されていない工場の数）を' +
-      '見積もり、そこから移動料を引いた値で比べている。投資は「利息 × 国力係数」に、' +
-      'その国の筆頭出資者を奪えるなら加点する。',
+      '学習は使っていない。区画の状態は「4色の個数・合計7以下」の330通りしかないので、' +
+      '残り枠が無作為に埋まると仮定したときの所有確率を起動時に多項分布で全部数え上げて表にしておく。' +
+      '同数無効のルールもこの数え上げの中で処理される。',
     methodBodyEn:
-      'No learning and no search tree. Actions are chosen on a rondel of eight spaces: you may not stay put, ' +
-      'you may only advance clockwise, and every space past the third costs 2. The decision is therefore not ' +
-      'what to do but in what order to come back round. Each space is scored by its immediate payoff — the ' +
-      'power gained if taxing, the number of unblocked factories if producing — minus the cost of reaching it. ' +
-      'Investments are priced as interest × the power multiplier, plus a bonus for seizing control of a nation.',
+      'No learning. A block has only 330 reachable states (four colours, at most seven cubes), so the ' +
+      'ownership probability under random filling is enumerated exactly at start-up with the multinomial ' +
+      'distribution. The tie-voids-the-colour rule falls out of the same enumeration.',
 
     plate: {
       caption: '実測勝率',
       captionEn: 'Measured win rate',
-      note: '4人戦・席順ローテーション・各400局（括弧内は95%信頼区間）',
-      noteEn: '4 players, seats rotated, 400 games each (95% CI)',
+      note: '4人戦・席順ローテーション・各200局',
+      noteEn: '4 players, seats rotated, 200 games each',
       baseline: 0.25,
       rows: [
-        { label: 'AI 1人 対 素人筋 3人',   labelEn: 'AI vs 3 naive',        v: 0.780, ci: 0.041, lead: true },
-        { label: 'AI 1人 対 乱択 3人',     labelEn: 'AI vs 3 random',       v: 0.988, ci: 0.011 },
-        { label: '素人筋 1人 対 AI 3人',   labelEn: 'Naive vs 3 AI',        v: 0.120, ci: 0.032 },
-        { label: '乱択 1人 対 AI 3人',     labelEn: 'Random vs 3 AI',       v: 0.003, ci: 0.005 },
-        { label: '［参考］素人筋 対 乱択3人', labelEn: '[ref] Naive vs 3 random', v: 0.815, ci: 0.038 }
+        { label: 'AI 1人 対 素人筋 3人',  labelEn: 'AI vs 3 naive',    v: 0.855, lead: true },
+        { label: 'AI 1人 対 浪費家 3人',  labelEn: 'AI vs 3 spenders', v: 0.995 },
+        { label: 'AI 1人 対 乱択 3人',    labelEn: 'AI vs 3 random',   v: 1.000 },
+        { label: '素人筋 1人 対 AI 3人',  labelEn: 'Naive vs 3 AI',    v: 0.055 },
+        { label: '乱択 1人 対 AI 3人',    labelEn: 'Random vs 3 AI',   v: 0.040 }
       ]
     },
 
     remark:
-      '席順の有利不利を疑って、AI 4人だけでも400局回した。席別の勝率は .233/.217/.300/.250 で、' +
-      '偏りは信頼区間の内側に収まっている。なお本作は盤面に持ち込みの画像を1枚使っており、' +
-      '他の3作の「画像を読み込まない」という作法からは外れている。',
+      '所有確率を「置いた数が多いほど有利」と当てずっぽうで近似していた版は、空き区画に1個置いただけで' +
+      '勝率43%と見積もり、序盤に全財産を注いで沈んだ。数え上げに替えて 0.43 → 0.98。',
     remarkEn:
-      'Suspecting a seat advantage, 400 games were also run with four copies of the AI: .233/.217/.300/.250 by ' +
-      'seat, within the confidence interval. Note that this one loads a single supplied board image, and so ' +
-      'departs from the no-images rule the other three keep.',
+      'An earlier version approximated ownership by "more cubes is better", valued a single cube on an empty ' +
+      'block at 43%, and drowned itself in debt in the opening. Switching to enumeration moved it 0.43 → 0.98.',
 
-    play: 'https://shunshun0904.github.io/imperial/',
-    repo: 'https://github.com/shunshun0904/imperial',
-    figure: 'rondel'
+    play: 'https://shunshun0904.github.io/bigshot/',
+    repo: 'https://github.com/shunshun0904/bigshot',
+    figure: 'blocks'
   },
+  /* ---------------------------------------------------------------- 03 */
+  {
+    id: 'acquire',
+    bggName: 'Acquire',
+    no: 3,
+    title: 'アクワイア',
+    titleEn: 'Acquire',
+    latin: 'ACQUIRE',
+    designer: 'シド・サクソン',
+    designerEn: 'Sid Sackson',
+    players: '2〜6人',
+    playersEn: '2–6 players',
+    genre: '株式・合併・タイル配置',
+    genreEn: 'Stocks / Mergers / Tile laying',
+    hook: '小さなチェーンは大きなチェーンに呑み込まれる。その瞬間、筆頭株主に株価の10倍が落ちる。',
+    hookEn: 'Small chains get swallowed by big ones — and the moment they do, the largest shareholder is paid ten times the share price.',
+    opponents: '性格4種（バランス／アグレッシブ／キャッシュ重視／マージャー）',
+    opponentsEn: '4 personalities (balanced / aggressive / cautious / merger)',
+    lead: 'ホテルチェーンを設立し、株を買い、合併ボーナスで資産を増やす。Avalon Hill 版に準拠。',
+    leadEn: 'Found hotel chains, buy stock, and grow on merger bonuses. Rules follow the Avalon Hill edition.',
 
-  /* ---------------------------------------------------------------- 05 */
+    method: '期待ドルへの換算',
+    methodEn: 'Everything priced in dollars',
+    methodBody:
+      'ルールベース。学習も探索木も使わない。かわりに、すべての選択肢を「期待ドル」に換算して比較する。' +
+      '単位が揃っているので「設立」「拡大」「合併」「捨て牌」を直接比べられる。',
+    methodBodyEn:
+      'Rule-based, with no learning and no search tree. Every option is converted into expected dollars, so ' +
+      'founding, growing, merging and discarding can be compared on one scale.',
+
+    plate: {
+      caption: '実測勝率',
+      captionEn: 'Measured win rate',
+      note: '4人戦・席順ローテーション・400ゲーム',
+      noteEn: '4 players, seats rotated, 400 games',
+      baseline: 0.25,
+      rows: [
+        { label: 'ルールベース CPU',        labelEn: 'Rule-based CPU',   v: 0.500, lead: true },
+        { label: 'ルールベース CPU（2体目）', labelEn: 'Rule-based CPU #2', v: 0.470 },
+        { label: '初期版の CPU',            labelEn: 'First-draft CPU',  v: 0.028 },
+        { label: 'ランダム',                labelEn: 'Random',           v: 0.003 },
+        { label: 'ルールベース 対 乱択 3人',  labelEn: 'Rule-based vs 3 random', v: 0.920 }
+      ]
+    },
+
+    remark:
+      '「相手の利益をどれだけ嫌うか」の係数 rival は総当りで測って決めた ' +
+      '（0.2→22.0% / 0.5→26.4% / 0.7→29.1% / 1.0→26.0% / 1.8→20.0%）。0.7 を採用。',
+    remarkEn:
+      'The rival coefficient — how much a rival\'s gain is disliked — was chosen by measurement ' +
+      '(0.2→22.0% / 0.5→26.4% / 0.7→29.1% / 1.0→26.0% / 1.8→20.0%). 0.7 was adopted.',
+
+    play: 'https://shunshun0904.github.io/aquire/',
+    repo: 'https://github.com/shunshun0904/aquire',
+    figure: 'grid'
+  },
 ];
 
 /* 「これから作るもの」。実装が済んだ段階で state を 'done' にする。 */
@@ -258,17 +245,16 @@ window.PB.PRINCIPLES = [
     titleEn: 'No dependencies',
     body:
       'どれもライブラリもフォントも読み込まない。盤面も駒も手書きの SVG と CSS で、' +
-      'ハイソサエティは index.html 1枚で完結する（学習した重み20KBごと埋め込んである）。' +
-      'アクワイアも単一ファイル版を書き出せる。' +
-      '例外はインペリアルで、持ち込みの盤面画像を1枚使い、ES モジュールのため配信が要る。' +
+      'ハイソサエティとビッグショットは index.html を開くだけで動く。' +
+      'ハイソサエティに至っては、学習した重み20KBごと1枚に収まっている。' +
+      'アクワイアは js/ に分けてあるが、単一ファイル版も書き出せる。' +
       '外から読むのはアクセス解析の1本だけ。それも web で配信しているときに限り、' +
       'ファイルとして開けば、どれも外へは何も出さない。',
     bodyEn:
-      'None of them loads a library or a font. Boards and pieces are hand-written SVG and CSS. High Society is ' +
-      'a single index.html, trained weights and all; Acquire can be exported as one file too. Imperial is the ' +
-      'exception: it uses one supplied board image and, being ' +
-      'ES modules, needs to be served. The one thing loaded from outside is analytics, and only when served ' +
-      'over the web — opened as a file, none of them reaches out at all.'
+      'None of them loads a library or a font. Boards and pieces are hand-written SVG and CSS. High Society and ' +
+      'Big Shot each run by opening index.html — High Society with its trained weights, 20 KB, embedded in the ' +
+      'same file. Acquire is split across js/ but exports as one file too. The one thing loaded from outside is ' +
+      'analytics, and only when served over the web — opened as a file, none of them reaches out at all.'
   },
   {
     title: '遊ぶコードと測るコードを分けない',

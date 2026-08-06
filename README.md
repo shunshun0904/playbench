@@ -203,7 +203,8 @@ node tools/stamp-assets.mjs --check   # 版が付いているか確かめる
 **空のあいだは gtag.js を読み込みません**（外部への通信が1本も出ません）。
 実装は [`assets/analytics.js`](assets/analytics.js) の1ファイルだけです。
 
-**収録ゲーム5作にも同じ測定IDを入れてあります**（サイトに出しているのは3作ですが、タグはbigshot と redplanet にも入ったままです）。 どのゲームが遊ばれているかを
+**収録ゲーム5作すべてに同じ測定IDが入っています**（サイトに出しているのは3作ですが、
+タグはインペリアルとレッドプラネットにも残してあります）。どのゲームが遊ばれているかを
 1つのプロパティで見るためで、GA の「ページとスクリーン」でパスごとに分かれます。
 ゲーム側は各 `index.html` の `<head>` にある `<script>` 1つだけで、
 `file://` で開いたときは何も読み込みません。
@@ -235,11 +236,11 @@ node tools/stamp-assets.mjs --check   # 版が付いているか確かめる
 
 | | ゲーム | 相手の作り | 実測（互角 .250） |
 |---|---|---|---|
-| 01 | [アクワイア](https://shunshun0904.github.io/aquire/) | 期待ドルへの換算（ルールベース） | 4人戦 **.500** |
-| 02 | [ハイソサエティ](https://shunshun0904.github.io/highsociety/) | 自己対戦PPO＋先読み | 対 既存CPU3人 **.621** |
-| 03 | [インペリアル](https://shunshun0904.github.io/imperial/) | ロンデルを巡回の設計として採点 | 対 素人筋3人 **.780** |
+| 01 | [ハイソサエティ](https://shunshun0904.github.io/highsociety/) | 自己対戦PPO＋先読み | 対 既存CPU3人 **.621** |
+| 02 | [ビッグショット](https://shunshun0904.github.io/bigshot/) | 所有権の確率を厳密に数え上げ | 対 素人筋3人 **.855** |
+| 03 | [アクワイア](https://shunshun0904.github.io/aquire/) | 期待ドルへの換算（ルールベース） | 4人戦 **.500** |
 
-[ビッグショット](https://shunshun0904.github.io/bigshot/) と
+[インペリアル](https://shunshun0904.github.io/imperial/) と
 [ミッション・レッドプラネット](https://shunshun0904.github.io/redplanet/) も
 実装してあり、リポジトリと配信は生きています。サイトに載せるのを3作に絞っただけです。
 
