@@ -700,14 +700,18 @@
     if (paras && paras.length) paras.forEach(function (s) { intro.appendChild(el('p', 'lead', s)); });
     else intro.appendChild(notYet());
 
-    if (pr.links && pr.links.fill && pr.links.rows.length) {
-      var ul = el('div', 'links');
-      pr.links.rows.forEach(function (r) {
-        var a = el('a', 'links__a', r.label);
-        a.href = r.url; a.rel = 'noopener';
-        ul.appendChild(a);
-      });
-      intro.appendChild(ul);
+    /* url の入っていない行は出さない。押せないリンクは置かない */
+    if (pr.links && pr.links.fill) {
+      var live = pr.links.rows.filter(function (r) { return r.url; });
+      if (live.length) {
+        var ul = el('div', 'links');
+        live.forEach(function (r) {
+          var a = el('a', 'links__a', r.label);
+          a.href = r.url; a.rel = 'noopener';
+          ul.appendChild(a);
+        });
+        intro.appendChild(ul);
+      }
     }
 
     /* ---- 職務経歴 */
@@ -732,21 +736,39 @@
       car.appendChild(list);
     } else car.appendChild(notYet());
 
-    /* ---- 道具 */
-    var sk = document.getElementById('profile-skills');
-    sk.textContent = '';
-    if (pr.skills && pr.skills.fill && pr.skills.groups.length) {
-      var g = el('div', 'cells');
-      pr.skills.groups.forEach(function (grp) {
-        var d = el('div', 'tenet');
-        d.appendChild(el('h3', 'tenet__t', pick(grp, 'label')));
-        var row = el('p', 'tags');
-        grp.items.forEach(function (s) { row.appendChild(el('span', 'tag tag--ink', s)); });
-        d.appendChild(row);
-        g.appendChild(d);
+    /* ---- 研究業績 */
+    var rs = document.getElementById('profile-research');
+    if (!rs) return;
+    rs.textContent = '';
+    if (pr.research && pr.research.fill && pr.research.groups.length) {
+      pr.research.groups.forEach(function (grp) {
+        var g = el('section', 'rsc');
+        g.appendChild(el('h3', 'rsc__gt', pick(grp, 'label')));
+        grp.rows.forEach(function (r) {
+          var row = el('div', 'rsc__row');
+
+          var k = el('div', 'rsc__k');
+          k.appendChild(el('span', 'tag tag--ink', pick(r, 'kind')));
+          row.appendChild(k);
+
+          var b = el('div', 'rsc__b');
+          /* url があるときだけリンクにする。無いものは文字のまま置く */
+          if (r.url) {
+            var a = el('a', 'rsc__t rsc__t--go', pick(r, 'title'));
+            a.href = r.url; a.rel = 'noopener';
+            b.appendChild(a);
+          } else {
+            b.appendChild(el('p', 'rsc__t', pick(r, 'title')));
+          }
+          var note = pick(r, 'note');
+          if (note) b.appendChild(el('p', 'rsc__n', note));
+          row.appendChild(b);
+
+          g.appendChild(row);
+        });
+        rs.appendChild(g);
       });
-      sk.appendChild(g);
-    } else sk.appendChild(notYet());
+    } else rs.appendChild(notYet());
   }
 
 

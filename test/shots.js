@@ -316,6 +316,66 @@ function serve() {
     await ctx.close();
   }
 
+  /* ------------------------------------------- 自己紹介（トップ）の中身 */
+  /* data/profile.js は履歴書から起こしてある。載せてよいものだけが
+     出ていること、特に連絡先の類が漏れていないことを毎回見る。 */
+  {
+    const ctx = await newContext({ viewport: { width: 1280, height: 1400 }, deviceScaleFactor: 2 });
+    const page = await ctx.newPage();
+    const errs = [];
+    page.on('pageerror', e => errs.push(String(e)));
+    await page.goto(URL, { waitUntil: 'load' });
+    await page.waitForFunction(() => document.querySelectorAll('.rsc__row').length > 0);
+    await page.screenshot({ path: path.join(OUT, 'home-profile.png'), fullPage: true });
+
+    const p = await page.evaluate(() => ({
+      bands: [...document.querySelectorAll('.band__t')].map(b => b.textContent.trim()),
+      tagline: !!document.querySelector('.hello__tag'),
+      intro: document.querySelectorAll('#profile-intro .lead').length,
+      cv: document.querySelectorAll('.cv__row').length,
+      groups: [...document.querySelectorAll('.rsc__gt')].map(g => g.textContent.trim()),
+      rows: document.querySelectorAll('.rsc__row').length,
+      /* 空 url の行がリンクとして出ていないこと */
+      dead: [...document.querySelectorAll('.rsc__t--go, .links__a')]
+        .filter(a => !a.getAttribute('href')).length,
+      links: [...document.querySelectorAll('.links__a')].map(a => a.textContent.trim()),
+      blank: document.querySelectorAll('.blank').length,
+      /* 履歴書には載っているが、公開してはいけないもの。
+         値そのものはここに書かない（書けばこの検査ごと漏れる）。
+         形で見る ── 電話番号・メール・郵便番号・生年月日。 */
+      leak: [
+        ['電話番号らしきもの', /(^|[^\d])0\d{9,10}([^\d]|$)/],
+        ['メールアドレス',     /[\w.+-]+@[\w-]+\.[\w.]{2,}/],
+        ['郵便番号',           /(^|[^\d])\d{3}-\d{4}([^\d]|$)/],
+        ['生年月日',           /19\d{2}\s*年\s*\d{1,2}\s*月\s*\d{1,2}\s*日/]
+      ].filter(([, re]) => re.test(document.body.innerText)).map(([name]) => name),
+      overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth
+    }));
+    /* 上の網が本当に掛かるか、作り物で確かめる。
+       素通りしているだけの検査は、無いのと同じなので。 */
+    const caught = await page.evaluate(() => [
+      /(^|[^\d])0\d{9,10}([^\d]|$)/.test('連絡先 09012345678 まで'),
+      /[\w.+-]+@[\w-]+\.[\w.]{2,}/.test('name@example.com'),
+      /(^|[^\d])\d{3}-\d{4}([^\d]|$)/.test('〒100-0001 東京都'),
+      /19\d{2}\s*年\s*\d{1,2}\s*月\s*\d{1,2}\s*日/.test('1990 年 1 月 1 日生')
+    ]);
+
+    console.log('── 自己紹介');
+    console.log('  ', JSON.stringify(p));
+    console.log('   漏れ検知の網:', caught.map(c => c ? '効' : '×').join(''));
+    if (caught.some(c => !c)) fail('漏れ検知の網が効いていない（作り物を捕まえられない）');
+    if (errs.length) fail('JS が転んでいる: ' + errs[0]);
+    if (p.bands.join('/') !== '自己紹介/職務経歴/研究業績') fail('見出しが揃っていない');
+    if (!p.tagline || p.intro < 1) fail('肩書きか自己紹介が出ていない');
+    if (p.cv < 6) fail('職務経歴の行が足りない');
+    if (p.groups.length < 3 || p.rows < 8) fail('研究業績が出ていない');
+    if (p.dead) fail('行き先のないリンクが出ている');
+    if (p.blank) fail('「まだ書いていません」が残っている');
+    if (p.leak.length) fail('連絡先などが漏れている: ' + p.leak.join(', '));
+    if (p.overflow > 1) fail('横スクロールが出ている');
+    await ctx.close();
+  }
+
   /* ------------------------------------------------------------- 英語 */
   {
     const ctx = await newContext({ viewport: { width: 1280, height: 1000 }, deviceScaleFactor: 2 });

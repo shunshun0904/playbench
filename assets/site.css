@@ -845,6 +845,36 @@ a { color: inherit; }
 .links__a:hover { color: var(--vermilion); }
 .tags { display: flex; flex-wrap: wrap; gap: .35rem; margin: 0; }
 
+/* -------------------------------------------------------- 研究業績 */
+/* 職務経歴と同じ組み。左に種別、右に題目。押せるものだけ下線が付く */
+.rsc { margin-bottom: var(--s5); }
+.rsc:last-child { margin-bottom: 0; }
+.rsc__gt {
+  margin: 0 0 var(--s2); font-size: .8rem; font-weight: 600;
+  letter-spacing: .1em; color: var(--ink-mute);
+}
+.rsc__row {
+  display: grid; grid-template-columns: minmax(0, 9rem) 1fr;
+  gap: var(--s2) var(--s4); padding: var(--s3) 0;
+  border-top: 1px solid var(--rule);
+}
+.rsc__row:last-child { border-bottom: 1px solid var(--rule); }
+.rsc__k { line-height: 1.5; }
+.rsc__t {
+  margin: 0; font-size: .92rem; line-height: 1.7;
+  font-weight: 600; color: var(--ink);
+}
+.rsc__t--go {
+  display: inline-block; color: var(--indigo);
+  text-decoration-color: var(--rule); text-underline-offset: .2em;
+}
+.rsc__t--go:hover { color: var(--vermilion); }
+.rsc__n {
+  margin: .3rem 0 0; font-family: var(--mono);
+  font-size: .76rem; color: var(--ink-mute);
+}
+@media (max-width: 34rem) { .rsc__row { grid-template-columns: 1fr; } }
+
 /* ---------------------------------------------------- マクロ経済指標 */
 .gauge { padding: var(--s4) 0; border-top: 1px solid var(--rule); }
 .gauge:last-child { border-bottom: 1px solid var(--rule); }

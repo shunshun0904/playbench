@@ -8,7 +8,7 @@
 
 | タブ | ページ | 中身 |
 |---|---|---|
-| 自己紹介 | [`index.html`](index.html) | 自己紹介と職務経歴。中身は `data/profile.js` に書く |
+| 自己紹介 | [`index.html`](index.html) | 自己紹介・職務経歴・研究業績。中身は `data/profile.js` に書く |
 | ボードゲーム | [`games.html`](games.html) | ボードゲーム2作の自主研究。遊べる |
 | 経済 | [`macro.html`](macro.html) | 株式投資のために見ているマクロ経済指標。出どころと取得日つき |
 
@@ -19,7 +19,7 @@
 ## 構成
 
 ```
-index.html          トップ＝自己紹介・職務経歴
+index.html          トップ＝自己紹介・職務経歴・研究業績
 games.html          ボードゲームの自主研究
 macro.html          マクロ経済指標
 about.html          index.html への転送のみ（旧URL宛て）
@@ -27,14 +27,14 @@ assets/site.css     版面。色・書体・実測プレート
 assets/site.js      組版。天地とタブもここから組む
 assets/analytics.js アクセス解析。唯一の外部読み込み。空なら何もしない
 assets/config.js    アクセス解析の測定ID
-data/profile.js     自己紹介と職務経歴  ← 本人が書く唯一のファイル
+data/profile.js     自己紹介・職務経歴・研究業績 ← 本人が書く唯一のファイル
 data/works.js       ゲームの目録        ← ゲームを増やすときはここだけ
 data/macro.js       見る指標の定義と、取得した系列（tools が書き換える）
 data/bgg.js         BGG の重さと評価のスナップショット（tools が書き換える）
 tools/fetch-macro.mjs  Alpha Vantage から指標を取ってくる道具
 tools/fetch-bgg.mjs    BGG から取ってくる道具
 tools/stamp-assets.mjs 配備時に全ページの参照へ版を打つ（キャッシュ対策）
-test/shots.js       実ブラウザでの検査（見た目・タブ・解析の入切・BGGの行）
+test/shots.js       実ブラウザでの検査（見た目・タブ・解析の入切・BGGの行・自己紹介）
 build.js            盤上のページを1枚にまとめる
 ```
 
