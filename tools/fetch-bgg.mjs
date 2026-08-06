@@ -27,12 +27,18 @@ const HOSTS = [
   'https://boardgamegeek.com/xmlapi2',
   'https://www.boardgamegeek.com/xmlapi2'
 ];
-/* 名乗りはこれ1つだけ。ブラウザのふりをする経路は置かない。
+/* 名乗りは1つだけ。ブラウザのふりをする経路は置かない。
    利用申請で「素性を明かして使いたい」と書いている以上、
    コードに逃げ道を残すのは筋が通らない。
-   申請文（docs/bgg-api-application.md）に書いた名乗りと同じものにしておく。 */
+
+   申請が承認されると、BGG 側は申請したアプリ名で認識する。
+   その名前が既定と違う場合は環境変数で上書きする:
+
+     BGG_UA='承認された名前/1.0 (+連絡先URL)' npm run bgg
+
+   既定値は申請文（docs/bgg-api-application.md）に書いた名乗りと同じ。 */
 const UAS = [
-  'playbench/1.0 (+https://github.com/shunshun0904/playbench)'
+  process.env.BGG_UA || 'playbench/1.0 (+https://github.com/shunshun0904/playbench)'
 ];
 let API = null, UA = UAS[0];   // 一度通った組み合わせを使い回す
 

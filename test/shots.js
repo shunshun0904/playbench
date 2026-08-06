@@ -657,6 +657,64 @@ function serve() {
     }
   }
 
+
+  /* ------------------------------------------ BGG の行（見本を差し込んで確認）
+     data/bgg.js は空のまま置いてある。空だと画面には何も出ないので、
+     取ってきたあとにきちんと出るかを、ここで確かめておく。
+     配信そのものを差し替えるので、本物の読み込み経路をそのまま通る。
+     見本は検査の中だけに存在し、リポジトリの数字には触れない。 */
+  {
+    const ctx = await newContext({ viewport: { width: 1280, height: 1000 }, deviceScaleFactor: 2 });
+    const page = await ctx.newPage();
+    await page.route(u => u.pathname.endsWith('/data/bgg.js'), r => r.fulfill({
+      status: 200, contentType: 'text/javascript',
+      body: `window.PB = window.PB || {};
+             window.PB.BGG = { fetchedAt: '2026-08-06', source: 'boardgamegeek.com', games: {
+               highsociety: { id: 220,  weight: 1.62, rating: 6.98, ratings: 12345 },
+               bigshot:     { id: 1746, weight: 2.00, rating: 6.40, ratings: 678 },
+               acquire:     { id: 5,    weight: 2.50, rating: 7.30, ratings: 34567 }
+             } };`
+    }));
+    await page.goto(GAMES, { waitUntil: 'load' });
+    await page.waitForTimeout(400);
+
+    const bgg = await page.evaluate(() => {
+      const rows = [...document.querySelectorAll('.bgg')];
+      if (!rows.length) return { n: 0 };
+      const first = rows[0];
+      return {
+        n: rows.length,
+        meters: first.querySelectorAll('.bgg__m').length,
+        vals: [...first.querySelectorAll('.bgg__v')].map(n => n.textContent),
+        widths: [...first.querySelectorAll('.bgg__b')].map(n => n.style.width),
+        people: (first.querySelector('.bgg__n') || {}).textContent,
+        href: first.querySelector('.bgg__a').getAttribute('href'),
+        when: (first.querySelector('.bgg__d') || {}).textContent
+      };
+    });
+    console.log('── BGG の行（見本）');
+    console.log('  ', JSON.stringify(bgg));
+    if (bgg.n !== 3) fail(`BGG の行が3作ぶん出ていない（${bgg.n}）`);
+    else {
+      if (bgg.meters !== 2) fail('重さと評価の2本が出ていない');
+      if (bgg.vals[0] !== '1.62 / 5' || bgg.vals[1] !== '6.98 / 10') fail('値の出し方が合わない: ' + bgg.vals);
+      /* 重さは5点満点、評価は10点満点。棒の長さがその割合になっているか。
+         style.width は丸めて返ってくるので、文字列ではなく数として比べる */
+      const pct = s => parseFloat(s);
+      if (Math.abs(pct(bgg.widths[0]) - 1.62 / 5 * 100) > 0.05) fail('重さの棒が満点5に対する割合でない: ' + bgg.widths[0]);
+      if (Math.abs(pct(bgg.widths[1]) - 6.98 / 10 * 100) > 0.05) fail('評価の棒が満点10に対する割合でない: ' + bgg.widths[1]);
+      if (!/12,345/.test(bgg.people || '')) fail('評価人数が出ていない');
+      if (bgg.href !== 'https://boardgamegeek.com/boardgame/220') fail('BGG への行き先が合わない');
+      if (!/2026-08-06/.test(bgg.when || '')) fail('取得日が添えられていない');
+      await page.evaluate(() => {
+        document.querySelectorAll('.scale').forEach(n => n.classList.add('is-read'));
+      });
+      await page.waitForTimeout(300);
+      await page.screenshot({ path: path.join(OUT, 'bgg-sample.png'), fullPage: true });
+    }
+    await ctx.close();
+  }
+
   /* ------------------------------------------------------------- 英語 */
   {
     const ctx = await newContext({ viewport: { width: 1280, height: 1000 }, deviceScaleFactor: 2 });
