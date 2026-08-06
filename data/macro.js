@@ -27,6 +27,13 @@ window.PB.INDICATORS = [
     unit: '%',
     why: '株の割引率の土台。ここが動くと、利益が変わらなくても株価の妥当な水準が動く。',
     whyEn: 'The base of the discount rate. When this moves, fair value moves even if earnings do not.',
+    by: '米連邦準備制度理事会（FRB）', byEn: 'Federal Reserve Board',
+    sources: [
+      { label: 'FOMC 日程・声明・議事要旨', labelEn: 'FOMC calendar, statements, minutes',
+        url: 'https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm' },
+      { label: 'H.15 主要金利（日次）', labelEn: 'H.15 Selected Interest Rates (daily)',
+        url: 'https://www.federalreserve.gov/releases/h15/' }
+    ],
     fn: 'FEDERAL_FUNDS_RATE'
   },
   {
@@ -36,6 +43,11 @@ window.PB.INDICATORS = [
     unit: '%',
     why: '政策金利との差（イールドカーブ）が景気の織り込みを映す。逆転は歴史的に景気後退の先触れ。',
     whyEn: 'Its gap to the policy rate is the curve. Inversion has historically preceded recessions.',
+    by: '米連邦準備制度理事会（FRB）', byEn: 'Federal Reserve Board',
+    sources: [
+      { label: 'H.15 主要金利（日次）', labelEn: 'H.15 Selected Interest Rates (daily)',
+        url: 'https://www.federalreserve.gov/releases/h15/' }
+    ],
     fn: 'TREASURY_YIELD', maturity: '10year'
   },
   {
@@ -45,15 +57,35 @@ window.PB.INDICATORS = [
     unit: '%',
     why: '金利を決めるのはこれ。指数そのものより、前年比の向きを見る。',
     whyEn: 'This is what sets rates. The direction of the year-over-year change matters more than the level.',
+    by: '米労働省労働統計局（BLS）', byEn: 'US Bureau of Labor Statistics',
+    sources: [
+      { label: '最新の公表文', labelEn: 'Latest news release',
+        url: 'https://www.bls.gov/news.release/cpi.nr0.htm' },
+      { label: '同 PDF', labelEn: 'Same, as PDF', pdf: true,
+        url: 'https://www.bls.gov/news.release/pdf/cpi.pdf' },
+      { label: '公表予定', labelEn: 'Release schedule',
+        url: 'https://www.bls.gov/schedule/news_release/cpi.htm' }
+    ],
     fn: 'CPI', transform: 'yoy'
   },
   {
     id: 'unemp',
     title: '米国 失業率', titleEn: 'US unemployment',
-    sub: '', subEn: '',
+    sub: '雇用統計（NFP）と同じ公表文', subEn: 'Same release as nonfarm payrolls',
     unit: '%',
-    why: '金融政策のもう一方の目標。上がり始めると利下げが早まる一方、企業収益は落ちる。',
-    whyEn: 'The other half of the mandate. When it starts rising, cuts come sooner but earnings fall.',
+    why: '金融政策のもう一方の目標。上がり始めると利下げが早まる一方、企業収益は落ちる。'
+      + '雇用者数（NFP）も同じ公表文に載る。',
+    whyEn: 'The other half of the mandate. When it starts rising, cuts come sooner but earnings fall. '
+      + 'Nonfarm payrolls are in the same release.',
+    by: '米労働省労働統計局（BLS）', byEn: 'US Bureau of Labor Statistics',
+    sources: [
+      { label: '最新の公表文', labelEn: 'Latest news release',
+        url: 'https://www.bls.gov/news.release/empsit.nr0.htm' },
+      { label: '同 PDF', labelEn: 'Same, as PDF', pdf: true,
+        url: 'https://www.bls.gov/news.release/pdf/empsit.pdf' },
+      { label: '公表予定', labelEn: 'Release schedule',
+        url: 'https://www.bls.gov/schedule/news_release/empsit.htm' }
+    ],
     fn: 'UNEMPLOYMENT'
   }
 ];

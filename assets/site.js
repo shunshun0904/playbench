@@ -832,6 +832,26 @@
 
       card.appendChild(el('p', 'gauge__why', pick(ind, 'why')));
 
+      /* 掲載元は図より先に置く。数字より、どこが出しているかのほうが先に要る。
+         PDF は別物として印を付ける（開くと落ちてくるので、押す前に分かるように）。 */
+      if (ind.sources && ind.sources.length) {
+        var box = el('div', 'srcs');
+        box.appendChild(el('span', 'srcs__k',
+          (lang === 'en' ? 'Published by ' : '掲載元 ') + pick(ind, 'by')));
+        var list = el('div', 'srcs__l');
+        ind.sources.forEach(function (src) {
+          var a = el('a', 'srcs__a' + (src.pdf ? ' srcs__a--pdf' : ''), pick(src, 'label'));
+          a.href = src.url;
+          a.rel = 'noopener';
+          a.target = '_blank';
+          if (src.pdf) a.appendChild(el('span', 'srcs__pdf', 'PDF'));
+          else a.appendChild(el('span', 'srcs__go', '↗'));
+          list.appendChild(a);
+        });
+        box.appendChild(list);
+        card.appendChild(box);
+      }
+
       var s = M.series && M.series[ind.id];
       if (s && s.v && s.v.length) {
         var fig = el('div', 'gauge__fig');

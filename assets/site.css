@@ -857,3 +857,27 @@ a { color: inherit; }
 .gauge__src { margin: var(--s2) 0 0; font-family: var(--mono);
   font-size: .72rem; color: var(--ink-mute); }
 .spark { display: block; width: 100%; min-width: 22rem; height: auto; color: var(--ink); }
+
+/* 掲載元。図より先に置く ── 数字より、どこが出しているかのほうが先に要る */
+.srcs { margin: 0 0 var(--s3); }
+.srcs__k {
+  display: block; margin-bottom: .4rem;
+  font-family: var(--mono); font-size: .7rem; letter-spacing: .1em;
+  color: var(--ink-mute);
+}
+.srcs__l { display: flex; flex-wrap: wrap; gap: .35rem; }
+.srcs__a {
+  display: inline-flex; align-items: center; gap: .35rem;
+  padding: .3rem .7rem;
+  border: 1px solid var(--rule);
+  font-size: .8rem; color: var(--ink-mid); text-decoration: none;
+  transition: color .15s, border-color .15s;
+}
+.srcs__a:hover { color: var(--indigo); border-color: var(--indigo); }
+.srcs__go { font-size: .7rem; opacity: .6; }
+/* PDF は押すと落ちてくる。押す前に分かるようにしておく */
+.srcs__pdf {
+  font-family: var(--mono); font-size: .6rem; letter-spacing: .08em;
+  padding: .05rem .3rem;
+  border: 1px solid currentColor; color: var(--indigo); opacity: .85;
+}
