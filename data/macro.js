@@ -18,10 +18,19 @@
 window.PB = window.PB || {};
 
 /* 何を見るか。順番がそのまま画面の順番になります。
-   ここに項目を足して fetch-macro.mjs を走らせれば、系列が入ります。 */
+   ここに項目を足して fetch-macro.mjs を走らせれば、系列が入ります。
+
+   release は公表の予定。出どころは自分の Google カレンダーで、手で写しています
+   （カレンダーには過去の公表がほとんど残っていないため、last が入るのは
+   実際に済んだと確認できたものだけ）。日付は日本時間。
+   ここは自動更新されないので、過ぎたら直してください。
+   いつ時点の写しかは CALENDAR_AS_OF に置いてあります。 */
+window.PB.CALENDAR_AS_OF = '2026-08-06';
+
 window.PB.INDICATORS = [
   {
     id: 'fedfunds',
+    release: { next: '2026-09-17', note: '9月会合の政策金利発表・声明' },
     title: '米国 政策金利', titleEn: 'US policy rate',
     sub: 'FF金利（実効）', subEn: 'Effective federal funds rate',
     unit: '%',
@@ -38,6 +47,7 @@ window.PB.INDICATORS = [
   },
   {
     id: 'dgs10',
+    release: { next: '', note: '毎営業日（H.15）' },
     title: '米国 10年国債利回り', titleEn: 'US 10-year yield',
     sub: '長期金利', subEn: 'Long-term rate',
     unit: '%',
@@ -52,6 +62,7 @@ window.PB.INDICATORS = [
   },
   {
     id: 'cpi',
+    release: { next: '2026-08-12', note: '2026年7月分' },
     title: '米国 消費者物価', titleEn: 'US CPI',
     sub: 'CPI（前年同月比を計算して表示）', subEn: 'CPI, shown as year-over-year',
     unit: '%',
@@ -70,6 +81,7 @@ window.PB.INDICATORS = [
   },
   {
     id: 'unemp',
+    release: { next: '2026-08-07', note: '2026年7月分（雇用統計）' },
     title: '米国 失業率', titleEn: 'US unemployment',
     sub: '雇用統計（NFP）と同じ公表文', subEn: 'Same release as nonfarm payrolls',
     unit: '%',
@@ -90,6 +102,7 @@ window.PB.INDICATORS = [
   },
   {
     id: 'pce',
+    release: { next: '2026-08-28', note: '2026年7月分' },
     title: '米国 PCE 物価指数', titleEn: 'US PCE price index',
     sub: 'FRB が物価目標に使うのはこちら', subEn: 'The gauge the Fed targets',
     unit: '%',
@@ -107,6 +120,7 @@ window.PB.INDICATORS = [
   },
   {
     id: 'umich',
+    release: { next: '2026-08-14', note: '2026年8月 速報値' },
     title: 'ミシガン大 消費者信頼感指数', titleEn: 'U. Michigan consumer sentiment',
     sub: '速報値と確報値が月2回', subEn: 'Preliminary and final, twice a month',
     why: '消費者に直接きいた指数。実績ではなく気分なので外れることも多いが、'
@@ -121,6 +135,7 @@ window.PB.INDICATORS = [
   },
   {
     id: 'beige',
+    release: { next: '2026-09-03', note: '2026年9月分' },
     title: '米 ベージュブック', titleEn: 'Beige Book',
     sub: '数字ではなく、地区連銀が集めた話', subEn: 'Anecdotes, not numbers',
     why: 'FOMC の約2週間前に年8回。12地区の企業への聞き取りをまとめたもので、'
@@ -135,6 +150,7 @@ window.PB.INDICATORS = [
   },
   {
     id: 'usmb',
+    release: { next: '2026-08-07', note: '2026年7月分' },
     title: '米国 マネーストック', titleEn: 'US money stock',
     sub: 'H.6（M1・M2）', subEn: 'H.6 (M1, M2)',
     why: 'マネタリーベースだけを出す統計（H.3）は廃止されているので、'
@@ -149,6 +165,7 @@ window.PB.INDICATORS = [
   },
   {
     id: 'jpcpi',
+    release: { next: '2026-08-21', note: '2026年7月分' },
     title: '日本 全国消費者物価', titleEn: 'Japan CPI',
     sub: '生鮮除く総合（コアCPI）が主役', subEn: 'Core (ex fresh food) is the headline',
     why: '日銀の物価目標はこれ。日本株を持つなら、円金利の前提がここで決まる。',
@@ -164,6 +181,7 @@ window.PB.INDICATORS = [
   },
   {
     id: 'jpcgpi',
+    release: { next: '2026-08-12', note: '2026年7月分' },
     title: '日本 企業物価指数', titleEn: 'Japan corporate goods prices',
     sub: '国内企業物価・輸出物価・輸入物価', subEn: 'Domestic, export and import price indexes',
     why: '企業間の値段。消費者物価より先に動くので、CPI の先行きを読む材料になる。'
@@ -180,6 +198,7 @@ window.PB.INDICATORS = [
   },
   {
     id: 'jpmb',
+    release: { next: '2026-09-02', note: '2026年8月分', last: '2026-08-04', lastNote: '2026年7月分' },
     title: '日本 マネタリーベース', titleEn: 'Japan monetary base',
     sub: '', subEn: '',
     why: '日銀が世の中に出している通貨の量。金融政策の転換が、声明より先に残高に出ることがある。',

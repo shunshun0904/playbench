@@ -885,6 +885,36 @@ a { color: inherit; }
 }
 /* 図を持たない項目。空欄とは意味が違うので、点線の枠にはしない */
 .gauge__only { margin: 0; font-size: .82rem; color: var(--ink-mute); }
+
+/* 一覧表。狭い画面では横に流す（畳んで読めなくするより、流したほうがいい） */
+.grid__wrap { overflow-x: auto; margin-bottom: var(--s2); }
+.grid { border-collapse: collapse; width: 100%; min-width: 44rem; font-size: .84rem; }
+.grid th, .grid td {
+  text-align: left; vertical-align: top;
+  padding: .55rem .7rem;
+  border-bottom: 1px solid var(--rule);
+}
+.grid th {
+  font-family: var(--mono); font-size: .68rem; letter-spacing: .12em;
+  font-weight: 400; color: var(--ink-mute); white-space: nowrap;
+  border-bottom: 1px solid var(--ink-mute);
+}
+.grid tbody tr:hover { background: color-mix(in srgb, var(--ink) 3%, transparent); }
+.grid__n a { color: var(--ink); text-decoration-color: var(--rule); text-underline-offset: .2em; }
+.grid__n a:hover { color: var(--vermilion); }
+.grid__by { color: var(--ink-mute); font-size: .78rem; }
+.grid__a {
+  display: inline-flex; align-items: center; gap: .3rem;
+  color: var(--indigo); text-decoration-color: var(--rule); text-underline-offset: .2em;
+}
+.grid__more { margin-left: .4rem; font-size: .72rem; color: var(--ink-mute); }
+.grid__v, .grid__r { white-space: nowrap; }
+.grid__num { color: var(--vermilion); font-weight: 600; }
+.grid__date { color: var(--ink-mid); }
+.grid__when { display: block; font-size: .7rem; color: var(--ink-mute); font-family: var(--serif); }
+.grid__dash { color: var(--ink-mute); }
+.grid__foot { margin: 0 0 var(--s5); font-size: .72rem; color: var(--ink-mute); }
+.grid__last { display: block; font-size: .68rem; color: var(--ink-mute); font-family: var(--serif); opacity: .85; }
 </style>
 <header class="masthead" id="head"></header>
 
@@ -1445,10 +1475,19 @@ window.PB.BGG = {
 window.PB = window.PB || {};
 
 /* 何を見るか。順番がそのまま画面の順番になります。
-   ここに項目を足して fetch-macro.mjs を走らせれば、系列が入ります。 */
+   ここに項目を足して fetch-macro.mjs を走らせれば、系列が入ります。
+
+   release は公表の予定。出どころは自分の Google カレンダーで、手で写しています
+   （カレンダーには過去の公表がほとんど残っていないため、last が入るのは
+   実際に済んだと確認できたものだけ）。日付は日本時間。
+   ここは自動更新されないので、過ぎたら直してください。
+   いつ時点の写しかは CALENDAR_AS_OF に置いてあります。 */
+window.PB.CALENDAR_AS_OF = '2026-08-06';
+
 window.PB.INDICATORS = [
   {
     id: 'fedfunds',
+    release: { next: '2026-09-17', note: '9月会合の政策金利発表・声明' },
     title: '米国 政策金利', titleEn: 'US policy rate',
     sub: 'FF金利（実効）', subEn: 'Effective federal funds rate',
     unit: '%',
@@ -1465,6 +1504,7 @@ window.PB.INDICATORS = [
   },
   {
     id: 'dgs10',
+    release: { next: '', note: '毎営業日（H.15）' },
     title: '米国 10年国債利回り', titleEn: 'US 10-year yield',
     sub: '長期金利', subEn: 'Long-term rate',
     unit: '%',
@@ -1479,6 +1519,7 @@ window.PB.INDICATORS = [
   },
   {
     id: 'cpi',
+    release: { next: '2026-08-12', note: '2026年7月分' },
     title: '米国 消費者物価', titleEn: 'US CPI',
     sub: 'CPI（前年同月比を計算して表示）', subEn: 'CPI, shown as year-over-year',
     unit: '%',
@@ -1497,6 +1538,7 @@ window.PB.INDICATORS = [
   },
   {
     id: 'unemp',
+    release: { next: '2026-08-07', note: '2026年7月分（雇用統計）' },
     title: '米国 失業率', titleEn: 'US unemployment',
     sub: '雇用統計（NFP）と同じ公表文', subEn: 'Same release as nonfarm payrolls',
     unit: '%',
@@ -1517,6 +1559,7 @@ window.PB.INDICATORS = [
   },
   {
     id: 'pce',
+    release: { next: '2026-08-28', note: '2026年7月分' },
     title: '米国 PCE 物価指数', titleEn: 'US PCE price index',
     sub: 'FRB が物価目標に使うのはこちら', subEn: 'The gauge the Fed targets',
     unit: '%',
@@ -1534,6 +1577,7 @@ window.PB.INDICATORS = [
   },
   {
     id: 'umich',
+    release: { next: '2026-08-14', note: '2026年8月 速報値' },
     title: 'ミシガン大 消費者信頼感指数', titleEn: 'U. Michigan consumer sentiment',
     sub: '速報値と確報値が月2回', subEn: 'Preliminary and final, twice a month',
     why: '消費者に直接きいた指数。実績ではなく気分なので外れることも多いが、'
@@ -1548,6 +1592,7 @@ window.PB.INDICATORS = [
   },
   {
     id: 'beige',
+    release: { next: '2026-09-03', note: '2026年9月分' },
     title: '米 ベージュブック', titleEn: 'Beige Book',
     sub: '数字ではなく、地区連銀が集めた話', subEn: 'Anecdotes, not numbers',
     why: 'FOMC の約2週間前に年8回。12地区の企業への聞き取りをまとめたもので、'
@@ -1562,6 +1607,7 @@ window.PB.INDICATORS = [
   },
   {
     id: 'usmb',
+    release: { next: '2026-08-07', note: '2026年7月分' },
     title: '米国 マネーストック', titleEn: 'US money stock',
     sub: 'H.6（M1・M2）', subEn: 'H.6 (M1, M2)',
     why: 'マネタリーベースだけを出す統計（H.3）は廃止されているので、'
@@ -1576,6 +1622,7 @@ window.PB.INDICATORS = [
   },
   {
     id: 'jpcpi',
+    release: { next: '2026-08-21', note: '2026年7月分' },
     title: '日本 全国消費者物価', titleEn: 'Japan CPI',
     sub: '生鮮除く総合（コアCPI）が主役', subEn: 'Core (ex fresh food) is the headline',
     why: '日銀の物価目標はこれ。日本株を持つなら、円金利の前提がここで決まる。',
@@ -1591,6 +1638,7 @@ window.PB.INDICATORS = [
   },
   {
     id: 'jpcgpi',
+    release: { next: '2026-08-12', note: '2026年7月分' },
     title: '日本 企業物価指数', titleEn: 'Japan corporate goods prices',
     sub: '国内企業物価・輸出物価・輸入物価', subEn: 'Domestic, export and import price indexes',
     why: '企業間の値段。消費者物価より先に動くので、CPI の先行きを読む材料になる。'
@@ -1607,6 +1655,7 @@ window.PB.INDICATORS = [
   },
   {
     id: 'jpmb',
+    release: { next: '2026-09-02', note: '2026年8月分', last: '2026-08-04', lastNote: '2026年7月分' },
     title: '日本 マネタリーベース', titleEn: 'Japan monetary base',
     sub: '', subEn: '',
     why: '日銀が世の中に出している通貨の量。金融政策の転換が、声明より先に残高に出ることがある。',
@@ -2508,6 +2557,96 @@ window.PB.MACRO = {
     return (+a[0] + Math.floor(m / 12)) + '-' + String(m % 12 + 1).padStart(2, '0');
   }
 
+  /* 一覧表。下のカードと同じ中身だが、横に並べたほうが一望できる。
+     何を見ているか・どこが出しているか・いつ出るか、を1行で。 */
+  function buildMacroTable() {
+    var host = document.getElementById('macro-table');
+    if (!host || !PB.INDICATORS) return;
+    host.textContent = '';
+    var en = lang === 'en';
+    var M = PB.MACRO || { series: {} };
+
+    var tbl = el('table', 'grid');
+    var head = el('tr');
+    [en ? 'Indicator' : '項目', en ? 'Published by' : '出典元',
+     en ? 'Source' : 'リンク', en ? 'Latest data' : '直近データ',
+     en ? 'Next release' : '次回公表'].forEach(function (h) {
+      head.appendChild(el('th', null, h));
+    });
+    var thead = el('thead'); thead.appendChild(head); tbl.appendChild(thead);
+
+    var body = el('tbody');
+    PB.INDICATORS.forEach(function (ind) {
+      var tr = el('tr');
+
+      /* 項目 ── 下のカードへ飛ばす */
+      var name = el('td', 'grid__n');
+      var jump = el('a', null, pick(ind, 'title'));
+      jump.href = '#g-' + ind.id;
+      name.appendChild(jump);
+      tr.appendChild(name);
+
+      tr.appendChild(el('td', 'grid__by', pick(ind, 'by')));
+
+      /* リンク ── 1本目だけ表に出す。残りはカードに全部ある */
+      var link = el('td');
+      if (ind.sources && ind.sources.length) {
+        var s0 = ind.sources[0];
+        var a = el('a', 'grid__a', pick(s0, 'label'));
+        a.href = s0.url; a.rel = 'noopener'; a.target = '_blank';
+        if (s0.pdf) a.appendChild(el('span', 'srcs__pdf', 'PDF'));
+        link.appendChild(a);
+        if (ind.sources.length > 1) {
+          link.appendChild(el('span', 'grid__more',
+            en ? '+' + (ind.sources.length - 1) : '他' + (ind.sources.length - 1)));
+        }
+      }
+      tr.appendChild(link);
+
+      /* 直近データ ── 系列を持っているものだけ。持たないものは「—」 */
+      var ser = M.series && M.series[ind.id];
+      var val = el('td', 'grid__v num');
+      if (ser && ser.v.length) {
+        var lastI = ser.v.length - 1;
+        while (lastI >= 0 && ser.v[lastI] == null) lastI--;
+        if (lastI >= 0) {
+          val.appendChild(el('span', 'grid__num',
+            ser.v[lastI].toFixed(2) + (ind.unit || '')));
+          val.appendChild(el('span', 'grid__when', monthAt(ser.from, lastI)));
+        }
+      } else {
+        val.appendChild(el('span', 'grid__dash', '—'));
+      }
+      tr.appendChild(val);
+
+      /* 次回公表 ── カレンダーからの写し */
+      var r = ind.release || {};
+      var when = el('td', 'grid__r');
+      when.appendChild(el('span', 'grid__date num', r.next || (en ? 'daily' : '毎営業日')));
+      if (r.note) when.appendChild(el('span', 'grid__when', r.note));
+      /* 済んだ公表が分かっているものだけ添える。カレンダーに残っていない
+         ものが大半なので、無いところは黙って空にする（推測で埋めない）。 */
+      if (r.last) {
+        when.appendChild(el('span', 'grid__last',
+          (en ? 'last ' : '前回 ') + r.last + (r.lastNote ? '・' + r.lastNote : '')));
+      }
+      tr.appendChild(when);
+
+      body.appendChild(tr);
+    });
+    tbl.appendChild(body);
+
+    var wrap = el('div', 'grid__wrap');
+    wrap.appendChild(tbl);
+    host.appendChild(wrap);
+
+    host.appendChild(el('p', 'grid__foot', en
+      ? 'Release dates are copied by hand from my own calendar, as of '
+        + (PB.CALENDAR_AS_OF || '') + '. They are not updated automatically.'
+      : '公表予定は自分のカレンダーから手で写したものです（'
+        + (PB.CALENDAR_AS_OF || '') + ' 時点）。自動では更新されません。'));
+  }
+
   function buildMacro() {
     var host = document.getElementById('macro');
     if (!host || !PB.INDICATORS) return;
@@ -2521,6 +2660,7 @@ window.PB.MACRO = {
 
     PB.INDICATORS.forEach(function (ind) {
       var card = el('section', 'gauge');
+      card.id = 'g-' + ind.id;
 
       var head = el('div', 'gauge__head');
       head.appendChild(el('h3', 'gauge__t', pick(ind, 'title')));
@@ -2580,6 +2720,7 @@ window.PB.MACRO = {
     buildFoot();
     buildHello();
     buildProfile();
+    buildMacroTable();
     buildMacro();
 
     var games = document.getElementById('works');

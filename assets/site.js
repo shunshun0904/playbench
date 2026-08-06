@@ -810,6 +810,96 @@
     return (+a[0] + Math.floor(m / 12)) + '-' + String(m % 12 + 1).padStart(2, '0');
   }
 
+  /* 一覧表。下のカードと同じ中身だが、横に並べたほうが一望できる。
+     何を見ているか・どこが出しているか・いつ出るか、を1行で。 */
+  function buildMacroTable() {
+    var host = document.getElementById('macro-table');
+    if (!host || !PB.INDICATORS) return;
+    host.textContent = '';
+    var en = lang === 'en';
+    var M = PB.MACRO || { series: {} };
+
+    var tbl = el('table', 'grid');
+    var head = el('tr');
+    [en ? 'Indicator' : '項目', en ? 'Published by' : '出典元',
+     en ? 'Source' : 'リンク', en ? 'Latest data' : '直近データ',
+     en ? 'Next release' : '次回公表'].forEach(function (h) {
+      head.appendChild(el('th', null, h));
+    });
+    var thead = el('thead'); thead.appendChild(head); tbl.appendChild(thead);
+
+    var body = el('tbody');
+    PB.INDICATORS.forEach(function (ind) {
+      var tr = el('tr');
+
+      /* 項目 ── 下のカードへ飛ばす */
+      var name = el('td', 'grid__n');
+      var jump = el('a', null, pick(ind, 'title'));
+      jump.href = '#g-' + ind.id;
+      name.appendChild(jump);
+      tr.appendChild(name);
+
+      tr.appendChild(el('td', 'grid__by', pick(ind, 'by')));
+
+      /* リンク ── 1本目だけ表に出す。残りはカードに全部ある */
+      var link = el('td');
+      if (ind.sources && ind.sources.length) {
+        var s0 = ind.sources[0];
+        var a = el('a', 'grid__a', pick(s0, 'label'));
+        a.href = s0.url; a.rel = 'noopener'; a.target = '_blank';
+        if (s0.pdf) a.appendChild(el('span', 'srcs__pdf', 'PDF'));
+        link.appendChild(a);
+        if (ind.sources.length > 1) {
+          link.appendChild(el('span', 'grid__more',
+            en ? '+' + (ind.sources.length - 1) : '他' + (ind.sources.length - 1)));
+        }
+      }
+      tr.appendChild(link);
+
+      /* 直近データ ── 系列を持っているものだけ。持たないものは「—」 */
+      var ser = M.series && M.series[ind.id];
+      var val = el('td', 'grid__v num');
+      if (ser && ser.v.length) {
+        var lastI = ser.v.length - 1;
+        while (lastI >= 0 && ser.v[lastI] == null) lastI--;
+        if (lastI >= 0) {
+          val.appendChild(el('span', 'grid__num',
+            ser.v[lastI].toFixed(2) + (ind.unit || '')));
+          val.appendChild(el('span', 'grid__when', monthAt(ser.from, lastI)));
+        }
+      } else {
+        val.appendChild(el('span', 'grid__dash', '—'));
+      }
+      tr.appendChild(val);
+
+      /* 次回公表 ── カレンダーからの写し */
+      var r = ind.release || {};
+      var when = el('td', 'grid__r');
+      when.appendChild(el('span', 'grid__date num', r.next || (en ? 'daily' : '毎営業日')));
+      if (r.note) when.appendChild(el('span', 'grid__when', r.note));
+      /* 済んだ公表が分かっているものだけ添える。カレンダーに残っていない
+         ものが大半なので、無いところは黙って空にする（推測で埋めない）。 */
+      if (r.last) {
+        when.appendChild(el('span', 'grid__last',
+          (en ? 'last ' : '前回 ') + r.last + (r.lastNote ? '・' + r.lastNote : '')));
+      }
+      tr.appendChild(when);
+
+      body.appendChild(tr);
+    });
+    tbl.appendChild(body);
+
+    var wrap = el('div', 'grid__wrap');
+    wrap.appendChild(tbl);
+    host.appendChild(wrap);
+
+    host.appendChild(el('p', 'grid__foot', en
+      ? 'Release dates are copied by hand from my own calendar, as of '
+        + (PB.CALENDAR_AS_OF || '') + '. They are not updated automatically.'
+      : '公表予定は自分のカレンダーから手で写したものです（'
+        + (PB.CALENDAR_AS_OF || '') + ' 時点）。自動では更新されません。'));
+  }
+
   function buildMacro() {
     var host = document.getElementById('macro');
     if (!host || !PB.INDICATORS) return;
@@ -823,6 +913,7 @@
 
     PB.INDICATORS.forEach(function (ind) {
       var card = el('section', 'gauge');
+      card.id = 'g-' + ind.id;
 
       var head = el('div', 'gauge__head');
       head.appendChild(el('h3', 'gauge__t', pick(ind, 'title')));
@@ -882,6 +973,7 @@
     buildFoot();
     buildHello();
     buildProfile();
+    buildMacroTable();
     buildMacro();
 
     var games = document.getElementById('works');

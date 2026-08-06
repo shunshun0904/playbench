@@ -883,3 +883,33 @@ a { color: inherit; }
 }
 /* 図を持たない項目。空欄とは意味が違うので、点線の枠にはしない */
 .gauge__only { margin: 0; font-size: .82rem; color: var(--ink-mute); }
+
+/* 一覧表。狭い画面では横に流す（畳んで読めなくするより、流したほうがいい） */
+.grid__wrap { overflow-x: auto; margin-bottom: var(--s2); }
+.grid { border-collapse: collapse; width: 100%; min-width: 44rem; font-size: .84rem; }
+.grid th, .grid td {
+  text-align: left; vertical-align: top;
+  padding: .55rem .7rem;
+  border-bottom: 1px solid var(--rule);
+}
+.grid th {
+  font-family: var(--mono); font-size: .68rem; letter-spacing: .12em;
+  font-weight: 400; color: var(--ink-mute); white-space: nowrap;
+  border-bottom: 1px solid var(--ink-mute);
+}
+.grid tbody tr:hover { background: color-mix(in srgb, var(--ink) 3%, transparent); }
+.grid__n a { color: var(--ink); text-decoration-color: var(--rule); text-underline-offset: .2em; }
+.grid__n a:hover { color: var(--vermilion); }
+.grid__by { color: var(--ink-mute); font-size: .78rem; }
+.grid__a {
+  display: inline-flex; align-items: center; gap: .3rem;
+  color: var(--indigo); text-decoration-color: var(--rule); text-underline-offset: .2em;
+}
+.grid__more { margin-left: .4rem; font-size: .72rem; color: var(--ink-mute); }
+.grid__v, .grid__r { white-space: nowrap; }
+.grid__num { color: var(--vermilion); font-weight: 600; }
+.grid__date { color: var(--ink-mid); }
+.grid__when { display: block; font-size: .7rem; color: var(--ink-mute); font-family: var(--serif); }
+.grid__dash { color: var(--ink-mute); }
+.grid__foot { margin: 0 0 var(--s5); font-size: .72rem; color: var(--ink-mute); }
+.grid__last { display: block; font-size: .68rem; color: var(--ink-mute); font-family: var(--serif); opacity: .85; }
