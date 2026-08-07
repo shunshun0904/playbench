@@ -1158,14 +1158,18 @@ window.PB.PROFILE = {
     ]
   },
 
-  /* 職務経歴と学歴。新しいものが上。 */
+  /* 職務経歴と学歴。新しいものが上。
+
+     社名は出しません。取引先・グループ会社・サービス名も、
+     そこから社名が割れるので一緒に伏せてあります。
+     業種と、何をしたかだけ書きます。 */
   career: {
     fill: true,
     rows: [
       {
         from: '2024-07', to: '2025-09',
-        org: '株式会社エナリス', orgEn: 'Eneres',
-        role: 'みらい研究所 ── 電力の需給予測', roleEn: 'Research lab — electricity supply and demand',
+        org: '電力小売の会社', orgEn: 'An electricity retailer',
+        role: '社内の研究部門 ── 電力の需給予測', roleEn: 'In-house research group — electricity supply and demand',
         body: '気象庁配信の GSM 予測値、電力需要、太陽光発電量の実績、需給調整市場の取引データを扱い、' +
               '将来の商品開発を見据えた予測モデルをつくっていました。予測は LightGBM が中心で、' +
               '要因を見るときは線形回帰・ガウス過程回帰・SHAP を併用。' +
@@ -1177,9 +1181,9 @@ window.PB.PROFILE = {
       },
       {
         from: '2023-08', to: '2024-03',
-        org: 'スマートスケープ株式会社', orgEn: 'Smartscape',
-        role: '業務委託 ── トヨタ自動車 先進安全技術開発部のデータ分析',
-        roleEn: 'Contract — data analysis for Toyota advanced safety development',
+        org: '自動車業界向けの研究開発会社', orgEn: 'An R&D firm serving the automotive industry',
+        role: '業務委託 ── 大手自動車メーカーの先進安全技術部門でのデータ分析',
+        roleEn: 'Contract — data analysis inside a major carmaker’s advanced safety group',
         body: '交差点単位の事故発生予測モデルを、少量かつ不均衡なデータという制約の中でつくる仕事でした。' +
               '車載センサーの CAN データ、OpenStreetMap、PLATEAU（3D 都市モデル）、国土交通省の人流データを併せて使い、' +
               'オープンソース系のものは自分でパースしています。PoC フェーズで、発注側と日次で擦り合わせながら進めました。',
@@ -1189,7 +1193,7 @@ window.PB.PROFILE = {
       },
       {
         from: '2023-01', to: '2023-07',
-        org: 'labellevie 株式会社', orgEn: 'labellevie',
+        org: '衣料品の EC を持つ小売会社', orgEn: 'An apparel retailer with its own e-commerce',
         role: 'データ戦略室（CEO 直下）', roleEn: 'Data strategy office, reporting to the CEO',
         body: '多部署が日々使う Tableau ダッシュボードの運用保守。不具合対応と、' +
               'Tableau が参照する DB の ETL 連携まわりのコード改修が主でした。' +
@@ -1208,8 +1212,8 @@ window.PB.PROFILE = {
       },
       {
         from: '2021-03', to: '2021-12',
-        org: 'インヴァスト株式会社', orgEn: 'Invast',
-        role: 'FX 自動売買「マイメイト」の研究開発', roleEn: 'R&D for the MaiMate automated FX service',
+        org: '金融サービスの会社', orgEn: 'A financial services company',
+        role: 'FX 自動売買サービスの研究開発', roleEn: 'R&D for an automated FX trading service',
         body: 'A3C（強化学習）を使ったサービスの開発で、ポートフォリオ機能のための AI エージェント選定ロジックの PoC を担当。' +
               'PoC の後を見据えてコードのリファクタリングとスクリプト化まで行い、ソフトウェアエンジニアに引き渡しました。' +
               '別に、ETF 銘柄の自動売買サービスへ銘柄を追加するための損益推移シミュレーションも Python で実装しています。',
@@ -1219,14 +1223,14 @@ window.PB.PROFILE = {
       },
       {
         from: '2019-04', to: '2021-02',
-        org: '株式会社 ALBERT', orgEn: 'ALBERT',
+        org: 'データ分析・AI 活用コンサルの会社', orgEn: 'A data analytics and AI consultancy',
         role: 'データサイエンティスト', roleEn: 'Data scientist',
-        body: '大手通信会社の広告配信の最適化モデル（ARISE Analytics に常駐）。' +
+        body: '大手通信会社の広告配信の最適化モデル（グループ会社に常駐）。' +
               '8 つの施策のうち 6 つでランダム配信よりクリック率を上げられたものの、残り 2 つの精度が悪く、' +
               '全体ではランダムと変わらないモデルになりました。PoC と本番運用の距離を知った案件です。' +
               'ほかに、スマホのプリインストールアプリのログ解析（顧客ポートフォリオと KPI の設計から）、' +
               '病院のレセプトデータを使った脳卒中発症の予測モデル（LightGBM と、SHAP・PDP による要因分析）。',
-        bodyEn: 'Ad-delivery optimisation for a major telecom, on site at ARISE Analytics. Six of eight ' +
+        bodyEn: 'Ad-delivery optimisation for a major telecom, on site at a group company. Six of eight ' +
                 'campaigns beat random delivery on click-through; the other two were poor enough that the ' +
                 'whole thing came out no better than random. That taught me the distance between a PoC and ' +
                 'production. Also: log analysis for a pre-installed smartphone app, from customer portfolio ' +
@@ -1333,9 +1337,12 @@ window.PB.PROFILE = {
       { label: 'GitHub', url: 'https://github.com/shunshun0904' },
       { label: 'Qiita',  url: 'https://qiita.com/shunshun0904' },
 
-      /* この2つは URL を手元で確かめられなかったので空にしてあります。
+      /* Kaggle は本人からもらった共有リンク。Google 経由の転送なので、
+         kaggle.com/<ユーザー名> の直リンクが分かったら差し替えたい。 */
+      { label: 'Kaggle', url: 'https://share.google/snLjEHti228HPzqK8' },
+
+      /* SIGNATE はまだ URL が分かっていないので空。
          プロフィールページの URL を貼れば、そのまま出ます。 */
-      { label: 'Kaggle',  url: '' },
       { label: 'SIGNATE', url: '' }
     ]
   }

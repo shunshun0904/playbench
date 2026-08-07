@@ -349,6 +349,10 @@ function serve() {
         ['郵便番号',           /(^|[^\d])\d{3}-\d{4}([^\d]|$)/],
         ['生年月日',           /19\d{2}\s*年\s*\d{1,2}\s*月\s*\d{1,2}\s*日/]
       ].filter(([, re]) => re.test(document.body.innerText)).map(([name]) => name),
+      /* 社名は出さない。個々の名前をここに並べるとこの検査ごと世に出るので、
+         法人格の表記が職務経歴に現れていないかで見る。 */
+      corp: /株式会社|有限会社|（株）|\(株\)|\b(Inc|Ltd|LLC|Corp)\b/
+        .test((document.getElementById('profile-career') || {}).innerText || ''),
       overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth
     }));
     /* 上の網が本当に掛かるか、作り物で確かめる。
@@ -357,7 +361,8 @@ function serve() {
       /(^|[^\d])0\d{9,10}([^\d]|$)/.test('連絡先 09012345678 まで'),
       /[\w.+-]+@[\w-]+\.[\w.]{2,}/.test('name@example.com'),
       /(^|[^\d])\d{3}-\d{4}([^\d]|$)/.test('〒100-0001 東京都'),
-      /19\d{2}\s*年\s*\d{1,2}\s*月\s*\d{1,2}\s*日/.test('1990 年 1 月 1 日生')
+      /19\d{2}\s*年\s*\d{1,2}\s*月\s*\d{1,2}\s*日/.test('1990 年 1 月 1 日生'),
+      /株式会社|有限会社|（株）|\(株\)|\b(Inc|Ltd|LLC|Corp)\b/.test('例 株式会社')
     ]);
 
     console.log('── 自己紹介');
@@ -372,6 +377,7 @@ function serve() {
     if (p.dead) fail('行き先のないリンクが出ている');
     if (p.blank) fail('「まだ書いていません」が残っている');
     if (p.leak.length) fail('連絡先などが漏れている: ' + p.leak.join(', '));
+    if (p.corp) fail('職務経歴に社名が出ている');
     if (p.overflow > 1) fail('横スクロールが出ている');
     await ctx.close();
   }
