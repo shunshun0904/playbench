@@ -9,7 +9,7 @@
      ・折り返し・取り消し済み・全角括弧を取り違えないか
    ========================================================================== */
 import assert from 'node:assert';
-import { parseIcs, pickFor, noteOf, toDay, readIndicators, render } from '../tools/fetch-calendar.mjs';
+import { parseIcs, pickFor, noteOf, toDay, readIndicators, render, sniff } from '../tools/fetch-calendar.mjs';
 
 let bad = 0;
 const ok = (name, fn) => {
@@ -116,6 +116,30 @@ ok('そのまま読める JavaScript になる', () => {
   assert.ok(js.includes("{ on: '2026-08-12', note: '2026年7月分' }"));
   assert.ok(js.includes("asOf: '2026-08-06'"));
   new Function('window', js)({ PB: {} });   // 構文が通ること
+});
+
+console.log('── 返ってきたものの見分け');
+/* 200 が返っても iCal とはかぎらない。実際、埋め込み用のページは
+   HTML を 200 で返してくる。そこで止まれることを見ておく。 */
+const ICAL_URL = 'https://calendar.google.com/calendar/ical/x%40group.calendar.google.com/private-abc/basic.ics';
+ok('本物の iCal は通す', () => assert.equal(sniff(ICAL_URL, 'text/calendar', ICS), null));
+ok('埋め込みページは止める', () => {
+  const r = sniff('https://calendar.google.com/calendar/embed?src=x', 'text/html', '<!DOCTYPE html><html>…');
+  assert.ok(r, '素通りしている');
+  assert.equal(r.kind, 'HTML');
+  assert.ok(r.why.some(w => w.includes('embed')), 'embed だと言っていない');
+});
+ok('.ics でない URL は止める', () => {
+  const r = sniff('https://calendar.google.com/calendar/u/0?cid=xxx', 'text/html', '<html>');
+  assert.ok(r && r.why.some(w => w.includes('.ics')), '.ics の話が出ていない');
+});
+ok('.ics なのに HTML なら、そう言う', () => {
+  const r = sniff(ICAL_URL, 'text/html', '<!doctype html><title>Error</title>');
+  assert.ok(r && r.why.some(w => w.includes('HTML')), 'HTML だと言っていない');
+});
+ok('長い文字列は伏せる（鍵を出さない）', () => {
+  const r = sniff('https://x/y.ics', 'text/html', '<html>' + 'a'.repeat(80));
+  assert.ok(!/a{40}/.test(r.head), '長い連なりがそのまま出ている');
 });
 
 console.log(bad ? `\n❌ ${bad} 件` : '\n✅ すべて通過');

@@ -155,8 +155,39 @@ ${body}
 
 /* ------------------------------------------------------------------ 実行 */
 
+/* 返ってきたものが iCal かどうかを見る。
+   違うときに何が返ってきたのかを言えないと、直しようがない。
+   URL も鍵も本文も出さない ── 出すのは形と、直し方だけ。 */
+export function sniff(url, contentType, body) {
+  if (/^BEGIN:VCALENDAR/m.test(body)) return null;
+
+  const looksHtml = /^\s*<(!doctype|html)/i.test(body);
+  const why = [];
+
+  if (/\/calendar\/embed\?/.test(url)) {
+    why.push('URL が calendar/embed です。これは人が見るためのページで、iCal ではありません。');
+    why.push('「カレンダーの統合」の中の【非公開URL（iCal形式）】── 末尾が /basic.ics のものを使ってください。');
+  } else if (!/\.ics(\?|$)/.test(url)) {
+    why.push('URL の末尾が .ics ではありません。');
+    why.push('正しい形: https://calendar.google.com/calendar/ical/<カレンダーID>/private-<英数字>/basic.ics');
+  } else if (looksHtml) {
+    why.push('末尾は .ics ですが、返ってきたのは HTML です。');
+    why.push('非公開URLを作り直した直後（前のURLは無効になります）か、URL の途中が欠けている可能性があります。');
+  } else {
+    why.push('iCal でも HTML でもないものが返っています。');
+  }
+
+  return {
+    kind: looksHtml ? 'HTML' : 'そのほか',
+    contentType: contentType || '(なし)',
+    bytes: body.length,
+    head: body.slice(0, 60).replace(/\s+/g, ' ').replace(/[\w-]{40,}/g, '…'),
+    why
+  };
+}
+
 async function main() {
-  const url = process.env.CALENDAR_ICS;
+  const url = (process.env.CALENDAR_ICS || '').trim().replace(/^['"]|['"]$/g, '');
   if (!url) {
     console.error('CALENDAR_ICS が空です。Google カレンダーの「非公開URL（iCal形式）」を入れてください。');
     process.exit(1);
@@ -167,9 +198,35 @@ async function main() {
   console.log(`指標 ${inds.length} 件（うち日付を持つのは ${wanted.length} 件）`);
 
   const res = await fetch(url, { headers: { 'user-agent': 'playbench/1.0' } });
-  if (!res.ok) { console.error(`取得できません: HTTP ${res.status}`); process.exit(1); }
-  const events = parseIcs(await res.text());
+  if (!res.ok) {
+    console.error(`取得できません: HTTP ${res.status}`);
+    if (res.status === 404) {
+      console.error('URL が違うか、非公開URLを作り直して前のものが無効になっています。');
+    }
+    process.exit(1);
+  }
+
+  const body = await res.text();
+
+  /* 200 でも iCal とはかぎらない。埋め込み用のページなどは
+     HTML を 200 で返してくるので、そこで気づけるようにする。 */
+  const bad = sniff(url, res.headers.get('content-type'), body);
+  if (bad) {
+    console.error(`\niCal が返ってきていません（${bad.kind} / ${bad.contentType} / ${bad.bytes} バイト）`);
+    console.error(`先頭: ${bad.head}`);
+    bad.why.forEach(w => console.error('  ・' + w));
+    console.error('\n取り方: Google カレンダー → ⚙設定 → 左でカレンダー名 → 「カレンダーの統合」');
+    console.error('        → 【非公開URL（iCal形式）】（公開URLでも、カレンダーIDでもありません）');
+    process.exit(1);
+  }
+
+  const events = parseIcs(body);
   console.log(`予定 ${events.length} 件を読み込み`);
+  if (!events.length) {
+    console.error('iCal は取れていますが、予定が1件も入っていません。');
+    console.error('別のカレンダーの URL を貼っていないか確かめてください。');
+    process.exit(1);
+  }
 
   /* 今日以降だけ残す。過ぎたものは持っていても使わないし、
      ファイルが際限なく伸びる。 */
