@@ -842,10 +842,22 @@
            String(d.getDate()).padStart(2, '0');
   }
 
+  /* その指標の「次の公表」。data/releases.js に入っている予定のうち、
+     今日以降で最初の1件。過ぎたものは自動的に飛ばされるので、
+     予定が残っているかぎり、日付が変わるだけで次に繰り上がる。
+     見つからなければ null（＝予定が尽きている）。 */
+  function nextRelease(ind, now) {
+    if (!ind.release || ind.release.daily) return null;
+    var rows = (PB.RELEASES && PB.RELEASES.byId && PB.RELEASES.byId[ind.id]) || [];
+    for (var i = 0; i < rows.length; i++) {
+      if (rows[i].on >= now) return rows[i];
+    }
+    return null;
+  }
+
   /* 次回公表の近さを返す（1 がいちばん近い）。
-     ─ 日次で出るもの（next が空）は持たない。「次の1日」が無いので。
-     ─ 今日より前の日付も持たない。カレンダーは手で写したもので
-       自動更新しないから、過ぎた日付はただ古いだけで「近い」ではない。
+     ─ 日次で出るもの（daily）は持たない。「次の1日」が無いので。
+     ─ 予定が尽きているものも持たない。無いものは無いと出す。
 
      濃さは日数の差ではなく順位で決める。公表が固まる月半ばでも、
      間があく月末でも、同じ幅で読めるように。
@@ -856,23 +868,23 @@
 
   function releaseHeat(inds) {
     var now = today();
-    var soon = inds.filter(function (i) {
-      return i.release && i.release.next && i.release.next >= now;
-    });
+    var next = {}, days = [];
 
-    var days = [];
-    soon.forEach(function (i) {
-      if (days.indexOf(i.release.next) < 0) days.push(i.release.next);
+    inds.forEach(function (ind) {
+      var r = nextRelease(ind, now);
+      if (!r) return;
+      next[ind.id] = r;
+      if (days.indexOf(r.on) < 0) days.push(r.on);
     });
     days.sort();
 
     var heat = {};
-    soon.forEach(function (ind) {
-      var k = days.indexOf(ind.release.next);
+    Object.keys(next).forEach(function (id) {
+      var k = days.indexOf(next[id].on);
       var far = days.length < 2 ? 0 : k / (days.length - 1);   /* 0=近い 1=遠い */
-      heat[ind.id] = 1 - far * (1 - HEAT_FAINT);
+      heat[id] = 1 - far * (1 - HEAT_FAINT);
     });
-    return { heat: heat, now: now, first: days[0] || '', days: days.length };
+    return { heat: heat, next: next, now: now, first: days[0] || '', days: days.length };
   }
 
   /* 一覧表。下のカードと同じ中身だが、横に並べたほうが一望できる。
@@ -939,26 +951,29 @@
       }
       tr.appendChild(val);
 
-      /* 次回公表 ── カレンダーからの写し。
-         近いものほど地を濃くする。濃さは CSS 変数で渡して、
+      /* 次回公表。近いものほど地を濃くする。濃さは CSS 変数で渡して、
          色そのものは CSS 側（＝テーマ）に決めさせる。 */
       var r = ind.release || {};
+      var nx = hot.next[ind.id];
       var when = el('td', 'grid__r');
       var h = hot.heat[ind.id];
       if (h != null) {
         when.style.setProperty('--heat', h.toFixed(3));
         /* 同じ日に出るものが複数あれば、その全部に印を付ける */
-        if (r.next === hot.first) when.classList.add('is-next');
-      } else if (r.next) {
-        when.classList.add('is-past');   /* 日付はあるが、もう過ぎている */
+        if (nx.on === hot.first) when.classList.add('is-next');
       }
-      when.appendChild(el('span', 'grid__date num', r.next || (en ? 'daily' : '毎営業日')));
-      if (r.note) when.appendChild(el('span', 'grid__when', r.note));
-      /* 済んだ公表が分かっているものだけ添える。カレンダーに残っていない
-         ものが大半なので、無いところは黙って空にする（推測で埋めない）。 */
-      if (r.last) {
-        when.appendChild(el('span', 'grid__last',
-          (en ? 'last ' : '前回 ') + r.last + (r.lastNote ? '・' + r.lastNote : '')));
+
+      if (r.daily) {
+        when.appendChild(el('span', 'grid__date num', pick(r, 'note') || (en ? 'daily' : '毎営業日')));
+      } else if (nx) {
+        when.appendChild(el('span', 'grid__date num', nx.on));
+        if (nx.note) when.appendChild(el('span', 'grid__when', nx.note));
+      } else {
+        /* 予定が尽きている。無いものは無いと書く。空欄や古い日付でごまかさない */
+        when.classList.add('is-dry');
+        when.appendChild(el('span', 'grid__date', en ? 'not fetched' : '予定なし'));
+        when.appendChild(el('span', 'grid__when', en
+          ? 'nothing left in the calendar' : 'カレンダーに先の予定がありません'));
       }
       tr.appendChild(when);
 
@@ -970,11 +985,26 @@
     wrap.appendChild(tbl);
     host.appendChild(wrap);
 
-    host.appendChild(el('p', 'grid__foot', en
-      ? 'Release dates are copied by hand from my own calendar, as of '
-        + (PB.CALENDAR_AS_OF || '') + '. They are not updated automatically.'
-      : '公表予定は自分のカレンダーから手で写したものです（'
-        + (PB.CALENDAR_AS_OF || '') + ' 時点）。自動では更新されません。'));
+    /* 脚注。書いてあることが実際と合っている状態を保つ。
+       予定が尽きかけているときは、そう言う。黙って色が消えるのがいちばん困る。 */
+    var R = PB.RELEASES || {};
+    var foot = el('p', 'grid__foot', en
+      ? 'Release dates come from my own calendar, read again every day. Last read '
+        + (R.asOf || '?') + '.'
+      : '公表予定は自分のカレンダーから毎日読み直しています（最後に読んだのは '
+        + (R.asOf || '?') + '）。');
+    host.appendChild(foot);
+
+    var dry = PB.INDICATORS.filter(function (i) {
+      return !(i.release && i.release.daily) && !hot.next[i.id];
+    }).length;
+    if (dry) {
+      host.appendChild(el('p', 'grid__warn', en
+        ? dry + ' of these have no future date left in the calendar. '
+          + 'Add the next ones there, or the ordering above goes blank.'
+        : 'このうち ' + dry + ' 件は、カレンダーに先の予定が残っていません。'
+          + 'カレンダー側に足さないと、上の色の順序が出せなくなります。'));
+    }
   }
 
   function buildMacro() {

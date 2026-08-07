@@ -5,12 +5,13 @@
   "private": true,
   "scripts": {
     "build": "node build.js",
-    "test": "node test/bgg-parse.mjs && node test/shots.js",
+    "test": "node test/bgg-parse.mjs && node test/calendar-parse.mjs && node test/shots.js",
     "serve": "python3 -m http.server 8080",
     "bgg": "node tools/fetch-bgg.mjs",
     "test:parse": "node test/bgg-parse.mjs",
     "bgg:print": "node tools/fetch-bgg.mjs --print",
-    "stamp": "node tools/stamp-assets.mjs"
+    "stamp": "node tools/stamp-assets.mjs",
+    "calendar": "node tools/fetch-calendar.mjs"
   },
   "devDependencies": {
     "playwright": "^1.49.1"

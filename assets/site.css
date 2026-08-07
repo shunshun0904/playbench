@@ -947,7 +947,13 @@ a { color: inherit; }
 .grid__r.is-next .grid__date {                /* いちばん近い1つだけ朱で書く */
   color: var(--vermilion); font-weight: 600;
 }
-.grid__r.is-past .grid__date { color: var(--ink-mute); }
+.grid__r.is-dry .grid__date { color: var(--ink-mute); font-style: italic; }
+.grid__warn {
+  margin: calc(-1 * var(--s3)) 0 var(--s5);
+  padding: var(--s2) var(--s3);
+  border-left: 2px solid var(--vermilion);
+  font-size: .74rem; color: var(--ink-mid);
+}
 @media (prefers-contrast: more) {
   .grid__r::before { opacity: calc(var(--heat, 0) * .28); }
 }

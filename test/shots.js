@@ -320,10 +320,17 @@ function serve() {
   /* 「今日」を止めて確かめる。実時間だと日が変わるたびに答えが変わり、
      検査が季節で落ちるようになるので。 */
   for (const [now, want] of [
-    /* カレンダーを写した日。次に出るのは 08-07 の2件 */
-    ['2026-08-06', { next: ['2026-08-07', '2026-08-07'], past: 0 }],
-    /* 2週間後。08-07〜08-14 は過ぎていて、次は 08-21 の1件 */
-    ['2026-08-20', { next: ['2026-08-21'], past: 5 }]
+    /* 予定を入れた日。次に出るのは 08-07 の2件 */
+    ['2026-08-06', { next: ['2026-08-07', '2026-08-07'], lit: 10, dry: 0 }],
+    /* 2週間後。日付が変わっただけで、起点はひとりでに繰り上がる */
+    ['2026-08-20', { next: ['2026-08-21'], lit: 10, dry: 0 }],
+    /* 3か月後。ここでも止まらない ── ここが前の作りとの違い。
+       ただし米PCE だけはカレンダーが 2026-10-30 までなので、
+       この時点で尽きて「予定なし」になる。1件でも尽きたら注意書きを出す。 */
+    ['2026-11-10', { next: ['2026-11-11'], lit: 9, dry: 1 }],
+    /* カレンダーを追い越したところ。黙って色が消えるのではなく、
+       予定が無いと書き、脚注で足りないことを言う */
+    ['2027-01-05', { next: [], lit: 0, dry: 10 }]
   ]) {
     const ctx = await newContext({ viewport: { width: 1280, height: 1200 } });
     await ctx.addInitScript(`{
@@ -336,32 +343,42 @@ function serve() {
     await page.goto(URL + 'macro.html', { waitUntil: 'load' });
     await page.waitForFunction(() => document.querySelectorAll('.grid__r').length > 0);
 
-    const rows = await page.evaluate(() => [...document.querySelectorAll('.grid tbody tr')].map(tr => {
-      const c = tr.querySelector('.grid__r');
-      const h = c.style.getPropertyValue('--heat');
-      return {
-        date: c.querySelector('.grid__date').textContent,
-        heat: h === '' ? null : parseFloat(h),
-        next: c.classList.contains('is-next'),
-        past: c.classList.contains('is-past'),
-        alpha: parseFloat(getComputedStyle(c, '::before').opacity)
-      };
+    const got = await page.evaluate(() => ({
+      rows: [...document.querySelectorAll('.grid tbody tr')].map(tr => {
+        const c = tr.querySelector('.grid__r');
+        const h = c.style.getPropertyValue('--heat');
+        return {
+          date: c.querySelector('.grid__date').textContent,
+          heat: h === '' ? null : parseFloat(h),
+          next: c.classList.contains('is-next'),
+          dry: c.classList.contains('is-dry'),
+          alpha: parseFloat(getComputedStyle(c, '::before').opacity)
+        };
+      }),
+      warn: !!document.querySelector('.grid__warn')
     }));
+    const rows = got.rows;
 
     const lit = rows.filter(r => r.heat != null);
     const nextDates = rows.filter(r => r.next).map(r => r.date).sort();
     console.log(`── 経済の表・次回公表の近さ（今日 = ${now}）`);
-    console.log('   色付き', lit.length, '/ 印', nextDates.join(','),
-                '/ 過ぎた', rows.filter(r => r.past).length);
+    console.log('   色付き', lit.length, '/ 印', nextDates.join(',') || '（なし）',
+                '/ 予定なし', rows.filter(r => r.dry).length,
+                '/ 注意書き', got.warn ? 'あり' : 'なし');
 
     /* 日次で出るものは順位を持たない */
-    const daily = rows.find(r => !/^\d{4}-/.test(r.date));
+    const daily = rows.find(r => /毎営業日/.test(r.date));
     if (!daily) fail('毎営業日の行が見つからない');
     else if (daily.heat != null || daily.alpha > 0) fail('毎営業日にも色が付いている');
 
-    /* 過ぎた日付にも付かない */
-    if (rows.some(r => r.past && (r.heat != null || r.alpha > 0))) fail('過ぎた日付に色が付いている');
-    if (rows.filter(r => r.past).length !== want.past) fail('過ぎた日付の数が合わない');
+    /* いちばん大事なところ ── 日付が過ぎても止まらず、次へ繰り上がる。
+       予定が残っているかぎり、色付きの数は減らない。 */
+    if (lit.length !== want.lit) fail(`色付きの数が合わない（${lit.length} / 期待 ${want.lit}）`);
+
+    /* 予定が尽きたら、黙って消えるのではなく、そう書く */
+    if (rows.filter(r => r.dry).length !== want.dry) fail('「予定なし」の数が合わない');
+    if (rows.some(r => r.dry && (r.heat != null || r.alpha > 0))) fail('予定なしの行に色が付いている');
+    if (got.warn !== (want.dry > 0)) fail('足りないことの注意書きが出ていない／余計に出ている');
 
     /* いちばん近い日が印を持つ。同じ日が複数あれば全部 */
     if (nextDates.join(',') !== want.next.join(',')) fail('いちばん近い公表の印がずれている');

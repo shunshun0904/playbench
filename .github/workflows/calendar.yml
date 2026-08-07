@@ -1,0 +1,57 @@
+name: Refresh release calendar
+
+# 公表予定を毎日読み直す。
+#
+# 予定を1件ずつしか持っていなかった頃は、その日を過ぎると「次」が
+# 無くなって、表の色分けが止まっていた。先の予定をまとめて持たせて、
+# ここで毎日入れ替える。
+#
+# 走る時刻は日本時間の朝6時（UTC 21:00）。公表そのものは日中〜深夜に
+# 起きるので、その前に当日ぶんが「次」になっている状態にしておく。
+
+on:
+  schedule:
+    - cron: '0 21 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: calendar
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # 読み取りの検査。通信しないので、鍵が無くても走る。
+      # ここが落ちるならカレンダーを読みに行っても仕方がない。
+      - name: 読み取りを検査する
+        run: node test/calendar-parse.mjs
+
+      - name: カレンダーから取ってくる
+        env:
+          # Google カレンダーの「非公開URL（iCal形式）」。
+          # これ自体が鍵なので Secrets に入れる。リポジトリには置かない。
+          CALENDAR_ICS: ${{ secrets.CALENDAR_ICS }}
+        run: node tools/fetch-calendar.mjs
+
+      - name: 変化があればコミットする
+        run: |
+          if git diff --quiet -- data/releases.js; then
+            echo "変化なし。何もしない"
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/releases.js
+          git commit \
+            -m "公表予定を読み直す" \
+            -m "出どころは本人の Google カレンダー。tools/fetch-calendar.mjs による自動更新。"
+          git push
