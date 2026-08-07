@@ -316,6 +316,69 @@ function serve() {
     await ctx.close();
   }
 
+  /* --------------------------------- 経済の表：次回公表の近さで色を付ける */
+  /* 「今日」を止めて確かめる。実時間だと日が変わるたびに答えが変わり、
+     検査が季節で落ちるようになるので。 */
+  for (const [now, want] of [
+    /* カレンダーを写した日。次に出るのは 08-07 の2件 */
+    ['2026-08-06', { next: ['2026-08-07', '2026-08-07'], past: 0 }],
+    /* 2週間後。08-07〜08-14 は過ぎていて、次は 08-21 の1件 */
+    ['2026-08-20', { next: ['2026-08-21'], past: 5 }]
+  ]) {
+    const ctx = await newContext({ viewport: { width: 1280, height: 1200 } });
+    await ctx.addInitScript(`{
+      const F = new Date('${now}T09:00:00').getTime(), R = Date;
+      Date = class extends R { constructor(...a) { super(...(a.length ? a : [F])); }
+                               static now() { return F; } };
+      Date.parse = R.parse; Date.UTC = R.UTC;
+    }`);
+    const page = await ctx.newPage();
+    await page.goto(URL + 'macro.html', { waitUntil: 'load' });
+    await page.waitForFunction(() => document.querySelectorAll('.grid__r').length > 0);
+
+    const rows = await page.evaluate(() => [...document.querySelectorAll('.grid tbody tr')].map(tr => {
+      const c = tr.querySelector('.grid__r');
+      const h = c.style.getPropertyValue('--heat');
+      return {
+        date: c.querySelector('.grid__date').textContent,
+        heat: h === '' ? null : parseFloat(h),
+        next: c.classList.contains('is-next'),
+        past: c.classList.contains('is-past'),
+        alpha: parseFloat(getComputedStyle(c, '::before').opacity)
+      };
+    }));
+
+    const lit = rows.filter(r => r.heat != null);
+    const nextDates = rows.filter(r => r.next).map(r => r.date).sort();
+    console.log(`── 経済の表・次回公表の近さ（今日 = ${now}）`);
+    console.log('   色付き', lit.length, '/ 印', nextDates.join(','),
+                '/ 過ぎた', rows.filter(r => r.past).length);
+
+    /* 日次で出るものは順位を持たない */
+    const daily = rows.find(r => !/^\d{4}-/.test(r.date));
+    if (!daily) fail('毎営業日の行が見つからない');
+    else if (daily.heat != null || daily.alpha > 0) fail('毎営業日にも色が付いている');
+
+    /* 過ぎた日付にも付かない */
+    if (rows.some(r => r.past && (r.heat != null || r.alpha > 0))) fail('過ぎた日付に色が付いている');
+    if (rows.filter(r => r.past).length !== want.past) fail('過ぎた日付の数が合わない');
+
+    /* いちばん近い日が印を持つ。同じ日が複数あれば全部 */
+    if (nextDates.join(',') !== want.next.join(',')) fail('いちばん近い公表の印がずれている');
+
+    /* 日付が先のものほど薄い。同じ日は同じ濃さ */
+    const byDate = [...lit].sort((a, b) => (a.date < b.date ? -1 : 1));
+    for (let i = 1; i < byDate.length; i++) {
+      if (byDate[i].date === byDate[i - 1].date) {
+        if (byDate[i].heat !== byDate[i - 1].heat) fail('同じ公表日なのに濃さが違う');
+      } else if (byDate[i].heat >= byDate[i - 1].heat) fail('先の日付のほうが濃い');
+    }
+    /* いちばん遠いものも薄く残す。0 にすると対象外と見分けが付かない */
+    if (byDate.length && byDate[byDate.length - 1].alpha <= 0) fail('いちばん遠い公表の色が消えている');
+    if (byDate.length && byDate[0].heat !== 1) fail('いちばん近い公表が最大の濃さでない');
+    await ctx.close();
+  }
+
   /* ------------------------------------------- 自己紹介（トップ）の中身 */
   /* data/profile.js は履歴書から起こしてある。載せてよいものだけが
      出ていること、特に連絡先の類が漏れていないことを毎回見る。 */

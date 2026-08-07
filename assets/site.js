@@ -833,6 +833,48 @@
     return (+a[0] + Math.floor(m / 12)) + '-' + String(m % 12 + 1).padStart(2, '0');
   }
 
+  /* 見ている人の「今日」。UTC ではなく手元の暦で取る。
+     公表日は YYYY-MM-DD なので、同じ形にして文字列のまま比べられる。 */
+  function today() {
+    var d = new Date();
+    return d.getFullYear() + '-' +
+           String(d.getMonth() + 1).padStart(2, '0') + '-' +
+           String(d.getDate()).padStart(2, '0');
+  }
+
+  /* 次回公表の近さを返す（1 がいちばん近い）。
+     ─ 日次で出るもの（next が空）は持たない。「次の1日」が無いので。
+     ─ 今日より前の日付も持たない。カレンダーは手で写したもので
+       自動更新しないから、過ぎた日付はただ古いだけで「近い」ではない。
+
+     濃さは日数の差ではなく順位で決める。公表が固まる月半ばでも、
+     間があく月末でも、同じ幅で読めるように。
+     順位は日付ごとに振る。同じ日に出るものは同じ濃さにしたい。
+     いちばん遠いものも薄く残す。0 にすると、上の2つ（対象外）と
+     見分けがつかなくなるので。 */
+  var HEAT_FAINT = .15;
+
+  function releaseHeat(inds) {
+    var now = today();
+    var soon = inds.filter(function (i) {
+      return i.release && i.release.next && i.release.next >= now;
+    });
+
+    var days = [];
+    soon.forEach(function (i) {
+      if (days.indexOf(i.release.next) < 0) days.push(i.release.next);
+    });
+    days.sort();
+
+    var heat = {};
+    soon.forEach(function (ind) {
+      var k = days.indexOf(ind.release.next);
+      var far = days.length < 2 ? 0 : k / (days.length - 1);   /* 0=近い 1=遠い */
+      heat[ind.id] = 1 - far * (1 - HEAT_FAINT);
+    });
+    return { heat: heat, now: now, first: days[0] || '', days: days.length };
+  }
+
   /* 一覧表。下のカードと同じ中身だが、横に並べたほうが一望できる。
      何を見ているか・どこが出しているか・いつ出るか、を1行で。 */
   function buildMacroTable() {
@@ -850,6 +892,8 @@
       head.appendChild(el('th', null, h));
     });
     var thead = el('thead'); thead.appendChild(head); tbl.appendChild(thead);
+
+    var hot = releaseHeat(PB.INDICATORS);
 
     var body = el('tbody');
     PB.INDICATORS.forEach(function (ind) {
@@ -895,9 +939,19 @@
       }
       tr.appendChild(val);
 
-      /* 次回公表 ── カレンダーからの写し */
+      /* 次回公表 ── カレンダーからの写し。
+         近いものほど地を濃くする。濃さは CSS 変数で渡して、
+         色そのものは CSS 側（＝テーマ）に決めさせる。 */
       var r = ind.release || {};
       var when = el('td', 'grid__r');
+      var h = hot.heat[ind.id];
+      if (h != null) {
+        when.style.setProperty('--heat', h.toFixed(3));
+        /* 同じ日に出るものが複数あれば、その全部に印を付ける */
+        if (r.next === hot.first) when.classList.add('is-next');
+      } else if (r.next) {
+        when.classList.add('is-past');   /* 日付はあるが、もう過ぎている */
+      }
       when.appendChild(el('span', 'grid__date num', r.next || (en ? 'daily' : '毎営業日')));
       if (r.note) when.appendChild(el('span', 'grid__when', r.note));
       /* 済んだ公表が分かっているものだけ添える。カレンダーに残っていない
