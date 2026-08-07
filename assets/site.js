@@ -1144,12 +1144,11 @@
     }
   }
 
-  /* いまが白か黒か。まだ選んでいなければ、端末の設定に従っているものとして答える */
+  /* いまが白か黒か。既定は黒 ── CSS の素の :root が黒なので、
+     属性が無いときは黒が出ている。ここもそれに合わせる。
+     端末の設定は見ない。見ると答えが CSS とずれる。 */
   function theme() {
-    var cur = document.documentElement.getAttribute('data-theme');
-    if (cur === 'dark' || cur === 'light') return cur;
-    return (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)
-      ? 'dark' : 'light';
+    return document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
   }
 
   /* ------------------------------------------------------------ 明暗切替 */

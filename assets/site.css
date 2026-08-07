@@ -12,58 +12,11 @@
    ========================================================================== */
 
 /* --------------------------------------------------------------- tokens */
+/* 既定は黒。素の :root が暗い地で、白は選んだときだけ。
+   端末の設定（prefers-color-scheme）は見ない ── 見ていると、
+   明るい設定の人には白で出てしまい「既定は黒」にならない。
+   選んだ結果は localStorage に残るので、白にした人は白のまま。 */
 :root {
-  --paper:        #ffffff;
-  --sheet:        #fafafa;
-  --ink:          #141414;
-  --ink-mid:      #4a4a4a;
-  --ink-mute:     #767676;
-  --rule:         #d6d6d6;
-  --rule-soft:    #e8e8e8;
-  --vermilion:    #b03a24;
-  --vermilion-dim:rgba(176, 58, 36, .13);
-  --indigo:       #2b4c6f;
-  --bar-cmp:      rgba(43, 76, 111, .30);
-  --bar-lead:     rgba(176, 58, 36, .34);
-  --danger:       #8c2f1c;
-  --scrim:        rgba(0, 0, 0, .45);
-  --shadow:       0 1px 0 rgba(0, 0, 0, .06);
-  --lift:         0 12px 40px rgba(0, 0, 0, .18);
-
-  --serif: "Hiragino Mincho ProN", "HiraMinProN-W3", "Yu Mincho", YuMincho,
-           "Noto Serif JP", "Songti SC", "Source Han Serif", serif;
-  --mono:  ui-monospace, "SF Mono", SFMono-Regular, "Cascadia Mono", Menlo,
-           Consolas, "Noto Sans Mono", monospace;
-
-  --measure: 36rem;
-  --sheet-w: 64rem;
-
-  --s1: .35rem;  --s2: .7rem;   --s3: 1.1rem;  --s4: 1.7rem;
-  --s5: 2.6rem;  --s6: 4rem;    --s7: 6rem;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --paper:        #000000;
-    --sheet:        #0e0e0e;
-    --ink:          #f2f2f2;
-    --ink-mid:      #b5b5b5;
-    --ink-mute:     #8c8c8c;
-    --rule:         #303030;
-    --rule-soft:    #1d1d1d;
-    --vermilion:    #e8815f;
-    --vermilion-dim:rgba(232, 129, 95, .16);
-    --indigo:       #82b4da;
-    --bar-cmp:      rgba(130, 180, 218, .30);
-    --bar-lead:     rgba(232, 129, 95, .34);
-    --danger:       #e0715a;
-    --scrim:        rgba(0, 0, 0, .70);
-    --shadow:       0 1px 0 rgba(0, 0, 0, .3);
-    --lift:         0 14px 46px rgba(0, 0, 0, .55);
-  }
-}
-
-:root[data-theme="dark"] {
   --paper:        #000000;
   --sheet:        #0e0e0e;
   --ink:          #f2f2f2;
@@ -80,7 +33,20 @@
   --scrim:        rgba(0, 0, 0, .70);
   --shadow:       0 1px 0 rgba(0, 0, 0, .3);
   --lift:         0 14px 46px rgba(0, 0, 0, .55);
+
+  --serif: "Hiragino Mincho ProN", "HiraMinProN-W3", "Yu Mincho", YuMincho,
+           "Noto Serif JP", "Songti SC", "Source Han Serif", serif;
+  --mono:  ui-monospace, "SF Mono", SFMono-Regular, "Cascadia Mono", Menlo,
+           Consolas, "Noto Sans Mono", monospace;
+
+  --measure: 36rem;
+  --sheet-w: 64rem;
+
+  --s1: .35rem;  --s2: .7rem;   --s3: 1.1rem;  --s4: 1.7rem;
+  --s5: 2.6rem;  --s6: 4rem;    --s7: 6rem;
 }
+
+/* 白は明示的に選んだときだけ。素の :root より詳細度が高いので勝つ */
 :root[data-theme="light"] {
   --paper:        #ffffff;
   --sheet:        #fafafa;

@@ -53,15 +53,21 @@ function serve() {
   };
 
   /* ---------------------------------------------------- 見た目 3面 */
+  /* 既定は黒。白は選んだときだけなので、白の面は localStorage に
+     入れてから開く（端末の設定では白にならない）。 */
   for (const view of [
-    { name: 'desktop-light', w: 1280, h: 1000, scheme: 'light' },
-    { name: 'desktop-dark', w: 1280, h: 1000, scheme: 'dark' },
-    { name: 'mobile-light', w: 390, h: 844, scheme: 'light' }
+    { name: 'desktop-dark', w: 1280, h: 1000, pick: null },
+    { name: 'desktop-light', w: 1280, h: 1000, pick: 'light' },
+    { name: 'mobile-dark', w: 390, h: 844, pick: null }
   ]) {
     const ctx = await newContext({
       viewport: { width: view.w, height: view.h },
-      colorScheme: view.scheme, deviceScaleFactor: 2
+      /* わざと「明るい設定の端末」にしておく。それでも既定が黒であること */
+      colorScheme: 'light', deviceScaleFactor: 2
     });
+    if (view.pick) {
+      await ctx.addInitScript(`try { localStorage.setItem('pb-theme', '${view.pick}'); } catch (e) {}`);
+    }
     const page = await ctx.newPage();
     const errs = [];
     page.on('console', m => { if (m.type() === 'error') errs.push(m.text()); });
@@ -69,6 +75,19 @@ function serve() {
 
     await page.goto(GAMES, { waitUntil: 'load' });
     await page.waitForTimeout(300);
+
+    /* 端末が明るい設定でも、選んでいなければ黒で出ること */
+    const paper = await page.evaluate(() => ({
+      bg: getComputedStyle(document.body).backgroundColor,
+      attr: document.documentElement.getAttribute('data-theme'),
+      /* 幅のトークンが両方の地で生きていること（片方に寄せると崩れる） */
+      w: getComputedStyle(document.documentElement).getPropertyValue('--sheet-w').trim()
+    }));
+    const wantBlack = view.pick !== 'light';
+    if ((paper.bg === 'rgb(0, 0, 0)') !== wantBlack) {
+      fail(`${view.name}: 地の色が想定と違う（${paper.bg} / 選択=${paper.attr}）`);
+    }
+    if (paper.w !== '64rem') fail(`${view.name}: --sheet-w が効いていない（${paper.w || '空'}）`);
     // 畳んである「作りの話」を開いて、中身も撮る
     await page.evaluate(() => {
       document.querySelectorAll('.game__more').forEach(d => { d.open = true; });

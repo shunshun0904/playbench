@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ボードゲームの自主研究 ── Shun Nakamura</title>
 <meta name="description" content="名作ボードゲーム3作をブラウザで実装し、CPU の強さを互角の線と並べて実測した記録。遊べます。">
-<meta name="color-scheme" content="light dark">
+<meta name="color-scheme" content="dark light">
 <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20fill%3D%22%231b2027%22%2F%3E%3Crect%20x%3D%225%22%20y%3D%2213%22%20width%3D%2222%22%20height%3D%226%22%20fill%3D%22%23e8e9e3%22%20fill-opacity%3D%22.22%22%2F%3E%3Crect%20x%3D%225%22%20y%3D%2213%22%20width%3D%2214%22%20height%3D%226%22%20fill%3D%22%23b03a24%22%2F%3E%3Crect%20x%3D%2210%22%20y%3D%227%22%20width%3D%221.4%22%20height%3D%2218%22%20fill%3D%22%23e8e9e3%22%2F%3E%3C%2Fsvg%3E">
 <link rel="canonical" href="https://shunshun0904.github.io/playbench/games.html">
 
@@ -33,58 +33,11 @@
    ========================================================================== */
 
 /* --------------------------------------------------------------- tokens */
+/* 既定は黒。素の :root が暗い地で、白は選んだときだけ。
+   端末の設定（prefers-color-scheme）は見ない ── 見ていると、
+   明るい設定の人には白で出てしまい「既定は黒」にならない。
+   選んだ結果は localStorage に残るので、白にした人は白のまま。 */
 :root {
-  --paper:        #ffffff;
-  --sheet:        #fafafa;
-  --ink:          #141414;
-  --ink-mid:      #4a4a4a;
-  --ink-mute:     #767676;
-  --rule:         #d6d6d6;
-  --rule-soft:    #e8e8e8;
-  --vermilion:    #b03a24;
-  --vermilion-dim:rgba(176, 58, 36, .13);
-  --indigo:       #2b4c6f;
-  --bar-cmp:      rgba(43, 76, 111, .30);
-  --bar-lead:     rgba(176, 58, 36, .34);
-  --danger:       #8c2f1c;
-  --scrim:        rgba(0, 0, 0, .45);
-  --shadow:       0 1px 0 rgba(0, 0, 0, .06);
-  --lift:         0 12px 40px rgba(0, 0, 0, .18);
-
-  --serif: "Hiragino Mincho ProN", "HiraMinProN-W3", "Yu Mincho", YuMincho,
-           "Noto Serif JP", "Songti SC", "Source Han Serif", serif;
-  --mono:  ui-monospace, "SF Mono", SFMono-Regular, "Cascadia Mono", Menlo,
-           Consolas, "Noto Sans Mono", monospace;
-
-  --measure: 36rem;
-  --sheet-w: 64rem;
-
-  --s1: .35rem;  --s2: .7rem;   --s3: 1.1rem;  --s4: 1.7rem;
-  --s5: 2.6rem;  --s6: 4rem;    --s7: 6rem;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --paper:        #000000;
-    --sheet:        #0e0e0e;
-    --ink:          #f2f2f2;
-    --ink-mid:      #b5b5b5;
-    --ink-mute:     #8c8c8c;
-    --rule:         #303030;
-    --rule-soft:    #1d1d1d;
-    --vermilion:    #e8815f;
-    --vermilion-dim:rgba(232, 129, 95, .16);
-    --indigo:       #82b4da;
-    --bar-cmp:      rgba(130, 180, 218, .30);
-    --bar-lead:     rgba(232, 129, 95, .34);
-    --danger:       #e0715a;
-    --scrim:        rgba(0, 0, 0, .70);
-    --shadow:       0 1px 0 rgba(0, 0, 0, .3);
-    --lift:         0 14px 46px rgba(0, 0, 0, .55);
-  }
-}
-
-:root[data-theme="dark"] {
   --paper:        #000000;
   --sheet:        #0e0e0e;
   --ink:          #f2f2f2;
@@ -101,7 +54,20 @@
   --scrim:        rgba(0, 0, 0, .70);
   --shadow:       0 1px 0 rgba(0, 0, 0, .3);
   --lift:         0 14px 46px rgba(0, 0, 0, .55);
+
+  --serif: "Hiragino Mincho ProN", "HiraMinProN-W3", "Yu Mincho", YuMincho,
+           "Noto Serif JP", "Songti SC", "Source Han Serif", serif;
+  --mono:  ui-monospace, "SF Mono", SFMono-Regular, "Cascadia Mono", Menlo,
+           Consolas, "Noto Sans Mono", monospace;
+
+  --measure: 36rem;
+  --sheet-w: 64rem;
+
+  --s1: .35rem;  --s2: .7rem;   --s3: 1.1rem;  --s4: 1.7rem;
+  --s5: 2.6rem;  --s6: 4rem;    --s7: 6rem;
 }
+
+/* 白は明示的に選んだときだけ。素の :root より詳細度が高いので勝つ */
 :root[data-theme="light"] {
   --paper:        #ffffff;
   --sheet:        #fafafa;
@@ -1620,26 +1586,33 @@ window.PB.PRINCIPLES = [
 </script>
 <script>
 /* boardgamegeek.com から取得。tools/fetch-bgg.mjs が書き換えるので手で編集しない。
-   こちらの実測ではなく他人が付けた数字なので、取得日と評価人数を必ず添えて表示する。
-
-   まだ一度も取得していない。games が空のあいだ、画面には何も出ない。
-
-   取り方 ── ご自分の回線で1回:
-
-     npm run bgg                                   # 取得して、このファイルを書き換える
-     BGG_UA='承認された名前/1.0 (+URL)' npm run bgg  # 名乗りを変える場合
-     npm run bgg:print                             # 書き換えず、取れた値を見るだけ
-
-   CI からは取れない。BGG はデータセンターの回線を 401/403 で弾くので、
-   GitHub Actions でもクラウド上でも通らない（6通りの宛先×名乗りで確認済み）。
-   利用申請が通っても、この制限は別物なので変わらない可能性が高い。 */
+   こちらの実測ではなく他人が付けた数字なので、取得日と評価人数を必ず添えて表示する。 */
 'use strict';
 
 window.PB = window.PB || {};
 window.PB.BGG = {
-  "fetchedAt": null,
+  "fetchedAt": "2026-08-07",
   "source": "boardgamegeek.com",
-  "games": {}
+  "games": {
+    "highsociety": {
+      "id": 220,
+      "name": "High Society",
+      "year": 1995,
+      "weight": 1.48,
+      "rating": 7.2,
+      "bayes": 6.97,
+      "ratings": 16835
+    },
+    "acquire": {
+      "id": 5,
+      "name": "Acquire",
+      "year": 1963,
+      "weight": 2.49,
+      "rating": 7.36,
+      "bayes": 7.13,
+      "ratings": 22316
+    }
+  }
 };
 </script>
 <script>
@@ -3180,12 +3153,11 @@ window.PB.RELEASES = {
     }
   }
 
-  /* いまが白か黒か。まだ選んでいなければ、端末の設定に従っているものとして答える */
+  /* いまが白か黒か。既定は黒 ── CSS の素の :root が黒なので、
+     属性が無いときは黒が出ている。ここもそれに合わせる。
+     端末の設定は見ない。見ると答えが CSS とずれる。 */
   function theme() {
-    var cur = document.documentElement.getAttribute('data-theme');
-    if (cur === 'dark' || cur === 'light') return cur;
-    return (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)
-      ? 'dark' : 'light';
+    return document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
   }
 
   /* ------------------------------------------------------------ 明暗切替 */
