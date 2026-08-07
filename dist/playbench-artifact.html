@@ -1,10 +1,13 @@
 <title>ボードゲームの自主研究 ── Shun Nakamura</title>
 <style>
 /* ==========================================================================
-   PLAYBENCH ─ 製図シートの上で遊ぶ
+   PLAYBENCH ─ 白い紙に刷る
 
-   明の地は製図用紙、暗の地は青焼き。同じ図面の2つの複製方式であって、
-   単純な明暗の反転ではない。色は2つだけ役割を持つ。
+   地は白か黒。灰も色味を持たせず、無彩色でそろえる。
+   もとは製図用紙と青焼き（生成りの地に方眼、藍の地に白抜き）だったが、
+   罫が字の下を走って読みにくかったので、地は無地にした。
+
+   色を持つのは2つだけ。役割があるものにしか使わない。
      朱  ── 押せるもの、いま言いたい一行、互角を超えた棒
      藍  ── 比較のための計測値
    数値はすべて等幅・桁揃えで、互角の線と一緒に読む。
@@ -12,24 +15,22 @@
 
 /* --------------------------------------------------------------- tokens */
 :root {
-  --paper:        #e8e9e3;
-  --sheet:        #f4f4f0;
-  --ink:          #1b2027;
-  --ink-mid:      #454e59;
-  --ink-mute:     #6b7480;
-  --rule:         #c5c8c0;
-  --rule-soft:    #d8dad3;
-  --grid-fine:    rgba(27, 32, 39, .045);
-  --grid-major:   rgba(27, 32, 39, .075);
+  --paper:        #ffffff;
+  --sheet:        #fafafa;
+  --ink:          #141414;
+  --ink-mid:      #4a4a4a;
+  --ink-mute:     #767676;
+  --rule:         #d6d6d6;
+  --rule-soft:    #e8e8e8;
   --vermilion:    #b03a24;
   --vermilion-dim:rgba(176, 58, 36, .13);
   --indigo:       #2b4c6f;
   --bar-cmp:      rgba(43, 76, 111, .30);
   --bar-lead:     rgba(176, 58, 36, .34);
   --danger:       #8c2f1c;
-  --scrim:        rgba(27, 32, 39, .42);
-  --shadow:       0 1px 0 rgba(27, 32, 39, .05);
-  --lift:         0 12px 40px rgba(27, 32, 39, .18);
+  --scrim:        rgba(0, 0, 0, .45);
+  --shadow:       0 1px 0 rgba(0, 0, 0, .06);
+  --lift:         0 12px 40px rgba(0, 0, 0, .18);
 
   --serif: "Hiragino Mincho ProN", "HiraMinProN-W3", "Yu Mincho", YuMincho,
            "Noto Serif JP", "Songti SC", "Source Han Serif", serif;
@@ -45,66 +46,60 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --paper:        #0f151c;
-    --sheet:        #151d26;
-    --ink:          #dde5ea;
-    --ink-mid:      #a7b4bf;
-    --ink-mute:     #7d8b98;
-    --rule:         #28323e;
-    --rule-soft:    #1e2833;
-    --grid-fine:    rgba(180, 210, 235, .05);
-    --grid-major:   rgba(180, 210, 235, .085);
+    --paper:        #000000;
+    --sheet:        #0e0e0e;
+    --ink:          #f2f2f2;
+    --ink-mid:      #b5b5b5;
+    --ink-mute:     #8c8c8c;
+    --rule:         #303030;
+    --rule-soft:    #1d1d1d;
     --vermilion:    #e8815f;
     --vermilion-dim:rgba(232, 129, 95, .16);
     --indigo:       #82b4da;
     --bar-cmp:      rgba(130, 180, 218, .30);
     --bar-lead:     rgba(232, 129, 95, .34);
     --danger:       #e0715a;
-    --scrim:        rgba(4, 8, 12, .62);
+    --scrim:        rgba(0, 0, 0, .70);
     --shadow:       0 1px 0 rgba(0, 0, 0, .3);
     --lift:         0 14px 46px rgba(0, 0, 0, .55);
   }
 }
 
 :root[data-theme="dark"] {
-  --paper:        #0f151c;
-  --sheet:        #151d26;
-  --ink:          #dde5ea;
-  --ink-mid:      #a7b4bf;
-  --ink-mute:     #7d8b98;
-  --rule:         #28323e;
-  --rule-soft:    #1e2833;
-  --grid-fine:    rgba(180, 210, 235, .05);
-  --grid-major:   rgba(180, 210, 235, .085);
+  --paper:        #000000;
+  --sheet:        #0e0e0e;
+  --ink:          #f2f2f2;
+  --ink-mid:      #b5b5b5;
+  --ink-mute:     #8c8c8c;
+  --rule:         #303030;
+  --rule-soft:    #1d1d1d;
   --vermilion:    #e8815f;
   --vermilion-dim:rgba(232, 129, 95, .16);
   --indigo:       #82b4da;
   --bar-cmp:      rgba(130, 180, 218, .30);
   --bar-lead:     rgba(232, 129, 95, .34);
   --danger:       #e0715a;
-  --scrim:        rgba(4, 8, 12, .62);
+  --scrim:        rgba(0, 0, 0, .70);
   --shadow:       0 1px 0 rgba(0, 0, 0, .3);
   --lift:         0 14px 46px rgba(0, 0, 0, .55);
 }
 :root[data-theme="light"] {
-  --paper:        #e8e9e3;
-  --sheet:        #f4f4f0;
-  --ink:          #1b2027;
-  --ink-mid:      #454e59;
-  --ink-mute:     #6b7480;
-  --rule:         #c5c8c0;
-  --rule-soft:    #d8dad3;
-  --grid-fine:    rgba(27, 32, 39, .045);
-  --grid-major:   rgba(27, 32, 39, .075);
+  --paper:        #ffffff;
+  --sheet:        #fafafa;
+  --ink:          #141414;
+  --ink-mid:      #4a4a4a;
+  --ink-mute:     #767676;
+  --rule:         #d6d6d6;
+  --rule-soft:    #e8e8e8;
   --vermilion:    #b03a24;
   --vermilion-dim:rgba(176, 58, 36, .13);
   --indigo:       #2b4c6f;
   --bar-cmp:      rgba(43, 76, 111, .30);
   --bar-lead:     rgba(176, 58, 36, .34);
   --danger:       #8c2f1c;
-  --scrim:        rgba(27, 32, 39, .42);
-  --shadow:       0 1px 0 rgba(27, 32, 39, .05);
-  --lift:         0 12px 40px rgba(27, 32, 39, .18);
+  --scrim:        rgba(0, 0, 0, .45);
+  --shadow:       0 1px 0 rgba(0, 0, 0, .06);
+  --lift:         0 12px 40px rgba(0, 0, 0, .18);
 }
 
 /* ----------------------------------------------------------------- base */
@@ -113,16 +108,12 @@
 html { background-color: var(--paper); scroll-behavior: smooth; }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
 
+/* 背景は無地。方眼の罫を敷いていたが、字の下に線が走って読みにくかった。
+   紙の質感は罫ではなく、余白と区切り線1本で出す。 */
 body {
   margin: 0;
   color: var(--ink);
   background-color: var(--paper);
-  background-image:
-    linear-gradient(var(--grid-fine) 1px, transparent 1px),
-    linear-gradient(90deg, var(--grid-fine) 1px, transparent 1px),
-    linear-gradient(var(--grid-major) 1px, transparent 1px),
-    linear-gradient(90deg, var(--grid-major) 1px, transparent 1px);
-  background-size: 24px 24px, 24px 24px, 120px 120px, 120px 120px;
   font-family: var(--serif);
   font-size: 16px;
   line-height: 1.85;
