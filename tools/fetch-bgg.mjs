@@ -40,33 +40,68 @@ const HOSTS = [
 const UAS = [
   process.env.BGG_UA || 'playbench/1.0 (+https://github.com/shunshun0904/playbench)'
 ];
+/* 承認時に発行された鍵。リポジトリには置かない ──
+   Alpha Vantage の鍵と同じで、環境変数か GitHub の Secrets から渡す。
+
+     BGG_KEY=xxxxxxxx npm run bgg
+
+   ただし「どう送るか」は申請文にも書かれていない。UUID 形式なので
+   送り方はいくつか考えられるが、推測で決め打ちはしない。
+   BGG_KEY_MODE を指定しなければ、下の順で1回だけ実測して確かめ、
+   通ったものを画面に出す。以後はそれを指定すれば試行は起きない。
+
+     BGG_KEY_MODE=bearer|xapikey|query|none
+
+   試すのは1つの宛先に対して最大4回、1.5秒あけて。申請文で約束した
+   「1回の更新につき最大8要求・1.5秒以上あける」の内側に収める。 */
+const KEY = (process.env.BGG_KEY || '').trim();
+const KEY_MODES = ['bearer', 'xapikey', 'query', 'none'];
+let MODE = process.env.BGG_KEY_MODE || (KEY ? null : 'none');
+
 let API = null, UA = UAS[0];   // 一度通った組み合わせを使い回す
 
 /* ---------------------------------------------------------------- 小物 */
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
-async function hit(base, ua, pathq) {
-  return fetch(base + pathq, {
-    headers: {
-      'User-Agent': ua,
-      'Accept': 'application/xml,text/xml,*/*',
-      'Accept-Language': 'en-US,en;q=0.9'
-    }
-  });
+/* 鍵の置き場所だけを差し替える。鍵そのものは決してログに出さない */
+function withKey(base, pathq, mode) {
+  const h = {
+    'User-Agent': UA,
+    'Accept': 'application/xml,text/xml,*/*',
+    'Accept-Language': 'en-US,en;q=0.9'
+  };
+  let url = base + pathq;
+  if (KEY && mode === 'bearer')  h['Authorization'] = 'Bearer ' + KEY;
+  if (KEY && mode === 'xapikey') h['X-API-Key'] = KEY;
+  if (KEY && mode === 'query')   url += (url.includes('?') ? '&' : '?') + 'apikey=' + encodeURIComponent(KEY);
+  return { url, headers: h };
 }
 
-/* 最初の1回だけ、通る宛先と名乗りの組み合わせを探す */
+async function hit(base, ua, pathq, mode) {
+  UA = ua;
+  const { url, headers } = withKey(base, pathq, mode || MODE || 'none');
+  return fetch(url, { headers });
+}
+
+/* 最初の1回だけ、通る宛先を探す。鍵の送り方が未定なら、そこも一緒に確かめる。 */
 async function probe(pathq) {
+  const modes = MODE ? [MODE] : (KEY ? KEY_MODES : ['none']);
   for (const base of HOSTS) {
     for (const ua of UAS) {
-      try {
-        const res = await hit(base, ua, pathq);
-        console.log(`   試行 ${res.status} ${base} / ${ua.slice(0, 24)}…`);
-        if (res.ok || res.status === 202) { API = base; UA = ua; return res; }
-      } catch (e) {
-        console.log(`   試行 失敗 ${base} ── ${e.message}`);
+      for (const mode of modes) {
+        try {
+          const res = await hit(base, ua, pathq, mode);
+          console.log(`   試行 ${res.status} ${base} / 鍵の送り方=${mode}`);
+          if (res.ok || res.status === 202) {
+            API = base; UA = ua; MODE = mode;
+            if (KEY) console.log(`   → 通ったのは BGG_KEY_MODE=${mode}。次回からこれを指定すれば試行は起きません`);
+            return res;
+          }
+        } catch (e) {
+          console.log(`   試行 失敗 ${base} ── ${e.message}`);
+        }
+        await sleep(1500);   /* 申請文で約束した間隔 */
       }
-      await sleep(600);
     }
   }
   return null;

@@ -1,13 +1,18 @@
 name: Refresh BGG data
 
 # 定期実行は付けていない。BGG はデータセンターからの要求を 401 で弾いており、
-# GitHub のランナーはまさにそれに当たるため、走らせても必ず失敗する
+# GitHub のランナーはまさにそれに当たっていた
 # （api.geekdo.com / boardgamegeek.com / www. の3宛先 × 名乗り2種、いずれも 401 で実測済み）。
 #
-# 確実なのは手元で実行して data/bgg.js をコミットすること:
-#     npm run bgg && git add data/bgg.js && git commit
+# 2026-08、XML API の利用申請が承認されて鍵が発行された。承認の主眼は
+# まさにこの制限の解除のはずなので、ここから通るかを試せるようにしてある。
+# 鍵は Secrets（BGG_KEY）。リポジトリには置かない。
 #
-# 手動実行の口だけ残してある。BGG の方針が変われば、ここから通るようになる。
+# 通らなければ、これまでどおり手元で実行して data/bgg.js をコミットする:
+#     BGG_KEY=xxxx npm run bgg && git add data/bgg.js && git commit
+#
+# 定期実行を付けないのは変えていない。申請文で「更新は手動、多くても週1回」と
+# 書いているので、勝手に回すのは筋が通らない。
 
 on:
   workflow_dispatch:
@@ -29,6 +34,12 @@ jobs:
           node-version: 22
 
       - name: BGG から取ってくる
+        env:
+          # 承認時に発行された鍵。どう送るかは申請の記録に無いので、
+          # BGG_KEY_MODE を指定しなければ道具が1回だけ実測して確かめる。
+          # 通った送り方が分かったら、ここに BGG_KEY_MODE: bearer などと書けば
+          # 試行が起きなくなる（要求数が減る）。
+          BGG_KEY: ${{ secrets.BGG_KEY }}
         run: node tools/fetch-bgg.mjs
 
       - name: 変化があればコミットする
