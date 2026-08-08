@@ -637,17 +637,7 @@
       return d;
     }
 
-    host.appendChild(col(en ? 'About this site' : 'このサイトについて', [
-      el('p', null, en
-        ? 'A personal site. Nothing is sold and there are no ads.'
-        : '個人のサイトです。何も販売せず、広告も出しません。'),
-      el('p', null, en
-        ? 'For analytics it uses Google Analytics: which pages were read, plus a rough region and device type. Nothing you type is ever sent.'
-        : 'アクセス解析には Google アナリティクスを使います。集めるのは読まれたページと、'
-          + 'おおまかな地域・機器の別だけで、入力した文字は送りません。'),
-      (function () { var p = el('p', 'pstate'); p.id = 'privacy-state'; return p; })()
-    ]));
-
+    
     host.appendChild(col(en ? 'Rights' : '権利について', [
       el('p', null, en
         ? 'High Society is a game by Reiner Knizia; Acquire by Sid Sackson. The implementations here are unofficial fan work made for study, containing no trademarks and no original artwork.'
@@ -656,20 +646,9 @@
           + '商標もアートワークも含みません。'),
       el('p', null, en
         ? 'Macro figures come from Alpha Vantage. Nothing here is investment advice.'
-        : 'マクロの数字は Alpha Vantage から取っています。投資助言ではありません。')
+        : '経済指標の数字は Alpha Vantage から取っています。投資助言ではありません。')
     ]));
 
-    var link = el('p');
-    var a = el('a', null, 'GitHub');
-    a.href = 'https://github.com/shunshun0904';
-    a.rel = 'noopener';
-    link.appendChild(a);
-    host.appendChild(col(en ? 'Source' : '置き場所', [
-      el('p', null, en
-        ? 'Everything here is public, including the measurements behind every bar.'
-        : 'すべて公開しています。棒グラフの裏にある実測も含めて。'),
-      link
-    ]));
   }
 
   /* トップ（＝自己紹介）の名乗り。中身は buildProfile が組む */
