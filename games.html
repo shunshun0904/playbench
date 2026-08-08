@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ボードゲームの自主研究 ── Shun Nakamura</title>
-<meta name="description" content="名作ボードゲーム3作をブラウザで実装し、CPU の強さを互角の線と並べて実測した記録。遊べます。">
+<meta name="description" content="名作ボードゲーム2作をブラウザで実装しました。エージェントのR＆Dのために作成しましたが、そこそこ強いCPUと遊べます。">
 <meta name="color-scheme" content="dark light">
 <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20fill%3D%22%231b2027%22%2F%3E%3Crect%20x%3D%225%22%20y%3D%2213%22%20width%3D%2222%22%20height%3D%226%22%20fill%3D%22%23e8e9e3%22%20fill-opacity%3D%22.22%22%2F%3E%3Crect%20x%3D%225%22%20y%3D%2213%22%20width%3D%2214%22%20height%3D%226%22%20fill%3D%22%23b03a24%22%2F%3E%3Crect%20x%3D%2210%22%20y%3D%227%22%20width%3D%221.4%22%20height%3D%2218%22%20fill%3D%22%23e8e9e3%22%2F%3E%3C%2Fsvg%3E">
 <link rel="canonical" href="https://shunshun0904.github.io/playbench/games.html">
@@ -15,7 +15,7 @@
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Shun Nakamura">
 <meta property="og:title" content="ボードゲームの自主研究 ── Shun Nakamura">
-<meta property="og:description" content="名作ボードゲーム3作をブラウザで実装し、CPU の強さを互角の線と並べて実測した記録。遊べます。">
+<meta property="og:description" content="名作ボードゲーム2作をブラウザで実装しました。エージェントのR＆Dのために作成しましたが、そこそこ強いCPUと遊べます。">
 <meta property="og:url" content="https://shunshun0904.github.io/playbench/games.html">
 <meta property="og:locale" content="ja_JP">
 <link rel="stylesheet" href="assets/site.css">
@@ -32,24 +32,12 @@
     <span class="tag" id="games-count"></span>
   </div>
   <p class="lead" data-en="I like board games, so I rebuilt three of them to run in a browser and spent rather longer building their opponents. What follows is mostly a record of that. If you want a game, the CPU will play you — it is not there to lose politely.">
-    ボードゲームが好きなので、3作をブラウザで動くように書き直し、
-    そのあと相手のCPUのほうに長く時間を使いました。以下はおおむねその記録です。
-    遊びたい方は、そのまま対戦できます。相手は手加減しません。
+    ボードゲームが好きなので、2作をブラウザで動くように書き直し、
+    遊びたい方は、登録やログインなしでそこそこ強いcpuと対戦できます。
   </p>
   <div class="works" id="works"></div>
 </section>
 
-<section class="sheet">
-  <div class="band">
-    <h2 class="band__t band__t--sub" data-en="What I want to try next">次に試したいこと</h2>
-    <span class="band__n"></span>
-  </div>
-  <p class="lead" data-en="The opponent I actually want is not the strongest one — it is the one that has watched me play. Four steps. <strong>None of it is built</strong>; this is a note to myself.">
-    ほしいのは最強の相手ではなく、<strong>自分の打ち方を見てきた相手</strong>です。順に4段階。
-    <strong>まだどれも実装していません</strong>。自分用の覚え書きです。
-  </p>
-  <div id="plan"></div>
-</section>
 
 <section class="sheet">
   <div class="band">
