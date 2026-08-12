@@ -104,8 +104,6 @@ function serve() {
       play: document.querySelectorAll('.game .btn--go').length,
       chips: document.querySelectorAll('.chip__bar').length,
       bars: document.querySelectorAll('.srow__bar').length,
-      steps: document.querySelectorAll('.step').length,
-      tenets: document.querySelectorAll('.tenet').length,
       rank: document.querySelectorAll('.rank').length,
       bgg: document.querySelectorAll('.bgg').length,
       err: document.querySelectorAll('.srow__err').length,
@@ -113,8 +111,8 @@ function serve() {
       wantBars: window.PB.WORKS.reduce((n, w) => n + w.plate.rows.length, 0),
       wantErr: window.PB.WORKS.reduce(
         (n, w) => n + w.plate.rows.filter(r => r.ci != null).length, 0),
-      wantSteps: window.PB.ROADMAP.length,
-      wantTenets: window.PB.PRINCIPLES.length
+      /* 段階（ROADMAP）と作り（PRINCIPLES）は本人が外した。
+         data も受け皿も無いので、数える対象そのものが無い。 */
     }));
     const bar = await page.evaluate(() => {
       const b = document.querySelector('.srow__bar'), t = b.parentElement;
@@ -123,15 +121,14 @@ function serve() {
     const ratio = bar.w / bar.t;
 
     console.log(`── ${view.name}`);
-    console.log(`   横あふれ ${overflow}px / ゲーム ${c.games} / 遊ぶ ${c.play} / 強さ ${c.chips} / 棒 ${c.bars} / BGG ${c.bgg} / ひげ ${c.err} / 段階 ${c.steps} / 作り ${c.tenets}`);
+    console.log(`   横あふれ ${overflow}px / ゲーム ${c.games} / 遊ぶ ${c.play} / 強さ ${c.chips} / 棒 ${c.bars} / BGG ${c.bgg} / ひげ ${c.err}`);
     console.log(`   棒幅の比 ${ratio.toFixed(3)} (--v=${bar.v})`);
     if (errs.length) fail('コンソール: ' + errs.slice(0, 3).join(' | '));
     if (overflow > 1) fail('横スクロールが出ている');
     if (c.games !== c.wantGames || c.chips !== c.wantGames || c.play !== c.wantGames
-      || c.bars !== c.wantBars || c.steps !== c.wantSteps || c.tenets !== c.wantTenets) {
+      || c.bars !== c.wantBars) {
       fail(`組めていない要素がある（ゲーム ${c.games}/${c.wantGames}・遊ぶ ${c.play}/${c.wantGames}`
-        + `・強さ ${c.chips}/${c.wantGames}・棒 ${c.bars}/${c.wantBars}`
-        + `・段階 ${c.steps}/${c.wantSteps}・作り ${c.tenets}/${c.wantTenets}）`);
+        + `・強さ ${c.chips}/${c.wantGames}・棒 ${c.bars}/${c.wantBars}）`);
     }
     // data/bgg.js が空のあいだは 0、取ってきたら全作品ぶん。中途半端はおかしい
     if (c.bgg !== 0 && c.bgg !== c.wantGames) fail('BGG の行が一部の作品にしか出ていない');
@@ -171,16 +168,23 @@ function serve() {
       return { ctx, page, hits };
     }
     const state = p => p.evaluate(() => PB.analytics.state());
+    /* 奥付の「このサイトについて」列は本人が外した（d73bf3a）。
+       計測の状態表示と「止める」ボタンも一緒に消えている。
+       仕組みそのものは生きているので、ここでは仕組みを見る。
+       表示が無いことは落とさずに報告だけする ── 出すかどうかは本人の判断。 */
+    const shown = p => p.evaluate(() => {
+      const h = document.getElementById('privacy-state');
+      return h ? h.textContent : null;
+    });
 
     /* 1. 測定IDが無ければ、外部へ1本も出さない */
     {
       const { ctx, page, hits } = await open({ id: '' });
       const st = await state(page);
-      const said = await page.textContent('#privacy-state');
-      console.log('   測定IDなし →', st, '/ 要求', hits.length, '/', JSON.stringify(said));
+      const said = await shown(page);
+      console.log('   測定IDなし →', st, '/ 要求', hits.length, '/ 奥付', said === null ? '表示なし' : JSON.stringify(said));
       if (st !== 'unset') fail('測定IDが無いのに unset になっていない');
       if (hits.length) fail('測定IDが無いのに外部を読みに行った');
-      if (!/計測していません/.test(said)) fail('計測していないことが奥付に出ていない');
       await ctx.close();
     }
 
@@ -196,16 +200,19 @@ function serve() {
         fail('gtag config が測定IDで積まれていない');
       }
 
-      await page.click('#privacy-state .lnk');
+      /* 画面のボタンは無くなったので、仕組みを直に呼んで止める */
+      await page.evaluate(() => PB.analytics.set(false));
       await page.waitForTimeout(150);
       const after = await page.evaluate(() => ({
         st: PB.analytics.state(),
         off: window['ga-disable-' + PB.analytics.id] === true,
-        txt: document.getElementById('privacy-state').textContent
+        txt: (document.getElementById('privacy-state') || {}).textContent || '（表示なし）'
       }));
       console.log('   止める →', JSON.stringify(after));
       if (after.st !== 'off' || !after.off) fail('「止める」を押しても送信が止まっていない');
-      if (!/止めています/.test(after.txt)) fail('止めたことが奥付に出ていない');
+      if (after.txt !== '（表示なし）' && !/止めています/.test(after.txt)) {
+        fail('止めたことが奥付に出ていない');
+      }
 
       hits.length = 0;
       await page.reload({ waitUntil: 'load' });
@@ -222,7 +229,7 @@ function serve() {
       console.log('   DNT あり →', await state(page), '/ 要求', hits.length);
       if (await state(page) !== 'dnt') fail('DNT を無視している');
       if (hits.length) fail('DNT を出しているのに読みに行った');
-      await page.click('#privacy-state .lnk');
+      await page.evaluate(() => PB.analytics.set(true));
       await page.waitForTimeout(400);
       console.log('   それでも許可 →', await state(page), '/ 要求', hits.length);
       if (await state(page) !== 'on' || !hits.length) fail('本人が許可しても入らない');
@@ -239,8 +246,12 @@ function serve() {
       const en = await foot();
       if (/何も追跡せず/.test(ja)) fail('奥付が「何も追跡せず」と言ったまま');
       if (/nothing is tracked/i.test(en)) fail('英語の奥付が nothing is tracked のまま');
+      /* 本人が奥付の「このサイトについて」列を外した（d73bf3a）ので、
+         いまは告知そのものが無い。嘘が書いてあるより無いほうがまし、
+         とは言えないので、落としはしないが毎回出す。 */
       if (!/Google アナリティクス/.test(ja) || !/Google Analytics/.test(en)) {
-        fail('何で計測しているかが奥付に出ていない');
+        console.log('   ⚠️  GA は動いているが、奥付に告知も「止める」も無い');
+        console.log('      戻すなら buildFoot()。出さない判断ならこの行は無視でよい');
       }
       await ctx.close();
     }
@@ -336,83 +347,87 @@ function serve() {
   }
 
   /* --------------------------------- 経済の表：次回公表の近さで色を付ける */
-  /* 「今日」を止めて確かめる。実時間だと日が変わるたびに答えが変わり、
-     検査が季節で落ちるようになるので。 */
-  for (const [now, want] of [
-    /* 予定を入れた日。次に出るのは 08-07 の2件 */
-    ['2026-08-06', { next: ['2026-08-07', '2026-08-07'], lit: 10, dry: 0 }],
-    /* 2週間後。日付が変わっただけで、起点はひとりでに繰り上がる */
-    ['2026-08-20', { next: ['2026-08-21'], lit: 10, dry: 0 }],
-    /* 3か月後。ここでも止まらない ── ここが前の作りとの違い。
-       ただし米PCE だけはカレンダーが 2026-10-30 までなので、
-       この時点で尽きて「予定なし」になる。1件でも尽きたら注意書きを出す。 */
-    ['2026-11-10', { next: ['2026-11-11'], lit: 9, dry: 1 }],
-    /* カレンダーを追い越したところ。黙って色が消えるのではなく、
-       予定が無いと書き、脚注で足りないことを言う */
-    ['2027-01-05', { next: [], lit: 0, dry: 10 }]
-  ]) {
-    const ctx = await newContext({ viewport: { width: 1280, height: 1200 } });
-    await ctx.addInitScript(`{
-      const F = new Date('${now}T09:00:00').getTime(), R = Date;
-      Date = class extends R { constructor(...a) { super(...(a.length ? a : [F])); }
-                               static now() { return F; } };
-      Date.parse = R.parse; Date.UTC = R.UTC;
-    }`);
-    const page = await ctx.newPage();
-    await page.goto(URL + 'macro.html', { waitUntil: 'load' });
-    await page.waitForFunction(() => document.querySelectorAll('.grid__r').length > 0);
+  /* 日付は data/releases.js に入っているが、あれは毎日 Actions が
+     書き換える。実物に固定の日付でぶら下がると、更新のたびに検査が
+     落ちる（実際に落ちた）。見本を差し込んで、日付を止めて見る。 */
+  {
+    const FIX = `window.PB = window.PB || {};
+      window.PB.RELEASES = { asOf: '2026-08-06', from: 'test', fromEn: 'test', byId: {
+        fedfunds: [{ on: '2026-09-17', note: 'a' }],
+        cpi:      [{ on: '2026-08-12', note: 'b' }, { on: '2026-09-16', note: 'b2' }],
+        unemp:    [{ on: '2026-08-07', note: 'c' }, { on: '2026-09-04', note: 'c2' }],
+        pce:      [{ on: '2026-08-28', note: 'd' }],
+        umich:    [{ on: '2026-08-14', note: 'e' }],
+        beige:    [{ on: '2026-09-03', note: 'f' }],
+        usmb:     [{ on: '2026-08-07', note: 'g' }],
+        jpcpi:    [{ on: '2026-08-21', note: 'h' }],
+        jpcgpi:   [{ on: '2026-08-12', note: 'i' }],
+        jpmb:     [{ on: '2026-09-02', note: 'j' }]
+      } };`;
 
-    const got = await page.evaluate(() => ({
-      rows: [...document.querySelectorAll('.grid tbody tr')].map(tr => {
-        const c = tr.querySelector('.grid__r');
-        const h = c.style.getPropertyValue('--heat');
-        return {
-          date: c.querySelector('.grid__date').textContent,
-          heat: h === '' ? null : parseFloat(h),
-          next: c.classList.contains('is-next'),
-          dry: c.classList.contains('is-dry'),
-          alpha: parseFloat(getComputedStyle(c, '::before').opacity)
-        };
-      }),
-      warn: !!document.querySelector('.grid__warn')
-    }));
-    const rows = got.rows;
+    for (const [now, want] of [
+      /* 見本の先頭。08-07 に2件あるので、印は2つ付く */
+      ['2026-08-06', { next: ['2026-08-07', '2026-08-07'], lit: 10, dry: 0 }],
+      /* 2週間後。日付が変わるだけで起点はひとりでに繰り上がる */
+      ['2026-08-20', { next: ['2026-08-21'], lit: 7, dry: 3 }],
+      /* 見本を追い越したところ。黙って消えるのではなく、無いと書く */
+      ['2026-10-01', { next: [], lit: 0, dry: 10 }]
+    ]) {
+      const ctx = await newContext({ viewport: { width: 1280, height: 1200 } });
+      await ctx.route(u => u.pathname.endsWith('/data/releases.js'), r =>
+        r.fulfill({ status: 200, contentType: 'text/javascript', body: FIX }));
+      await ctx.addInitScript(`{
+        const F = new Date('${now}T09:00:00').getTime(), R = Date;
+        Date = class extends R { constructor(...a) { super(...(a.length ? a : [F])); }
+                                 static now() { return F; } };
+        Date.parse = R.parse; Date.UTC = R.UTC;
+      }`);
+      const page = await ctx.newPage();
+      await page.goto(URL + 'macro.html', { waitUntil: 'load' });
+      await page.waitForFunction(() => document.querySelectorAll('.grid__r').length > 0);
 
-    const lit = rows.filter(r => r.heat != null);
-    const nextDates = rows.filter(r => r.next).map(r => r.date).sort();
-    console.log(`── 経済の表・次回公表の近さ（今日 = ${now}）`);
-    console.log('   色付き', lit.length, '/ 印', nextDates.join(',') || '（なし）',
-                '/ 予定なし', rows.filter(r => r.dry).length,
-                '/ 注意書き', got.warn ? 'あり' : 'なし');
+      const got = await page.evaluate(() => ({
+        rows: [...document.querySelectorAll('.grid tbody tr')].map(tr => {
+          const c = tr.querySelector('.grid__r');
+          const h = c.style.getPropertyValue('--heat');
+          return {
+            date: c.querySelector('.grid__date').textContent,
+            heat: h === '' ? null : parseFloat(h),
+            next: c.classList.contains('is-next'),
+            dry: c.classList.contains('is-dry'),
+            alpha: parseFloat(getComputedStyle(c, '::before').opacity)
+          };
+        }),
+        warn: !!document.querySelector('.grid__warn')
+      }));
+      const rows = got.rows;
+      const lit = rows.filter(r => r.heat != null);
+      const nextDates = rows.filter(r => r.next).map(r => r.date).sort();
+      console.log(`── 経済の表・次回公表の近さ（今日 = ${now}）`);
+      console.log('   色付き', lit.length, '/ 印', nextDates.join(',') || '（なし）',
+                  '/ 予定なし', rows.filter(r => r.dry).length,
+                  '/ 注意書き', got.warn ? 'あり' : 'なし');
 
-    /* 日次で出るものは順位を持たない */
-    const daily = rows.find(r => /毎営業日/.test(r.date));
-    if (!daily) fail('毎営業日の行が見つからない');
-    else if (daily.heat != null || daily.alpha > 0) fail('毎営業日にも色が付いている');
+      const daily = rows.find(r => /毎営業日/.test(r.date));
+      if (!daily) fail('毎営業日の行が見つからない');
+      else if (daily.heat != null || daily.alpha > 0) fail('毎営業日にも色が付いている');
 
-    /* いちばん大事なところ ── 日付が過ぎても止まらず、次へ繰り上がる。
-       予定が残っているかぎり、色付きの数は減らない。 */
-    if (lit.length !== want.lit) fail(`色付きの数が合わない（${lit.length} / 期待 ${want.lit}）`);
+      if (lit.length !== want.lit) fail(`色付きの数が合わない（${lit.length} / 期待 ${want.lit}）`);
+      if (rows.filter(r => r.dry).length !== want.dry) fail('「予定なし」の数が合わない');
+      if (rows.some(r => r.dry && (r.heat != null || r.alpha > 0))) fail('予定なしの行に色が付いている');
+      if (got.warn !== (want.dry > 0)) fail('足りないことの注意書きが出ていない／余計に出ている');
+      if (nextDates.join(',') !== want.next.join(',')) fail('いちばん近い公表の印がずれている');
 
-    /* 予定が尽きたら、黙って消えるのではなく、そう書く */
-    if (rows.filter(r => r.dry).length !== want.dry) fail('「予定なし」の数が合わない');
-    if (rows.some(r => r.dry && (r.heat != null || r.alpha > 0))) fail('予定なしの行に色が付いている');
-    if (got.warn !== (want.dry > 0)) fail('足りないことの注意書きが出ていない／余計に出ている');
-
-    /* いちばん近い日が印を持つ。同じ日が複数あれば全部 */
-    if (nextDates.join(',') !== want.next.join(',')) fail('いちばん近い公表の印がずれている');
-
-    /* 日付が先のものほど薄い。同じ日は同じ濃さ */
-    const byDate = [...lit].sort((a, b) => (a.date < b.date ? -1 : 1));
-    for (let i = 1; i < byDate.length; i++) {
-      if (byDate[i].date === byDate[i - 1].date) {
-        if (byDate[i].heat !== byDate[i - 1].heat) fail('同じ公表日なのに濃さが違う');
-      } else if (byDate[i].heat >= byDate[i - 1].heat) fail('先の日付のほうが濃い');
+      const byDate = [...lit].sort((a, b) => (a.date < b.date ? -1 : 1));
+      for (let i = 1; i < byDate.length; i++) {
+        if (byDate[i].date === byDate[i - 1].date) {
+          if (byDate[i].heat !== byDate[i - 1].heat) fail('同じ公表日なのに濃さが違う');
+        } else if (byDate[i].heat >= byDate[i - 1].heat) fail('先の日付のほうが濃い');
+      }
+      if (byDate.length && byDate[byDate.length - 1].alpha <= 0) fail('いちばん遠い公表の色が消えている');
+      if (byDate.length && byDate[0].heat !== 1) fail('いちばん近い公表が最大の濃さでない');
+      await ctx.close();
     }
-    /* いちばん遠いものも薄く残す。0 にすると対象外と見分けが付かない */
-    if (byDate.length && byDate[byDate.length - 1].alpha <= 0) fail('いちばん遠い公表の色が消えている');
-    if (byDate.length && byDate[0].heat !== 1) fail('いちばん近い公表が最大の濃さでない');
-    await ctx.close();
   }
 
   /* ------------------------------------------- 自己紹介（トップ）の中身 */

@@ -166,13 +166,13 @@ window.PB.PROFILE = {
             kind: '査読あり', kindEn: 'Peer-reviewed',
             title: '患者の OCT 画像を入力とする CNN を用いた注射後の視力推定精度の検証',
             titleEn: 'Validating post-injection visual acuity estimation from patient OCT images with a CNN',
-            note: '', noteEn: '', url: ''
+            note: '', noteEn: '', url: 'https://www.jstage.jst.go.jp/article/mii/36/3/36_136/_article/-char/ja/'
           },
           {
             kind: '国内会議', kindEn: 'Domestic conference',
             title: 'クラスタリングを用いた湾曲繊維 CFRP の最適繊維配向モデルの探索手法の提案',
             titleEn: 'A clustering-based search for optimal fibre orientation in curvilinear-fibre CFRP',
-            note: '優秀講演フェロー賞', noteEn: 'Outstanding Presentation Fellow Award', url: ''
+            note: '優秀講演フェロー賞', noteEn: 'Outstanding Presentation Fellow Award', url: 'https://www.jstage.jst.go.jp/article/jsmecmd/2018.31/0/2018.31_105/_article/-char/ja/'
           },
           {
             kind: '共著', kindEn: 'Co-authored',
@@ -187,6 +187,12 @@ window.PB.PROFILE = {
       {
         label: '分析コンペティション', labelEn: 'Competitions',
         rows: [
+           {
+            kind: 'SIGNATE', kindEn: 'SIGNATE',
+            title: '第2回 国土交通省 地理空間情報データチャレンジ',
+            titleEn: 'JR East train operation forecasting',
+            note: 'シルバー・ソロ参加 / 2025-11', noteEn: 'Silver, solo / 2026-01', url: ''
+          },
           {
             kind: 'SIGNATE', kindEn: 'SIGNATE',
             title: 'JR 東日本 列車運行予測',
@@ -203,7 +209,7 @@ window.PB.PROFILE = {
             kind: 'SIGNATE', kindEn: 'SIGNATE',
             title: 'SIGNATE Cup 2024 旅行パッケージ成約率予測',
             titleEn: 'SIGNATE Cup 2024 travel package conversion prediction',
-            note: 'ブロンズ', noteEn: 'Bronze', url: ''
+            note: 'ブロンズ・チーム参加 / 2024-07', noteEn: 'Bronze', url: 'https://www.eneres.co.jp/blog/20241106'
           },
           {
             kind: 'Kaggle', kindEn: 'Kaggle',
@@ -220,12 +226,6 @@ window.PB.PROFILE = {
             kind: '2020-07', kindEn: '2020-07',
             title: 'Python3 エンジニア認定データ分析試験',
             titleEn: 'Python 3 Certified Data Analyst Examination',
-            note: '', noteEn: '', url: ''
-          },
-          {
-            kind: '2014-06', kindEn: '2014-06',
-            title: 'TOEIC 725',
-            titleEn: 'TOEIC 725',
             note: '', noteEn: '', url: ''
           }
         ]
@@ -246,7 +246,7 @@ window.PB.PROFILE = {
 
       /* SIGNATE はまだ URL が分かっていないので空。
          プロフィールページの URL を貼れば、そのまま出ます。 */
-      { label: 'SIGNATE', url: '' }
+      { label: 'SIGNATE', url: 'https://user.competition.signate.jp/ja/account?tab=public' }
     ]
   }
 };

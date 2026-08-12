@@ -457,21 +457,6 @@
     host.appendChild(buildWire());
   }
 
-  /* ----------------------------------------------------------- これから */
-  function buildPlan() {
-    var wrap = el('div', 'cells plan');
-    PB.ROADMAP.forEach(function (r) {
-      var st = el('div', 'step');
-      st.appendChild(el('div', 'step__n', pick(r, 'step')));
-      st.appendChild(el('h3', 'step__t', pick(r, 'title')));
-      st.appendChild(el('p', 'step__b', pick(r, 'body')));
-      if (r.note) st.appendChild(el('p', 'step__note', pick(r, 'note')));
-      st.appendChild(el('span', 'step__state', t('planned')));
-      wrap.appendChild(st);
-    });
-    return wrap;
-  }
-
   function buildWire() {
     var box = el('div', 'wire');
     var s = svg(640, 132);
@@ -542,17 +527,6 @@
       buildPrivacyState();
     });
     host.appendChild(b);
-  }
-
-  function buildTenets() {
-    var wrap = el('div', 'cells tenets');
-    PB.PRINCIPLES.forEach(function (p) {
-      var d = el('div', 'tenet');
-      d.appendChild(el('h3', 'tenet__t', pick(p, 'title')));
-      d.appendChild(el('p', 'tenet__b', pick(p, 'body')));
-      wrap.appendChild(d);
-    });
-    return wrap;
   }
 
   /* ------------------------------------------------------------- 棒の伸び */
@@ -637,17 +611,7 @@
       return d;
     }
 
-    host.appendChild(col(en ? 'About this site' : 'このサイトについて', [
-      el('p', null, en
-        ? 'A personal site. Nothing is sold and there are no ads.'
-        : '個人のサイトです。何も販売せず、広告も出しません。'),
-      el('p', null, en
-        ? 'For analytics it uses Google Analytics: which pages were read, plus a rough region and device type. Nothing you type is ever sent.'
-        : 'アクセス解析には Google アナリティクスを使います。集めるのは読まれたページと、'
-          + 'おおまかな地域・機器の別だけで、入力した文字は送りません。'),
-      (function () { var p = el('p', 'pstate'); p.id = 'privacy-state'; return p; })()
-    ]));
-
+    
     host.appendChild(col(en ? 'Rights' : '権利について', [
       el('p', null, en
         ? 'High Society is a game by Reiner Knizia; Acquire by Sid Sackson. The implementations here are unofficial fan work made for study, containing no trademarks and no original artwork.'
@@ -656,20 +620,9 @@
           + '商標もアートワークも含みません。'),
       el('p', null, en
         ? 'Macro figures come from Alpha Vantage. Nothing here is investment advice.'
-        : 'マクロの数字は Alpha Vantage から取っています。投資助言ではありません。')
+        : '経済指標の数字は Alpha Vantage から取っています。投資助言ではありません。')
     ]));
 
-    var link = el('p');
-    var a = el('a', null, 'GitHub');
-    a.href = 'https://github.com/shunshun0904';
-    a.rel = 'noopener';
-    link.appendChild(a);
-    host.appendChild(col(en ? 'Source' : '置き場所', [
-      el('p', null, en
-        ? 'Everything here is public, including the measurements behind every bar.'
-        : 'すべて公開しています。棒グラフの裏にある実測も含めて。'),
-      link
-    ]));
   }
 
   /* トップ（＝自己紹介）の名乗りと、その下の写真。
@@ -1117,11 +1070,7 @@
       ? PB.WORKS.length + ' games'
       : '全 ' + PB.WORKS.length + ' 作';
 
-    var plan = document.getElementById('plan');
-    if (plan) { plan.textContent = ''; plan.appendChild(buildPlan()); }
 
-    var tenets = document.getElementById('tenets');
-    if (tenets) { tenets.textContent = ''; tenets.appendChild(buildTenets()); }
 
     buildRanking();
     buildPrivacyState();

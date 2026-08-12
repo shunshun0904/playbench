@@ -953,32 +953,13 @@ a { color: inherit; }
     <span class="tag" id="games-count"></span>
   </div>
   <p class="lead" data-en="I like board games, so I rebuilt three of them to run in a browser and spent rather longer building their opponents. What follows is mostly a record of that. If you want a game, the CPU will play you — it is not there to lose politely.">
-    ボードゲームが好きなので、3作をブラウザで動くように書き直し、
-    そのあと相手のCPUのほうに長く時間を使いました。以下はおおむねその記録です。
-    遊びたい方は、そのまま対戦できます。相手は手加減しません。
+    ボードゲームが好きなので、2作をブラウザで動くように書き直し、
+    遊びたい方は、登録やログインなしでそこそこ強いcpuと対戦できます。
   </p>
   <div class="works" id="works"></div>
 </section>
 
-<section class="sheet">
-  <div class="band">
-    <h2 class="band__t band__t--sub" data-en="What I want to try next">次に試したいこと</h2>
-    <span class="band__n"></span>
-  </div>
-  <p class="lead" data-en="The opponent I actually want is not the strongest one — it is the one that has watched me play. Four steps. <strong>None of it is built</strong>; this is a note to myself.">
-    ほしいのは最強の相手ではなく、<strong>自分の打ち方を見てきた相手</strong>です。順に4段階。
-    <strong>まだどれも実装していません</strong>。自分用の覚え書きです。
-  </p>
-  <div id="plan"></div>
-</section>
 
-<section class="sheet">
-  <div class="band">
-    <h2 class="band__t band__t--sub" data-en="How these are built">作りについて</h2>
-    <span class="band__n"></span>
-  </div>
-  <div id="tenets"></div>
-</section>
 </main>
 
 <footer class="sheet colophon" id="foot"></footer>
@@ -1270,13 +1251,13 @@ window.PB.PROFILE = {
             kind: '査読あり', kindEn: 'Peer-reviewed',
             title: '患者の OCT 画像を入力とする CNN を用いた注射後の視力推定精度の検証',
             titleEn: 'Validating post-injection visual acuity estimation from patient OCT images with a CNN',
-            note: '', noteEn: '', url: ''
+            note: '', noteEn: '', url: 'https://www.jstage.jst.go.jp/article/mii/36/3/36_136/_article/-char/ja/'
           },
           {
             kind: '国内会議', kindEn: 'Domestic conference',
             title: 'クラスタリングを用いた湾曲繊維 CFRP の最適繊維配向モデルの探索手法の提案',
             titleEn: 'A clustering-based search for optimal fibre orientation in curvilinear-fibre CFRP',
-            note: '優秀講演フェロー賞', noteEn: 'Outstanding Presentation Fellow Award', url: ''
+            note: '優秀講演フェロー賞', noteEn: 'Outstanding Presentation Fellow Award', url: 'https://www.jstage.jst.go.jp/article/jsmecmd/2018.31/0/2018.31_105/_article/-char/ja/'
           },
           {
             kind: '共著', kindEn: 'Co-authored',
@@ -1291,6 +1272,12 @@ window.PB.PROFILE = {
       {
         label: '分析コンペティション', labelEn: 'Competitions',
         rows: [
+           {
+            kind: 'SIGNATE', kindEn: 'SIGNATE',
+            title: '第2回 国土交通省 地理空間情報データチャレンジ',
+            titleEn: 'JR East train operation forecasting',
+            note: 'シルバー・ソロ参加 / 2025-11', noteEn: 'Silver, solo / 2026-01', url: ''
+          },
           {
             kind: 'SIGNATE', kindEn: 'SIGNATE',
             title: 'JR 東日本 列車運行予測',
@@ -1307,7 +1294,7 @@ window.PB.PROFILE = {
             kind: 'SIGNATE', kindEn: 'SIGNATE',
             title: 'SIGNATE Cup 2024 旅行パッケージ成約率予測',
             titleEn: 'SIGNATE Cup 2024 travel package conversion prediction',
-            note: 'ブロンズ', noteEn: 'Bronze', url: ''
+            note: 'ブロンズ・チーム参加 / 2024-07', noteEn: 'Bronze', url: 'https://www.eneres.co.jp/blog/20241106'
           },
           {
             kind: 'Kaggle', kindEn: 'Kaggle',
@@ -1324,12 +1311,6 @@ window.PB.PROFILE = {
             kind: '2020-07', kindEn: '2020-07',
             title: 'Python3 エンジニア認定データ分析試験',
             titleEn: 'Python 3 Certified Data Analyst Examination',
-            note: '', noteEn: '', url: ''
-          },
-          {
-            kind: '2014-06', kindEn: '2014-06',
-            title: 'TOEIC 725',
-            titleEn: 'TOEIC 725',
             note: '', noteEn: '', url: ''
           }
         ]
@@ -1350,7 +1331,7 @@ window.PB.PROFILE = {
 
       /* SIGNATE はまだ URL が分かっていないので空。
          プロフィールページの URL を貼れば、そのまま出ます。 */
-      { label: 'SIGNATE', url: '' }
+      { label: 'SIGNATE', url: 'https://user.competition.signate.jp/ja/account?tab=public' }
     ]
   }
 };
@@ -1485,105 +1466,6 @@ window.PB.WORKS = [
     repo: 'https://github.com/shunshun0904/aquire',
     figure: 'grid'
   },
-];
-
-/* 「これから作るもの」。実装が済んだ段階で state を 'done' にする。 */
-window.PB.ROADMAP = [
-  {
-    step: '一',
-    stepEn: 'I',
-    title: '棋譜をとる',
-    titleEn: 'Record your games',
-    body: 'あなたが打った一手ずつを、局面と一緒に手元（ブラウザ内）に貯める。送信はしない。',
-    bodyEn: 'Every move you make is stored with its position, in your own browser. Nothing is uploaded.',
-    state: 'planned'
-  },
-  {
-    step: '二',
-    stepEn: 'II',
-    title: '分身をつくる',
-    titleEn: 'Build your double',
-    body: 'その棋譜を真似るように学習させて、「あなたのように打つ」エージェントを作る。',
-    bodyEn: 'Train an agent to imitate those games — an opponent that plays the way you play.',
-    state: 'planned'
-  },
-  {
-    step: '三',
-    stepEn: 'III',
-    title: '倒す相手を鍛える',
-    titleEn: 'Train something to beat it',
-    body:
-      'その分身だけを相手に、それを倒すことに特化した方策を鍛える。' +
-      '出来上がるのは「あなたの癖を咎めるために作られた相手」になる。',
-    bodyEn:
-      'Then train a policy whose only job is to beat that double. What comes out is an opponent built ' +
-      'specifically to punish your habits.',
-    state: 'planned',
-    note: 'highsociety の train/league.js --mode=exploit に、この中核はすでに動く形で入っている。',
-    noteEn: 'The core of this already runs, as train/league.js --mode=exploit in highsociety.'
-  },
-  {
-    step: '四',
-    stepEn: 'IV',
-    title: '闘技場で並べる',
-    titleEn: 'Put them in the arena',
-    body:
-      'エージェントは PR で提出する。対戦は GitHub Actions が回し、結果は JSON でコミットされ、' +
-      'このサイトがそれを読む。サーバーは無い。順位表の全行が、実行ログと突き合わせて再現できる。',
-    bodyEn:
-      'Agents arrive as pull requests. Matches run in GitHub Actions, results are committed as JSON, and this ' +
-      'site reads them. There is no server. Every row of the table can be reproduced against its run log.',
-    state: 'planned'
-  }
-];
-
-/* 設計の作法。収録作で実際に守られていること（例外はその場に書く）。 */
-window.PB.PRINCIPLES = [
-  {
-    title: '外部依存を持たない',
-    titleEn: 'No dependencies',
-    body:
-      'どれもライブラリもフォントも読み込まない。盤面も駒も手書きの SVG と CSS で、' +
-      'ハイソサエティは index.html を開くだけで動く。学習した重み20KBごと1枚に収まっている。' +
-      'アクワイアは js/ に分けてあるが、単一ファイル版も書き出せる。' +
-      '外から読むのはアクセス解析の1本だけ。それも web で配信しているときに限り、' +
-      'ファイルとして開けば、どれも外へは何も出さない。',
-    bodyEn:
-      'Neither loads a library or a font. Boards and pieces are hand-written SVG and CSS. High Society runs by ' +
-      'opening index.html, trained weights and all — 20 KB, embedded in the same file. Acquire is split across ' +
-      'js/ but exports as one file too. The one thing loaded from outside is ' +
-      'analytics, and only when served over the web — opened as a file, none of them reaches out at all.'
-  },
-  {
-    title: '遊ぶコードと測るコードを分けない',
-    titleEn: 'One copy of the rules',
-    body:
-      '検査も学習も、遊ぶときと同じロジックをそのまま Node で実行する。' +
-      'ブラウザで動く相手と、机上で測った相手がずれない。',
-    bodyEn:
-      'Tests and training run the very same logic that runs when you play. The opponent measured on the bench ' +
-      'and the opponent in your browser cannot drift apart.'
-  },
-  {
-    title: '互角の線を必ず添える',
-    titleEn: 'Always show the parity line',
-    body:
-      '勝率だけを見せても強さは分からない。4人戦なら互角は .250。' +
-      'このサイトの棒はすべて、その線と一緒に読むようにできている。',
-    bodyEn:
-      'A win rate alone says nothing. In a four-player game, parity is .250. Every bar on this site is drawn ' +
-      'to be read against that line.'
-  },
-  {
-    title: '駄目だった方向も残す',
-    titleEn: 'Keep the failures',
-    body:
-      '強くしようとして外した手も、同じだけ有用な記録として実測つきで残す。' +
-      '「先読みの真似は上手くなったのに、実際の強さは落ちた」のような結果こそ、次の判断材料になる。',
-    bodyEn:
-      'Attempts that made things worse are kept, with their measurements. "It imitated the search better and ' +
-      'played worse" is exactly the kind of result that decides what to try next.'
-  }
 ];
 </script>
 <script>
@@ -1933,7 +1815,7 @@ window.PB = window.PB || {};
 
 window.PB.RELEASES = {
   /* いつ読み直したか。画面の脚注に出ます */
-  asOf: '2026-08-07',
+  asOf: '2026-08-12',
   /* どこから読んだか */
   from: 'Google カレンダー', fromEn: 'Google Calendar',
   byId: {
@@ -1950,7 +1832,6 @@ window.PB.RELEASES = {
       { on: '2026-12-10', note: '2026年11月分' }
     ],
     unemp: [
-      { on: '2026-08-07', note: '2026年7月分' },
       { on: '2026-09-04', note: '2026年8月分' },
       { on: '2026-10-02', note: '2026年9月分' },
       { on: '2026-11-06', note: '2026年10月分' },
@@ -1979,7 +1860,6 @@ window.PB.RELEASES = {
       { on: '2026-11-26', note: '2026年11月分' }
     ],
     usmb: [
-      { on: '2026-08-07', note: '2026年7月分' },
       { on: '2026-09-04', note: '2026年8月分' },
       { on: '2026-10-02', note: '2026年9月分' },
       { on: '2026-11-06', note: '2026年10月分' },
@@ -2468,21 +2348,6 @@ window.PB.RELEASES = {
     host.appendChild(buildWire());
   }
 
-  /* ----------------------------------------------------------- これから */
-  function buildPlan() {
-    var wrap = el('div', 'cells plan');
-    PB.ROADMAP.forEach(function (r) {
-      var st = el('div', 'step');
-      st.appendChild(el('div', 'step__n', pick(r, 'step')));
-      st.appendChild(el('h3', 'step__t', pick(r, 'title')));
-      st.appendChild(el('p', 'step__b', pick(r, 'body')));
-      if (r.note) st.appendChild(el('p', 'step__note', pick(r, 'note')));
-      st.appendChild(el('span', 'step__state', t('planned')));
-      wrap.appendChild(st);
-    });
-    return wrap;
-  }
-
   function buildWire() {
     var box = el('div', 'wire');
     var s = svg(640, 132);
@@ -2553,17 +2418,6 @@ window.PB.RELEASES = {
       buildPrivacyState();
     });
     host.appendChild(b);
-  }
-
-  function buildTenets() {
-    var wrap = el('div', 'cells tenets');
-    PB.PRINCIPLES.forEach(function (p) {
-      var d = el('div', 'tenet');
-      d.appendChild(el('h3', 'tenet__t', pick(p, 'title')));
-      d.appendChild(el('p', 'tenet__b', pick(p, 'body')));
-      wrap.appendChild(d);
-    });
-    return wrap;
   }
 
   /* ------------------------------------------------------------- 棒の伸び */
@@ -2648,17 +2502,7 @@ window.PB.RELEASES = {
       return d;
     }
 
-    host.appendChild(col(en ? 'About this site' : 'このサイトについて', [
-      el('p', null, en
-        ? 'A personal site. Nothing is sold and there are no ads.'
-        : '個人のサイトです。何も販売せず、広告も出しません。'),
-      el('p', null, en
-        ? 'For analytics it uses Google Analytics: which pages were read, plus a rough region and device type. Nothing you type is ever sent.'
-        : 'アクセス解析には Google アナリティクスを使います。集めるのは読まれたページと、'
-          + 'おおまかな地域・機器の別だけで、入力した文字は送りません。'),
-      (function () { var p = el('p', 'pstate'); p.id = 'privacy-state'; return p; })()
-    ]));
-
+    
     host.appendChild(col(en ? 'Rights' : '権利について', [
       el('p', null, en
         ? 'High Society is a game by Reiner Knizia; Acquire by Sid Sackson. The implementations here are unofficial fan work made for study, containing no trademarks and no original artwork.'
@@ -2667,20 +2511,9 @@ window.PB.RELEASES = {
           + '商標もアートワークも含みません。'),
       el('p', null, en
         ? 'Macro figures come from Alpha Vantage. Nothing here is investment advice.'
-        : 'マクロの数字は Alpha Vantage から取っています。投資助言ではありません。')
+        : '経済指標の数字は Alpha Vantage から取っています。投資助言ではありません。')
     ]));
 
-    var link = el('p');
-    var a = el('a', null, 'GitHub');
-    a.href = 'https://github.com/shunshun0904';
-    a.rel = 'noopener';
-    link.appendChild(a);
-    host.appendChild(col(en ? 'Source' : '置き場所', [
-      el('p', null, en
-        ? 'Everything here is public, including the measurements behind every bar.'
-        : 'すべて公開しています。棒グラフの裏にある実測も含めて。'),
-      link
-    ]));
   }
 
   /* トップ（＝自己紹介）の名乗りと、その下の写真。
@@ -3128,11 +2961,7 @@ window.PB.RELEASES = {
       ? PB.WORKS.length + ' games'
       : '全 ' + PB.WORKS.length + ' 作';
 
-    var plan = document.getElementById('plan');
-    if (plan) { plan.textContent = ''; plan.appendChild(buildPlan()); }
 
-    var tenets = document.getElementById('tenets');
-    if (tenets) { tenets.textContent = ''; tenets.appendChild(buildTenets()); }
 
     buildRanking();
     buildPrivacyState();
