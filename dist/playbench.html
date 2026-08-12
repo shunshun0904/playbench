@@ -793,6 +793,20 @@ a { color: inherit; }
   font-weight: 600; letter-spacing: .02em; color: var(--ink);
 }
 .hello__tag { margin: 0 0 var(--s3); color: var(--vermilion); font-size: .92rem; }
+
+/* 名乗りの下の写真。幅いっぱいには広げない ── 見出しの一部ではなく、
+   本人が撮った1枚として置きたいので、本文と同じくらいの幅で止める。 */
+.shot { margin: var(--s3) 0 var(--s4); max-width: 30rem; }
+.shot__i {
+  display: block; width: 100%; height: auto;
+  border: 1px solid var(--rule);
+  background: var(--sheet);       /* 読み込み前に穴が空かないように */
+}
+.shot__c {
+  margin-top: var(--s1);
+  font-family: var(--mono); font-size: .72rem;
+  letter-spacing: .08em; color: var(--ink-mute);
+}
 .hello__b p { max-width: 44rem; margin: 0 0 var(--s2); line-height: 1.95; color: var(--ink-mid); }
 
 /* まだ書いていない・まだ取っていない、と正直に出す枠 */
@@ -1132,34 +1146,44 @@ window.PB.PROFILE = {
 
   /* 名乗り。 */
   name:   { fill: true, ja: 'Shun Nakamura', en: 'Shun Nakamura' },
-  tagline:{ fill: true,
-    ja: 'データサイエンティスト ── 機械工学から入って、いまは機械学習で食べています',
-    en: 'Data scientist ── came in through mechanical engineering, now paid to do machine learning' },
+
+  /* 肩書きは出しません。下の1行目が同じことを言っているので、
+     並べると同じ話が2回出ます。出したくなったら fill を true に。 */
+  tagline:{ fill: false, ja: '', en: '' },
+
+  /* 名乗りの下に置く写真。alt は「見えないときに代わりに読まれる文」なので、
+     何が写っているかを書きます。飾りではないので空にはしません。 */
+  photo: {
+    fill: true,
+    src: 'assets/desk.jpg',
+    w: 1200, h: 900,          /* 読み込み中に行がずれないよう、寸法を先に渡す */
+    alt: 'エルグランデの盤面。城（カスティーリョ）の塔の向こうに、'
+       + 'トレド・バレンシア・カタルーニャなどの地方が広がり、'
+       + '4色のキューブが置かれている。',
+    altEn: 'A game of El Grande in progress. Beyond the Castillo tower, cubes in four '
+         + 'colours are spread across Toledo, Valencia, Cataluña and the other regions.',
+    cap: 'エルグランデ', capEn: 'El Grande'
+  },
 
   /* 自己紹介。段落ごとに配列の1要素。 */
   intro: {
     fill: true,
     ja: [
-      '広告配信、スマホアプリのログ、病院のレセプト、FX と ETF、fMRI、アパレルの売上、自動車のセンサー、電力の需給。' +
-      '扱ってきた領域はばらばらですが、やっていることはどれも同じで、' +
-      '「手元のデータで何がどこまで言えて、どこから先は言えないのか」を確かめることです。' +
-      '当てにいくより、外れ方を先に知っておきたい性分だと思います。',
+      'フリーランスで、データサイエンス、データ分析をしてます。',
 
-      'このサイトは仕事とは別に、自分で確かめたいことを置く場所です。' +
-      'ボードゲームの自主研究と、投資のために見ているマクロ経済指標を並べています。' +
-      'どちらも、数字は自分で測るか出典を添えるかのどちらかにしていて、' +
-      'それができないものは載せないことにしています。'
+      '趣味：ボードゲーム（特にテラフォーミングマーズ、エルグランデ、トロワ が好きです）、'
+      + '散歩、読書、株式投資',
+
+      'ここには、自主研究用のボードゲームアプリと投資判断に使ってる経済指標を並べています。'
     ],
     en: [
-      'Ad delivery, smartphone app logs, hospital claims data, FX and ETFs, fMRI, apparel sales, ' +
-      'vehicle sensors, electricity supply and demand. The domains have been scattered, but the work ' +
-      'has always been the same: finding out how much the data in front of me can actually support, ' +
-      'and where it stops. I would rather know how a model fails before I know how it wins.',
+      'Freelance. I do data science and data analysis.',
 
-      'This site is separate from that work — a place for things I want to check for myself. ' +
-      'Board game research, and the macroeconomic indicators I follow for investing. ' +
-      'In both, a number is either measured here or carries its source. ' +
-      'If it can be neither, it does not go up.'
+      'Off the clock: board games (Terraforming Mars, El Grande and Troyes above all), '
+      + 'walking, reading, and investing in equities.',
+
+      'What is here: the board game apps I build to study them, and the economic indicators '
+      + 'I watch when deciding what to buy.'
     ]
   },
 
@@ -2681,10 +2705,33 @@ window.PB.RELEASES = {
     ]));
   }
 
-  /* トップ（＝自己紹介）の名乗り。中身は buildProfile が組む */
+  /* トップ（＝自己紹介）の名乗りと、その下の写真。
+     中身は buildProfile が組む */
   function buildHello() {
     var n = document.getElementById('hello-name');
     if (n) n.textContent = who();
+
+    var host = document.getElementById('hello-photo');
+    if (!host) return;
+    host.textContent = '';
+    var p = PB.PROFILE && PB.PROFILE.photo;
+    if (!p || !p.fill || !p.src) return;
+
+    var fig = el('figure', 'shot');
+    var img = document.createElement('img');
+    img.className = 'shot__i';
+    img.src = p.src;
+    img.alt = pick(p, 'alt') || '';
+    /* 先に寸法を渡しておく。無いと、読み終わった瞬間に下の文章が飛ぶ */
+    if (p.w) img.width = p.w;
+    if (p.h) img.height = p.h;
+    img.loading = 'lazy';
+    img.decoding = 'async';
+    fig.appendChild(img);
+
+    var cap = pick(p, 'cap');
+    if (cap) fig.appendChild(el('figcaption', 'shot__c', cap));
+    host.appendChild(fig);
   }
 
   /* ═══════════════════════════════════════════════════ 自己紹介・職務経歴 */

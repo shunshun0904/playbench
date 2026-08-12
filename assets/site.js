@@ -672,10 +672,33 @@
     ]));
   }
 
-  /* トップ（＝自己紹介）の名乗り。中身は buildProfile が組む */
+  /* トップ（＝自己紹介）の名乗りと、その下の写真。
+     中身は buildProfile が組む */
   function buildHello() {
     var n = document.getElementById('hello-name');
     if (n) n.textContent = who();
+
+    var host = document.getElementById('hello-photo');
+    if (!host) return;
+    host.textContent = '';
+    var p = PB.PROFILE && PB.PROFILE.photo;
+    if (!p || !p.fill || !p.src) return;
+
+    var fig = el('figure', 'shot');
+    var img = document.createElement('img');
+    img.className = 'shot__i';
+    img.src = p.src;
+    img.alt = pick(p, 'alt') || '';
+    /* 先に寸法を渡しておく。無いと、読み終わった瞬間に下の文章が飛ぶ */
+    if (p.w) img.width = p.w;
+    if (p.h) img.height = p.h;
+    img.loading = 'lazy';
+    img.decoding = 'async';
+    fig.appendChild(img);
+
+    var cap = pick(p, 'cap');
+    if (cap) fig.appendChild(el('figcaption', 'shot__c', cap));
+    host.appendChild(fig);
   }
 
   /* ═══════════════════════════════════════════════════ 自己紹介・職務経歴 */

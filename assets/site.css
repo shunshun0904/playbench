@@ -772,6 +772,20 @@ a { color: inherit; }
   font-weight: 600; letter-spacing: .02em; color: var(--ink);
 }
 .hello__tag { margin: 0 0 var(--s3); color: var(--vermilion); font-size: .92rem; }
+
+/* 名乗りの下の写真。幅いっぱいには広げない ── 見出しの一部ではなく、
+   本人が撮った1枚として置きたいので、本文と同じくらいの幅で止める。 */
+.shot { margin: var(--s3) 0 var(--s4); max-width: 30rem; }
+.shot__i {
+  display: block; width: 100%; height: auto;
+  border: 1px solid var(--rule);
+  background: var(--sheet);       /* 読み込み前に穴が空かないように */
+}
+.shot__c {
+  margin-top: var(--s1);
+  font-family: var(--mono); font-size: .72rem;
+  letter-spacing: .08em; color: var(--ink-mute);
+}
 .hello__b p { max-width: 44rem; margin: 0 0 var(--s2); line-height: 1.95; color: var(--ink-mid); }
 
 /* まだ書いていない・まだ取っていない、と正直に出す枠 */

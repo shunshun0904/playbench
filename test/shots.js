@@ -429,10 +429,17 @@ function serve() {
 
     const p = await page.evaluate(() => ({
       bands: [...document.querySelectorAll('.band__t')].map(b => b.textContent.trim()),
-      tagline: !!document.querySelector('.hello__tag'),
       intro: document.querySelectorAll('#profile-intro .lead').length,
       cv: document.querySelectorAll('.cv__row').length,
       groups: [...document.querySelectorAll('.rsc__gt')].map(g => g.textContent.trim()),
+      /* 名乗りの下の写真。読めていること、代替文があること、
+         寸法が入っていること（無いと読み終わった瞬間に本文が飛ぶ） */
+      photo: (function () {
+        const i = document.querySelector('.shot__i');
+        if (!i) return null;
+        return { ok: i.complete && i.naturalWidth > 0, alt: i.alt.length,
+                 sized: !!(i.getAttribute('width') && i.getAttribute('height')) };
+      })(),
       rows: document.querySelectorAll('.rsc__row').length,
       /* 空 url の行がリンクとして出ていないこと */
       dead: [...document.querySelectorAll('.rsc__t--go, .links__a')]
@@ -470,7 +477,13 @@ function serve() {
     if (caught.some(c => !c)) fail('漏れ検知の網が効いていない（作り物を捕まえられない）');
     if (errs.length) fail('JS が転んでいる: ' + errs[0]);
     if (p.bands.join('/') !== '自己紹介/職務経歴/研究業績') fail('見出しが揃っていない');
-    if (!p.tagline || p.intro < 1) fail('肩書きか自己紹介が出ていない');
+    if (p.intro < 1) fail('自己紹介が出ていない');
+    if (!p.photo) fail('名乗りの下の写真が出ていない');
+    else {
+      if (!p.photo.ok) fail('写真が読めていない（パスかファイルを確かめる）');
+      if (!p.photo.alt) fail('写真に代替文が無い');
+      if (!p.photo.sized) fail('写真に寸法が入っていない（読み込み後に本文がずれる）');
+    }
     if (p.cv < 6) fail('職務経歴の行が足りない');
     if (p.groups.length < 3 || p.rows < 8) fail('研究業績が出ていない');
     if (p.dead) fail('行き先のないリンクが出ている');
