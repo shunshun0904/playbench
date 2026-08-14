@@ -70,6 +70,23 @@ window.PB.PROFILE = {
     fill: true,
     rows: [
       {
+        from: '2026-01', to: '',        /* to が空なら「現在」と出る */
+        org: '大手総合旅行会社', orgEn: 'A major travel company',
+        role: 'データサイエンティスト ── 海外のダイナミックプライシング／レベニューマネジメント',
+        roleEn: 'Data scientist — dynamic pricing and revenue management for overseas travel',
+        body: '海外（ハワイ、ショート／ロングアジア）向けのプライシングアルゴリズムの精度改善と保守運用。' +
+              '需要予測モデル・マージン弾力性モデル・価格シナリオ最適化モデルの3層構成です。' +
+              '需要予測モデルにデータドリフト（PSI > 0.25）と精度低下が出ていたのを調べ、' +
+              '原因が LightGBM の学習不良 ── validation データの生成ロジックの不備と、' +
+              'それによる早期終了 ── だと特定して改修しました。',
+        bodyEn: 'Improving and maintaining the pricing algorithm for overseas destinations ' +
+                '(Hawaii, short- and long-haul Asia): three layers — demand forecasting, margin ' +
+                'elasticity, and price scenario optimisation. Investigated data drift (PSI > 0.25) ' +
+                'and falling accuracy in the demand model, and traced it to the LightGBM training ' +
+                'itself — a flaw in how the validation set was built, and the early stopping that ' +
+                'followed from it — then fixed both.'
+      },
+      {
         from: '2024-07', to: '2025-09',
         org: '電力小売の会社', orgEn: 'An electricity retailer',
         role: '社内の研究部門 ── 電力の需給予測', roleEn: 'In-house research group — electricity supply and demand',
