@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>市場センチメント ── Shun Nakamura</title>
+<meta name="description" content="金融ニュースの論調を時間減衰つきの加重平均で1つの数字にまとめ、5分ごとに更新しています。根拠にした記事も出どころ付きで並べています。">
+<meta name="color-scheme" content="dark light">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20fill%3D%22%231b2027%22%2F%3E%3Crect%20x%3D%225%22%20y%3D%2213%22%20width%3D%2222%22%20height%3D%226%22%20fill%3D%22%23e8e9e3%22%20fill-opacity%3D%22.22%22%2F%3E%3Crect%20x%3D%225%22%20y%3D%2213%22%20width%3D%2214%22%20height%3D%226%22%20fill%3D%22%23b03a24%22%2F%3E%3Crect%20x%3D%2210%22%20y%3D%227%22%20width%3D%221.4%22%20height%3D%2218%22%20fill%3D%22%23e8e9e3%22%2F%3E%3C%2Fsvg%3E">
+<link rel="canonical" href="https://shunshun0904.github.io/playbench/sentiment.html">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Shun Nakamura">
+<meta property="og:title" content="市場センチメント ── Shun Nakamura">
+<meta property="og:description" content="金融ニュースの論調を1つの数字にまとめ、5分ごとに更新しています。相場の予測ではありません。">
+<meta property="og:url" content="https://shunshun0904.github.io/playbench/sentiment.html">
+<meta property="og:locale" content="ja_JP">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+
+<header class="masthead" id="head"></header>
+
+<main>
+<section class="sheet">
+  <div class="band">
+    <h2 class="band__t" data-en="Market sentiment">市場センチメント</h2>
+    <span class="band__n" id="sent-index"></span>
+    <span class="tag" id="sent-when"></span>
+  </div>
+  <p class="lead" data-en="The tone of finance news, boiled down to one number between −1 and +1 and refreshed every five minutes. It is a reading of the coverage, not a forecast of the market — the articles behind each reading are listed below, with where they came from.">
+    金融ニュースの論調を <strong>−1〜+1 の1つの数字</strong>にまとめ、5分ごとに更新しています。
+    相場の予測ではなく、報道の側の温度です。もとにした記事は下に出どころ付きで並べています。
+  </p>
+  <div id="sentiment"></div>
+</section>
+</main>
+
+<footer class="sheet colophon" id="foot"></footer>
+
+<script src="assets/config.js"></script>
+<script src="assets/analytics.js"></script>
+<script src="data/profile.js"></script>
+<script src="data/works.js"></script>
+<script src="data/bgg.js"></script>
+<script src="data/macro.js"></script>
+<script src="data/releases.js"></script>
+<script src="data/sentiment.js"></script>
+<script src="assets/site.js"></script>
+</body>
+</html>

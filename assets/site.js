@@ -548,12 +548,13 @@
   }
 
   /* ═══════════════════════════════════════════════════ 全ページ共通の天地
-     4ページあるので、天と地は HTML に写さず、ここから組む。
+     5ページあるので、天と地は HTML に写さず、ここから組む。
      文言を直す場所が1つで済む。 */
   var PAGES = [
-    { file: 'index.html', ja: '自己紹介',     en: 'About' },
-    { file: 'games.html', ja: 'ボードゲーム', en: 'Board games' },
-    { file: 'macro.html', ja: '経済',         en: 'Economy' }
+    { file: 'index.html',     ja: '自己紹介',         en: 'About' },
+    { file: 'games.html',     ja: 'ボードゲーム',     en: 'Board games' },
+    { file: 'macro.html',     ja: '経済',             en: 'Economy' },
+    { file: 'sentiment.html', ja: '市場センチメント', en: 'Market sentiment' }
   ];
   function here() {
     var f = (location.pathname.split('/').pop() || '').split('?')[0];
@@ -619,8 +620,10 @@
           + 'ここの実装はいずれも学習目的の非公式なファンメイドで、'
           + '商標もアートワークも含みません。'),
       el('p', null, en
-        ? 'Macro figures come from Alpha Vantage. Nothing here is investment advice.'
-        : '経済指標の数字は Alpha Vantage から取っています。投資助言ではありません。')
+        ? 'Macro figures come from Alpha Vantage; the market-sentiment page reads news articles '
+          + 'via APITube and scores them itself. Nothing here is investment advice.'
+        : '経済指標の数字は Alpha Vantage、市場センチメントの記事は APITube から取り、'
+          + 'スコアはこちらで付けています。いずれも投資助言ではありません。')
     ]));
 
   }
@@ -1050,6 +1053,287 @@
     });
   }
 
+  /* ═══════════════════════════════════════════════ 市場センチメント
+     ここだけは数字を手元に持たない。5分ごとに AWS 側（Lambda）が集計して
+     S3 に置いた JSON を、開いているあいだ読みに行く。
+     読めなければ、読めないと書く ── 前の値を残して「今」のふりをさせない。
+
+     色は朱と藍の2つだけ。朱が強気、藍が弱気。ただし色だけで意味を持たせず、
+     数値と「やや弱気」などの語を必ず並べる（色が分からなくても読めるように）。 */
+  var SENT = { state: 'idle', data: null, err: '', timer: 0, wired: false };
+  var SENT_SCHEMA = 1;
+
+  /* 外から来る URL は http/https だけ通す。記事の見出しは textContent で入れる */
+  function safeUrl(u) {
+    if (!u) return '';
+    return /^https?:\/\//i.test(String(u)) ? String(u) : '';
+  }
+  /* 符号を必ず付ける。−0.05 と 0.05 を見間違えないため */
+  function sfmt(v, d) {
+    var n = Math.abs(Number(v)).toFixed(d == null ? 2 : d);
+    return (Number(v) < 0 ? '−' : '+') + n;
+  }
+  function sentTone(v) {
+    return v > .02 ? 'var(--vermilion)' : v < -.02 ? 'var(--indigo)' : 'var(--ink-mute)';
+  }
+  /* data/sentiment.js の {ja, en} を言語で選ぶ。
+     pick2 は自己紹介用で fill を要求するので、こちらは素の2択 */
+  function jaen(o) {
+    if (!o) return '';
+    return (lang === 'en' && o.en) ? o.en : (o.ja || '');
+  }
+  /* スコアの出どころ。環境変数の値そのままでは読めないので言い換える */
+  function scorerName(k) {
+    var en = lang === 'en';
+    if (k === 'claude') return en ? 'Claude Haiku 4.5' : 'Claude Haiku 4.5';
+    if (k === 'dual') return en ? 'both, side by side' : '両方式を並走';
+    if (k === 'passthrough' || k === 'apitube') return en ? 'the news API' : '記事APIの付属スコア';
+    return k || '?';
+  }
+  function clockAt(iso) {
+    var d = new Date(iso);
+    if (isNaN(d)) return '';
+    return d.toLocaleTimeString(lang === 'en' ? 'en-GB' : 'ja-JP',
+      { hour: '2-digit', minute: '2-digit' });
+  }
+
+  function loadSentiment() {
+    var conf = PB.SENTIMENT;
+    if (!conf || !conf.endpoint) { SENT.state = 'unset'; buildSentiment(); return; }
+    SENT.state = SENT.data ? SENT.state : 'loading';
+    fetch(conf.endpoint, { cache: 'no-store' }).then(function (r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    }).then(function (j) {
+      if (j.schema_version !== SENT_SCHEMA) throw new Error(lang === 'en'
+        ? 'the data format has changed' : 'データの形が変わっています');
+      SENT.data = j; SENT.state = 'ok'; SENT.err = '';
+    }).catch(function (e) {
+      SENT.state = SENT.data ? 'stale' : 'error';
+      SENT.err = e.message || String(e);
+    }).then(function () {
+      buildSentiment();
+      var wait = ((SENT.data && SENT.data.meta && SENT.data.meta.update_interval_seconds) || 300) * 1000;
+      clearTimeout(SENT.timer);
+      SENT.timer = setTimeout(loadSentiment, SENT.state === 'error' ? 60000 : wait);
+    });
+  }
+
+  /* いまの値。図の前に、数字と語と −1〜+1 の位置で三重に出す */
+  function sentimentNow(s, meta) {
+    var en = lang === 'en';
+    var box = el('div', 'sent__now');
+
+    var head = el('div', 'sent__head');
+    var big = el('strong', 'sent__big', sfmt(s.score));
+    big.style.color = sentTone(s.score);
+    head.appendChild(big);
+    head.appendChild(el('span', 'sent__label', s.label));
+    box.appendChild(head);
+
+    var plates = el('div', 'sent__plates');
+    function plate(k, v, note) {
+      var d = el('div', 'sent__plate');
+      d.appendChild(el('span', 'sent__k', k));
+      d.appendChild(el('span', 'sent__v num', v));
+      if (note) d.appendChild(el('span', 'sent__note', note));
+      plates.appendChild(d);
+    }
+    plate(en ? 'vs 5 min ago' : '前回比',
+      s.delta == null ? '—' : sfmt(s.delta),
+      s.delta == null ? (en ? 'first reading' : '初回') : '');
+    plate(en ? 'Articles' : '対象記事', String(s.article_count),
+      en ? 'last 24 h' : '直近24時間');
+    plate(en ? 'Confidence' : '信頼度', Math.round(s.confidence * 100) + '%',
+      en ? 'weight of evidence' : '記事の量と新しさ');
+    box.appendChild(plates);
+
+    /* −1〜+1 の帯。中央が0 */
+    var half = Math.min(Math.abs(s.score), 1) * 50;
+    var track = el('div', 'sent__track');
+    var fill = el('div', 'sent__fill');
+    fill.style.background = sentTone(s.score);
+    if (s.score >= 0) { fill.style.left = '50%'; fill.style.right = (50 - half) + '%'; }
+    else { fill.style.left = (50 - half) + '%'; fill.style.right = '50%'; }
+    track.appendChild(fill);
+    track.appendChild(el('span', 'sent__zero'));
+    box.appendChild(track);
+
+    var scale = el('div', 'sent__scale');
+    scale.appendChild(el('span', null, en ? '−1.0 bearish' : '−1.0 弱気'));
+    scale.appendChild(el('span', 'num', '0'));
+    scale.appendChild(el('span', null, en ? 'bullish +1.0' : '強気 +1.0'));
+    box.appendChild(scale);
+
+    if (meta && meta.half_life_hours) {
+      box.appendChild(el('p', 'sent__meta', en
+        ? 'Half-life ' + meta.half_life_hours + ' h · scored by ' + scorerName(meta.scorer)
+        : '半減期 ' + meta.half_life_hours + ' 時間 · スコアは' + scorerName(meta.scorer)));
+    }
+    return box;
+  }
+
+  /* 24時間の図。0の線を境に、上は朱、下は藍。面は薄く、線は細く */
+  function sentimentFig(series) {
+    var pts = (series || []).filter(function (p) { return p && isFinite(p.score); });
+    if (pts.length < 2) return null;
+
+    var W = 640, H = 170, PADL = 30, PADR = 12, PADT = 10, PADB = 20;
+    var top = 0;
+    pts.forEach(function (p) { top = Math.max(top, Math.abs(p.score)); });
+    var hi = Math.min(1, Math.max(.2, Math.ceil(top * 10) / 10)), lo = -hi;
+
+    var t0 = Date.parse(pts[0].t), t1 = Date.parse(pts[pts.length - 1].t);
+    if (!(t1 > t0)) t1 = t0 + 1;
+    var x = function (t) { return PADL + (W - PADL - PADR) * ((Date.parse(t) - t0) / (t1 - t0)); };
+    var y = function (v) { return PADT + (H - PADT - PADB) * ((hi - v) / (hi - lo)); };
+
+    var s = svg(W, H), ink = 'currentColor';
+    s.setAttribute('class', 'spark sent__fig');
+    s.setAttribute('aria-label', lang === 'en'
+      ? 'Sentiment over the last 24 hours' : '直近24時間のセンチメントの推移');
+
+    /* 上下の目盛は破線、0だけは実線。0が境目だと分かるように */
+    [hi, 0, lo].forEach(function (v) {
+      var zero = v === 0;
+      sh(s, 'line', { x1: PADL, y1: y(v), x2: W - PADR, y2: y(v), stroke: ink,
+        'stroke-width': zero ? .8 : .5, 'stroke-opacity': zero ? .45 : .25,
+        'stroke-dasharray': zero ? '' : '3 3' });
+      var tx = sh(s, 'text', { x: PADL - 5, y: y(v) + 3.5, 'text-anchor': 'end',
+        fill: ink, 'font-size': 9, 'fill-opacity': .55 });
+      tx.textContent = v.toFixed(1);
+    });
+
+    /* 符号で色を変える。0の高さで硬く切り替える1本のグラデーション */
+    var gid = 'sent-sign';
+    var defs = sh(s, 'defs', {});
+    var lg = sh(defs, 'linearGradient', { id: gid, x1: '0', y1: '0', x2: '0', y2: '1' });
+    var cut = ((y(0) - PADT) / (H - PADT - PADB) * 100).toFixed(2) + '%';
+    sh(lg, 'stop', { offset: '0%', 'stop-color': 'var(--vermilion)' });
+    sh(lg, 'stop', { offset: cut, 'stop-color': 'var(--vermilion)' });
+    sh(lg, 'stop', { offset: cut, 'stop-color': 'var(--indigo)' });
+    sh(lg, 'stop', { offset: '100%', 'stop-color': 'var(--indigo)' });
+
+    var d = '';
+    pts.forEach(function (p, i) {
+      d += (i ? ' L' : 'M') + x(p.t).toFixed(1) + ' ' + y(p.score).toFixed(1);
+    });
+    sh(s, 'path', { d: d + ' L' + x(pts[pts.length - 1].t).toFixed(1) + ' ' + y(0).toFixed(1)
+        + ' L' + x(pts[0].t).toFixed(1) + ' ' + y(0).toFixed(1) + ' Z',
+      fill: 'url(#' + gid + ')', 'fill-opacity': .13, stroke: 'none' });
+    sh(s, 'path', { d: d, fill: 'none', stroke: 'url(#' + gid + ')',
+      'stroke-width': 1.4, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' });
+
+    var last = pts[pts.length - 1];
+    sh(s, 'circle', { cx: x(last.t), cy: y(last.score), r: 2.6, fill: sentTone(last.score) });
+
+    [[pts[0], 'start'], [pts[pts.length - 1], 'end']].forEach(function (p) {
+      var tx = sh(s, 'text', { x: p[1] === 'start' ? PADL : W - PADR, y: H - 5,
+        'text-anchor': p[1], fill: ink, 'font-size': 9, 'fill-opacity': .55 });
+      tx.textContent = clockAt(p[0].t);
+    });
+    return s;
+  }
+
+  /* 根拠。どの記事がこの値を作ったのか、出どころ付きで並べる。
+     出典の無い数字は載せない、というこの site の決まりはここにも効く */
+  function sentimentArticles(list) {
+    var en = lang === 'en';
+    var box = el('div', 'sent__srcs');
+    (list || []).forEach(function (a) {
+      var row = el('div', 'sent__a');
+
+      var sc = el('span', 'sent__as num', sfmt(a.score));
+      sc.style.color = sentTone(a.score);
+      row.appendChild(sc);
+
+      var body = el('div');
+      var url = safeUrl(a.url);
+      var t = el('p', 'sent__at');
+      if (url) {
+        var link = el('a', null, a.title);
+        link.href = url; link.rel = 'noopener'; link.target = '_blank';
+        link.appendChild(el('span', 'srcs__go', '↗'));
+        t.appendChild(link);
+      } else {
+        t.textContent = a.title;
+      }
+      body.appendChild(t);
+      body.appendChild(el('p', 'sent__aw',
+        a.source + ' · ' + clockAt(a.published_at)
+        + ' · ' + (en ? 'weight ' : '重み ') + Number(a.weight).toFixed(2)));
+      row.appendChild(body);
+      box.appendChild(row);
+    });
+    return box;
+  }
+
+  function buildSentiment() {
+    var host = document.getElementById('sentiment');
+    if (!host) return;
+    var conf = PB.SENTIMENT || {};
+    var en = lang === 'en';
+    host.textContent = '';
+
+    var when = document.getElementById('sent-when');
+    var stamp = document.getElementById('sent-index');
+    if (stamp) stamp.textContent = jaen(conf.index);
+
+    if (SENT.state === 'idle' || SENT.state === 'loading') {
+      if (when) when.textContent = en ? 'loading' : '読み込み中';
+      host.appendChild(el('p', 'blank', en ? 'Fetching…' : '読み込んでいます…'));
+      return;
+    }
+    if (SENT.state === 'unset') {
+      if (when) when.textContent = en ? 'not deployed' : '未配備';
+      host.appendChild(el('p', 'blank', en
+        ? 'Not deployed yet. Once the collector is running on AWS, put its latest.json URL '
+          + 'into data/sentiment.js and the figures appear here.'
+        : 'まだ配備していません。AWS 側の集計が動きだしたら、その latest.json の URL を '
+          + 'data/sentiment.js に書くと、ここに数字が入ります。'));
+      return;
+    }
+    if (SENT.state === 'error') {
+      if (when) when.textContent = en ? 'unreachable' : '取得できず';
+      host.appendChild(el('p', 'blank', (en
+        ? 'Could not read the figures (' : '数字を取得できませんでした（') + SENT.err
+        + (en ? '). Retrying shortly.' : '）。しばらくして取り直します。')));
+      return;
+    }
+
+    var data = SENT.data;
+    if (when) {
+      when.textContent = (en ? 'as of ' : '') + clockAt(data.generated_at) + (en ? '' : ' 現在')
+        + (SENT.state === 'stale' ? (en ? ' · stale' : ' · 更新できず') : '');
+    }
+
+    host.appendChild(sentimentNow(data.sentiment, data.meta));
+
+    /* 注意書きは図より先。数字を見る前に読んでほしい */
+    var caveat = jaen(conf.caveat);
+    if (caveat) host.appendChild(el('p', 'sent__caveat', caveat));
+
+    var fig = sentimentFig(data.series);
+    if (fig) {
+      var wrap = el('div', 'gauge__fig');
+      wrap.appendChild(fig);
+      host.appendChild(wrap);
+      host.appendChild(el('p', 'gauge__src', (en ? 'Last 24 hours · ' : '直近24時間 · ')
+        + (data.series || []).length + (en ? ' points, 5-minute steps' : ' 点・5分刻み')));
+    }
+
+    host.appendChild(el('p', 'sent__how', jaen(conf.method)));
+
+    if (data.articles && data.articles.length) {
+      host.appendChild(el('h3', 'rsc__gt', en ? 'What moved it' : '根拠となった記事'));
+      host.appendChild(sentimentArticles(data.articles));
+      host.appendChild(el('p', 'grid__foot', (en
+        ? 'Articles via ' : '記事の出どころ ') + jaen(conf.provider)
+        + (en ? ' · sorted by how much each moved the number'
+              : ' · この値をどれだけ動かしたかの順')));
+    }
+  }
+
   /* --------------------------------------------------------------- 描画 */
   function render() {
     buildHead();
@@ -1058,6 +1342,7 @@
     buildProfile();
     buildMacroTable();
     buildMacro();
+    buildSentiment();
 
     var games = document.getElementById('works');
     if (games) {
@@ -1140,6 +1425,16 @@
 
     applyLang();
     applyTheme(document.documentElement.getAttribute('data-theme'));
+
+    /* センチメントのページだけ、外の数字を読みに行く。
+       閉じているあいだは取りに行かない ── 戻ってきたときに取り直す。 */
+    if (document.getElementById('sentiment') && !SENT.wired) {
+      SENT.wired = true;
+      loadSentiment();
+      document.addEventListener('visibilitychange', function () {
+        if (document.visibilityState === 'visible') loadSentiment();
+      });
+    }
 
     /* 切替ボタンは天と一緒に作り直されるので、要素に直接ではなく
        document で受ける。付け直しの漏れが起きない。 */

@@ -281,7 +281,7 @@ function serve() {
       });
       console.log(`   ${w}px → ` +
         (tabs ? tabs.map(x => (x.ok ? '✅' : '❌') + x.t).join(' ') : 'nav が無い'));
-      if (!tabs || tabs.length !== 3) fail(`${w}px でタブが3枚出ていない`);
+      if (!tabs || tabs.length !== 4) fail(`${w}px でタブが4枚出ていない`);
       else {
         const ng = tabs.filter(x => !x.ok);
         if (ng.length) fail(`${w}px でタブが見えない: ${ng.map(x => x.t).join('/')}`);
@@ -534,9 +534,116 @@ function serve() {
     console.log('  ', JSON.stringify(en));
     // 収録は3作。先頭はハイソサエティ
     if (en.lang !== 'en' || en.first !== 'High Society' || !/Play/.test(en.play)) fail('英語に切り替わっていない');
-    if (!/About\/Board games\/Economy/.test(en.nav)) fail('天のタブが英語になっていない');
+    if (!/About\/Board games\/Economy\/Market sentiment/.test(en.nav)) fail('天のタブが英語になっていない');
     if (en.overflow > 1) fail('横スクロールが出ている');
     await ctx.close();
+  }
+
+
+  /* ------------------------------------------------ 市場センチメント
+     数字は AWS 側から来るので、リポジトリの中には無い。
+     配信を差し替えて、(a) 配備前の断り書き (b) 数字が来たときの画面、
+     の両方を通す。見本は検査の中だけに存在する。 */
+  {
+    const FIX = {
+      schema_version: 1,
+      index: { id: 'SPX', name: 'S&P 500' },
+      generated_at: '2026-08-14T12:20:00Z',
+      next_update_at: '2026-08-14T12:25:00Z',
+      sentiment: { score: -0.31, label: 'やや弱気', confidence: 0.74, article_count: 41, delta: -0.08 },
+      series: [
+        { t: '2026-08-13T12:20:00Z', score: 0.22, n: 30, weight: 5.1, confidence: .6 },
+        { t: '2026-08-14T00:20:00Z', score: 0.05, n: 36, weight: 6.2, confidence: .7 },
+        { t: '2026-08-14T12:20:00Z', score: -0.31, n: 41, weight: 7.4, confidence: .74 }
+      ],
+      articles: [
+        { id: 'a', title: 'Jobless claims rise more than expected', url: 'https://example.com/a',
+          source: 'wsj.com', published_at: '2026-08-14T11:20:00Z', score: -0.52, weight: 0.78,
+          scored_by: 'apitube', scores: { apitube: -0.52 } },
+        { id: 'b', title: 'Tech megacaps lead broad rally into the close', url: 'https://example.com/b',
+          source: 'bloomberg.com', published_at: '2026-08-14T10:05:00Z', score: 0.61, weight: 0.55,
+          scored_by: 'apitube', scores: { apitube: 0.61 } }
+      ],
+      meta: { scorer: 'apitube', source: 'apitube', window_hours: 24, half_life_hours: 6,
+              update_interval_seconds: 300, fetched: 62, new_scored: 7 }
+    };
+
+    /* (a) 配備前 ── endpoint が空。数字を出さず、そう書けているか */
+    {
+      const ctx = await newContext({ viewport: { width: 1280, height: 1000 }, deviceScaleFactor: 2 });
+      const page = await ctx.newPage();
+      await page.goto(URL + 'sentiment.html', { waitUntil: 'load' });
+      await page.waitForTimeout(300);
+      const blank = await page.evaluate(() => ({
+        blank: !!document.querySelector('#sentiment .blank'),
+        big: !!document.querySelector('.sent__big'),
+        tag: (document.getElementById('sent-when') || {}).textContent
+      }));
+      console.log('── 市場センチメント（配備前）');
+      console.log('  ', JSON.stringify(blank));
+      if (!blank.blank) fail('配備前の断り書きが出ていない');
+      if (blank.big) fail('数字が無いのに数字を出している');
+      if (!/未配備/.test(blank.tag)) fail(`未配備と書けていない（${blank.tag}）`);
+      await ctx.close();
+    }
+
+    /* (b) 数字が来たとき */
+    {
+      const ctx = await newContext({ viewport: { width: 1280, height: 1200 }, deviceScaleFactor: 2 });
+      const page = await ctx.newPage();
+      await page.route(u => u.pathname.endsWith('/data/sentiment.js'), r => r.fulfill({
+        status: 200, contentType: 'text/javascript',
+        body: `window.PB = window.PB || {};
+               window.PB.SENTIMENT = {
+                 endpoint: '/fixture-sentiment.json',
+                 index: { id: 'SPX', ja: 'S&P 500', en: 'S&P 500' },
+                 provider: { ja: 'APITube（ニュース記事）', en: 'APITube (news articles)' },
+                 method: { ja: '半減期6時間の加重平均です。', en: 'Time-decayed mean, 6-hour half-life.' },
+                 caveat: { ja: '相場の予測ではありません。', en: 'Not a forecast.' }
+               };`
+      }));
+      await page.route(u => u.pathname.endsWith('/fixture-sentiment.json'), r => r.fulfill({
+        status: 200, contentType: 'application/json', body: JSON.stringify(FIX)
+      }));
+      await page.goto(URL + 'sentiment.html', { waitUntil: 'load' });
+      await page.waitForFunction(() => !!document.querySelector('.sent__big'));
+
+      const got = await page.evaluate(() => ({
+        big: document.querySelector('.sent__big').textContent,
+        label: document.querySelector('.sent__label').textContent,
+        plates: [...document.querySelectorAll('.sent__v')].map(n => n.textContent),
+        rows: document.querySelectorAll('.sent__a').length,
+        first: document.querySelector('.sent__as').textContent,
+        href: document.querySelector('.sent__at a').getAttribute('href'),
+        paths: document.querySelectorAll('.sent__fig path').length,
+        tabs: document.querySelectorAll('.masthead__nav a').length,
+        here: (document.querySelector('.masthead__nav a.is-here') || {}).textContent,
+        idx: (document.getElementById('sent-index') || {}).textContent,
+        how: (document.querySelector('.sent__how') || {}).textContent,
+        caveat: (document.querySelector('.sent__caveat') || {}).textContent,
+        overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth
+      }));
+      console.log('── 市場センチメント（見本）');
+      console.log('  ', JSON.stringify(got));
+      // 符号は必ず付ける。−0.31 と 0.31 を見間違えないため
+      if (got.big !== '−0.31') fail(`いまの値が符号つきで出ていない（${got.big}）`);
+      if (got.label !== 'やや弱気') fail('語が出ていない ── 色だけに意味を持たせない');
+      if (got.plates.join('/') !== '−0.08/41/74%') fail(`前回比・件数・信頼度が合わない（${got.plates}）`);
+      if (got.rows !== 2) fail(`根拠の記事が2件出ていない（${got.rows}）`);
+      if (got.first !== '−0.52') fail('記事のスコアが符号つきで出ていない');
+      if (!/^https:\/\//.test(got.href)) fail('記事のリンクが http(s) でない');
+      if (got.paths < 2) fail('図（面と線）が出ていない');
+      if (got.tabs !== 4) fail('天のタブが4枚出ていない');
+      if (got.here !== '市場センチメント') fail('いま開いている耳に印が付いていない');
+      if (got.idx !== 'S&P 500') fail('どの指数か出ていない');
+      // 出どころと読み取り方は、無ければ数字だけが独り歩きする
+      if (!got.how) fail('算出方法の説明が出ていない');
+      if (!got.caveat) fail('読み取り方の注意が出ていない');
+      if (got.overflow > 1) fail('横スクロールが出ている');
+
+      await page.screenshot({ path: path.join(OUT, 'sentiment.png'), fullPage: true });
+      await ctx.close();
+    }
   }
 
   await browser.close();

@@ -4,13 +4,14 @@
 
 <https://shunshun0904.github.io/playbench/>
 
-棚は3つ。上のタブで切り替えます。
+棚は4つ。上のタブで切り替えます。
 
 | タブ | ページ | 中身 |
 |---|---|---|
 | 自己紹介 | [`index.html`](index.html) | 自己紹介・職務経歴・研究業績。中身は `data/profile.js` に書く |
 | ボードゲーム | [`games.html`](games.html) | ボードゲーム2作の自主研究。遊べる |
 | 経済 | [`macro.html`](macro.html) | 株式投資のために見ているマクロ経済指標。出どころと取得日つき |
+| 市場センチメント | [`sentiment.html`](sentiment.html) | 金融ニュースの論調を1つの数字にまとめたもの。5分ごとに更新、根拠の記事つき |
 
 - 数値はすべて出典つき。**出典のない数字は載せません**
 - 勝率は必ず**互角の線つき**。4人戦なら .250
@@ -22,6 +23,7 @@
 index.html          トップ＝自己紹介・職務経歴・研究業績
 games.html          ボードゲームの自主研究
 macro.html          マクロ経済指標
+sentiment.html      市場センチメント（数字は AWS 側から読む）
 about.html          index.html への転送のみ（旧URL宛て）
 assets/site.css     版面。色・書体・実測プレート
 assets/site.js      組版。天地とタブもここから組む
@@ -33,6 +35,7 @@ data/works.js       ゲームの目録        ← ゲームを増やすときは
 data/macro.js       見る指標の定義と、取得した系列（tools が書き換える）
 data/releases.js    公表予定（tools が書き換える。毎日 Actions が読み直す）
 data/bgg.js         BGG の重さと評価のスナップショット（tools が書き換える）
+data/sentiment.js   市場センチメントの置き場のURLと説明文 ← 配備したらURLを書く
 tools/fetch-macro.mjs  Alpha Vantage から指標を取ってくる道具
 tools/fetch-bgg.mjs    BGG から取ってくる道具
 tools/fetch-calendar.mjs 公表予定を Google カレンダーから取ってくる道具
@@ -41,6 +44,26 @@ test/shots.js       実ブラウザでの検査（見た目・タブ・解析の
 test/calendar-parse.mjs 公表予定の読み取りの検査（作り物のICS。通信しない）
 build.js            盤上のページを1枚にまとめる
 ```
+
+## 市場センチメント
+
+金融ニュースの論調を −1〜+1 の1つの数字にまとめ、5分ごとに更新しています。
+**このリポジトリに数字は入っていません。** 集計するのは別のところ
+（<https://github.com/shunshun0904/sentiment_analysis>）で、AWS 上の Lambda が
+5分ごとにニュースを取り、スコアを付け、S3 に JSON を置きます。
+このページは開いているあいだ、その JSON を読みに行くだけです。
+
+配備したら、その `latest.json` の URL を `data/sentiment.js` の `endpoint` に書きます。
+書くまでのあいだ、ページは「まだ配備していません」とだけ出します
+── それらしい数字を置いたりはしません。
+
+```js
+// data/sentiment.js
+endpoint: 'https://<バケット名>.s3.ap-northeast-1.amazonaws.com/data/SPX/latest.json',
+```
+
+図の色は朱が強気、藍が弱気。ただし色だけに意味は持たせず、数値と語
+（「やや弱気」など）を必ず並べています。相場の予測ではなく、報道の側の温度です。
 
 ## マクロ経済指標
 
