@@ -545,27 +545,47 @@ function serve() {
      配信を差し替えて、(a) 配備前の断り書き (b) 数字が来たときの画面、
      の両方を通す。見本は検査の中だけに存在する。 */
   {
+    /* 見本は「いま」から作る。ページは取得時刻ではなく現在時刻で再構成するので、
+       固定の日付を置くと窓から外れて空になる。
+
+       仕掛けは2群。半減期ちょうど6時間ぶん離してあるので、答えが手で出る:
+         A  1分前   −0.5 × 12件   重み k
+         B  6時間1分前  +0.1 × 12件   重み k/2   （k は約分で消える）
+       いま       = (12k(−.5) + 6k(.1)) / (12k + 6k) = −0.30
+       単純平均    = (−0.5 + 0.1) / 2                = −0.20
+       1時間前     = A がまだ無いので B だけ         = +0.10 → 前比 −0.40 */
+    const MIN = 60e3;
+    const av = (msAgo, sec) => {
+      const d = new Date(Date.now() - msAgo);
+      const p = (n, w) => String(n).padStart(w || 2, '0');
+      return p(d.getUTCFullYear(), 4) + p(d.getUTCMonth() + 1) + p(d.getUTCDate())
+        + 'T' + p(d.getUTCHours()) + p(d.getUTCMinutes()) + (sec ? p(d.getUTCSeconds()) : '');
+    };
+    const win = [];
+    for (let i = 0; i < 12; i++) win.push({ t: av(1 * MIN, true), s: -0.5, r: 1 });
+    for (let i = 0; i < 12; i++) win.push({ t: av(361 * MIN, true), s: 0.1, r: 1 });
+
     const FIX = {
-      schema_version: 1,
-      index: { id: 'SPX', name: 'S&P 500' },
-      generated_at: '2026-08-14T12:20:00Z',
-      next_update_at: '2026-08-14T12:25:00Z',
-      sentiment: { score: -0.31, label: 'やや弱気', confidence: 0.74, article_count: 41, delta: -0.08 },
+      schema_version: 2,
+      updated_at: av(1 * MIN),
+      next_update_at: av(-59 * MIN),
+      current: -0.30, label: 'Somewhat-Bearish', raw_mean: -0.20, n_articles: 24,
+      top_tickers: [{ s: 'NVDA', n: 9 }],
+      /* 集計側の毎時の値。ページはこれと自分の再構成を突き合わせて差を出す。
+         この時刻には B しか窓に入らないので、どちらも +0.10 になるはず */
       series: [
-        { t: '2026-08-13T12:20:00Z', score: 0.22, n: 30, weight: 5.1, confidence: .6 },
-        { t: '2026-08-14T00:20:00Z', score: 0.05, n: 36, weight: 6.2, confidence: .7 },
-        { t: '2026-08-14T12:20:00Z', score: -0.31, n: 41, weight: 7.4, confidence: .74 }
+        { t: av(120 * MIN), v: 0.1, u: 0.1 },
+        { t: av(60 * MIN), v: 0.1, u: 0.1 }
       ],
-      articles: [
-        { id: 'a', title: 'Jobless claims rise more than expected', url: 'https://example.com/a',
-          source: 'wsj.com', published_at: '2026-08-14T11:20:00Z', score: -0.52, weight: 0.78,
-          scored_by: 'apitube', scores: { apitube: -0.52 } },
-        { id: 'b', title: 'Tech megacaps lead broad rally into the close', url: 'https://example.com/b',
-          source: 'bloomberg.com', published_at: '2026-08-14T10:05:00Z', score: 0.61, weight: 0.55,
-          scored_by: 'apitube', scores: { apitube: 0.61 } }
-      ],
-      meta: { scorer: 'apitube', source: 'apitube', window_hours: 24, half_life_hours: 6,
-              update_interval_seconds: 300, fetched: 62, new_scored: 7 }
+      params: { half_life_hours: 6, window_hours: 24, step_min: 5,
+                use_relevance: true, update_interval_seconds: 3600 },
+      window: win,
+      top_articles: [
+        { title: 'Jobless claims rise more than expected', url: 'https://example.com/a',
+          source: 'wsj.com', t: av(1 * MIN, true), score: -0.52 },
+        { title: 'Tech megacaps lead broad rally into the close', url: 'https://example.com/b',
+          source: 'bloomberg.com', t: av(75 * MIN, true), score: 0.61 }
+      ]
     };
 
     /* (a) 配備前 ── endpoint が空。数字を出さず、そう書けているか */
@@ -597,7 +617,7 @@ function serve() {
                window.PB.SENTIMENT = {
                  endpoint: '/fixture-sentiment.json',
                  index: { id: 'SPX', ja: 'S&P 500', en: 'S&P 500' },
-                 provider: { ja: 'APITube（ニュース記事）', en: 'APITube (news articles)' },
+                 provider: { ja: 'Alpha Vantage（記事とスコア）', en: 'Alpha Vantage (articles and scores)' },
                  method: { ja: '半減期6時間の加重平均です。', en: 'Time-decayed mean, 6-hour half-life.' },
                  caveat: { ja: '相場の予測ではありません。', en: 'Not a forecast.' }
                };`
@@ -616,29 +636,42 @@ function serve() {
         first: document.querySelector('.sent__as').textContent,
         href: document.querySelector('.sent__at a').getAttribute('href'),
         paths: document.querySelectorAll('.sent__fig path').length,
+        keys: document.querySelectorAll('.sent__legend .sent__lk').length,
+        foot: (document.querySelector('.gauge__src') || {}).textContent,
         tabs: document.querySelectorAll('.masthead__nav a').length,
         here: (document.querySelector('.masthead__nav a.is-here') || {}).textContent,
         idx: (document.getElementById('sent-index') || {}).textContent,
         how: (document.querySelector('.sent__how') || {}).textContent,
         caveat: (document.querySelector('.sent__caveat') || {}).textContent,
+        note: (document.querySelector('.grid__foot') || {}).textContent,
         overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth
       }));
       console.log('── 市場センチメント（見本）');
       console.log('  ', JSON.stringify(got));
-      // 符号は必ず付ける。−0.31 と 0.31 を見間違えないため
-      if (got.big !== '−0.31') fail(`いまの値が符号つきで出ていない（${got.big}）`);
+      // 符号は必ず付ける。−0.30 と 0.30 を見間違えないため
+      if (got.big !== '−0.30') fail(`いまの値が符号つきで出ていない（${got.big}）`);
       if (got.label !== 'やや弱気') fail('語が出ていない ── 色だけに意味を持たせない');
-      if (got.plates.join('/') !== '−0.08/41/74%') fail(`前回比・件数・信頼度が合わない（${got.plates}）`);
-      if (got.rows !== 2) fail(`根拠の記事が2件出ていない（${got.rows}）`);
+      // 前比・件数・単純平均。値は上のコメントの手計算どおりになるはず
+      if (got.plates.join('/') !== '−0.40/24/−0.20') fail(`前比・件数・単純平均が合わない（${got.plates}）`);
+      if (got.rows !== 2) fail(`記事が2件出ていない（${got.rows}）`);
       if (got.first !== '−0.52') fail('記事のスコアが符号つきで出ていない');
       if (!/^https:\/\//.test(got.href)) fail('記事のリンクが http(s) でない');
-      if (got.paths < 2) fail('図（面と線）が出ていない');
+      if (got.paths < 3) fail('図（面・主系列・対照の破線）が3本そろっていない');
+      // 線が2種類ある以上、凡例が無いと破線が何なのか分からない
+      if (got.keys !== 2) fail(`凡例が2つ出ていない（${got.keys}）`);
+      if (!/5分刻み/.test(got.foot)) fail('5分刻みで再構成したと書けていない');
+      // 再構成が集計側とずれていないか。仕掛け上ぴったり合うはず
+      const gap = (got.foot.match(/最大差\s*([\d.]+)/) || [])[1];
+      if (gap == null) fail('集計側との照合が出ていない');
+      else if (Number(gap) > 0.01) fail(`再構成が集計側とずれている（最大差 ${gap}）`);
       if (got.tabs !== 4) fail('天のタブが4枚出ていない');
       if (got.here !== '市場センチメント') fail('いま開いている耳に印が付いていない');
       if (got.idx !== 'S&P 500') fail('どの指数か出ていない');
       // 出どころと読み取り方は、無ければ数字だけが独り歩きする
       if (!got.how) fail('算出方法の説明が出ていない');
       if (!got.caveat) fail('読み取り方の注意が出ていない');
+      // 記事一覧は最後の取得ぶんだけ。上の数字の全根拠だと読まれると誤る
+      if (!/全部ではありません/.test(got.note)) fail('記事一覧が一部だという断りが無い');
       if (got.overflow > 1) fail('横スクロールが出ている');
 
       await page.screenshot({ path: path.join(OUT, 'sentiment.png'), fullPage: true });

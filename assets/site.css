@@ -975,6 +975,15 @@ a { color: inherit; }
 .sent__meta { margin: var(--s3) 0 0; font-family: var(--mono); font-size: .7rem; color: var(--ink-mute); }
 
 .sent__fig { width: 100%; height: auto; }
+
+/* 凡例。線が2種類ある以上は要る ── 対照の破線が何なのかは図の中では言えない */
+.sent__legend {
+  display: flex; flex-wrap: wrap; gap: .3rem var(--s3);
+  margin: .4rem 0 0; font-size: .72rem; color: var(--ink-mute);
+}
+.sent__lk { display: inline-flex; align-items: center; gap: .35rem; }
+.sent__lki { width: 24px; height: 8px; flex: none; }
+
 .sent__how {
   max-width: 44rem; margin: var(--s3) 0 var(--s5);
   font-size: .84rem; line-height: 1.9; color: var(--ink-mid);
