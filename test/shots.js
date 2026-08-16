@@ -408,9 +408,11 @@ function serve() {
                   '/ 予定なし', rows.filter(r => r.dry).length,
                   '/ 注意書き', got.warn ? 'あり' : 'なし');
 
-      const daily = rows.find(r => /毎営業日/.test(r.date));
-      if (!daily) fail('毎営業日の行が見つからない');
-      else if (daily.heat != null || daily.alpha > 0) fail('毎営業日にも色が付いている');
+      /* 日次で出るものは複数ある（金利まわり）。1つ残らず色を持たないこと */
+      const daily = rows.filter(r => /毎営業日/.test(r.date));
+      if (!daily.length) fail('毎営業日の行が見つからない');
+      if (daily.some(r => r.heat != null || r.alpha > 0)) fail('毎営業日にも色が付いている');
+      if (daily.some(r => r.dry)) fail('毎営業日の行が「予定なし」になっている');
 
       if (lit.length !== want.lit) fail(`色付きの数が合わない（${lit.length} / 期待 ${want.lit}）`);
       if (rows.filter(r => r.dry).length !== want.dry) fail('「予定なし」の数が合わない');

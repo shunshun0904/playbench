@@ -64,6 +64,76 @@ window.PB.INDICATORS = [
     fn: 'TREASURY_YIELD', maturity: '10year'
   },
   {
+    id: 'dgs2',
+    release: { daily: true, note: '毎営業日（H.15）', noteEn: 'Every business day (H.15)' },
+    title: '米国 2年国債利回り', titleEn: 'US 2-year yield',
+    sub: '短期の織り込み', subEn: 'The short end',
+    unit: '%',
+    why: '10年との差が「2年10年」。ここが逆転してから戻る途中で、株が落ちてきた。'
+       + '2年は次の1〜2年の政策金利を織り込むので、利下げ観測はまずここに出る。',
+    whyEn: 'The gap to the 10-year is the 2s10s spread. Equities have historically fallen while it '
+         + 'un-inverts, not while it is inverted. The 2-year prices the policy rate one to two years '
+         + 'out, so rate-cut expectations show up here first.',
+    by: '米連邦準備制度理事会（FRB）', byEn: 'Federal Reserve Board',
+    sources: [
+      { label: 'H.15 主要金利（日次）', labelEn: 'H.15 Selected Interest Rates (daily)',
+        url: 'https://www.federalreserve.gov/releases/h15/' }
+    ],
+    fn: 'TREASURY_YIELD', maturity: '2year'
+  },
+  {
+    id: 'hyoas',
+    release: { daily: true, note: '毎営業日', noteEn: 'Every business day' },
+    title: '米 ハイイールド債スプレッド', titleEn: 'US high yield spread',
+    sub: 'ICE BofA・オプション調整後（OAS）', subEn: 'ICE BofA option-adjusted spread',
+    unit: '%',
+    why: '低格付け社債が国債に対してどれだけ上乗せを要求されているか。'
+       + '信用不安は株より先にここへ出ることが多く、開き始めたら株の下げが続きやすい。',
+    whyEn: 'How much extra yield low-grade corporate debt has to pay over Treasuries. Credit stress '
+         + 'usually shows here before it shows in equities; once it starts widening, equity drawdowns '
+         + 'tend to keep going.',
+    by: 'ICE BofA（セントルイス連銀 FRED が配信）', byEn: 'ICE BofA, distributed by FRED',
+    sources: [
+      { label: 'BAMLH0A0HYM2', labelEn: 'BAMLH0A0HYM2',
+        url: 'https://fred.stlouisfed.org/series/BAMLH0A0HYM2' }
+    ]
+  },
+  {
+    id: 'dfii10',
+    release: { daily: true, note: '毎営業日（H.15）', noteEn: 'Every business day (H.15)' },
+    title: '米国 10年実質金利', titleEn: 'US 10-year real yield',
+    sub: '物価連動債（TIPS）の利回り', subEn: 'Yield on inflation-indexed Treasuries',
+    unit: '%',
+    why: '株の割引率に効くのは名目ではなくこちら。'
+       + '利益が先にあるほど効きが強いので、上がると成長株から先に売られる。',
+    whyEn: 'What actually discounts equity cash flows — not the nominal yield. The further out the '
+         + 'earnings, the harder it bites, so growth names sell off first when this rises.',
+    by: '米連邦準備制度理事会（FRB）', byEn: 'Federal Reserve Board',
+    sources: [
+      { label: 'DFII10', labelEn: 'DFII10',
+        url: 'https://fred.stlouisfed.org/series/DFII10' },
+      { label: 'H.15 主要金利（日次）', labelEn: 'H.15 Selected Interest Rates (daily)',
+        url: 'https://www.federalreserve.gov/releases/h15/' }
+    ]
+  },
+  {
+    id: 't10yie',
+    release: { daily: true, note: '毎営業日', noteEn: 'Every business day' },
+    title: '米 期待インフレ率（10年）', titleEn: 'US 10-year breakeven',
+    sub: 'ブレークイーブン ＝ 名目 − 実質', subEn: 'Breakeven = nominal − real',
+    unit: '%',
+    why: '10年金利が動いたとき、実質が動いたのか物価の織り込みが動いたのかを分ける。'
+       + '株にとっては意味が逆になることがあるので、名目だけ見ていると読み違える。',
+    whyEn: 'When the 10-year moves, this separates a move in real rates from a move in expected '
+         + 'inflation. For equities the two can mean opposite things, so watching the nominal alone '
+         + 'misleads.',
+    by: 'セントルイス連銀（FRED が算出）', byEn: 'Computed by the St. Louis Fed (FRED)',
+    sources: [
+      { label: 'T10YIE', labelEn: 'T10YIE',
+        url: 'https://fred.stlouisfed.org/series/T10YIE' }
+    ]
+  },
+  {
     id: 'cpi',
     release: { match: ['米国CPI'] },
     title: '米国 消費者物価', titleEn: 'US CPI',
