@@ -20,7 +20,7 @@ window.PB = window.PB || {};
 
 window.PB.RELEASES = {
   /* いつ読み直したか。画面の脚注に出ます */
-  asOf: '2026-08-16',
+  asOf: '2026-08-17',
   /* どこから読んだか */
   from: 'Google カレンダー', fromEn: 'Google Calendar',
   byId: {
