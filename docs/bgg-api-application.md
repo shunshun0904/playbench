@@ -9,6 +9,31 @@
 
 ---
 
+## ⚠ 2026-08 の変更 ── BGG への連絡がまだ済んでいません
+
+`recommend.html`（はじめての人向けのおすすめ）を作るにあたり、**読む項目と作品数を
+承認時の申告より広げました。** 実装とこの文書は一致させてあります。残っているのは
+**BGG に伝えること**です。
+
+| | 承認時の申告 | いまの実装 |
+|---|---|---|
+| 使う口 | search と thing の2つ | 変わらず2つ |
+| 読む項目 | 6項目 | 16項目（人数・時間・対象年齢・総合ランク・人数投票・分類を追加） |
+| 作品数 | 4作 | 収録2作 ＋ おすすめ一覧 約60作 |
+| 1回の要求数 | 最大8 | 初回30以内／2回目以降12前後 |
+| 更新 | 手動・多くても週1回 | 変わらず |
+| 閲覧者のブラウザから叩くか | 叩かない | 変わらず叩かない |
+| 説明文・画像・レビュー・利用者データ | 再掲しない | 変わらず再掲しない |
+
+**取得を実行する前に、BGG の窓口へ変更を伝えてください。** 下の英文の
+「Detailed description」と「other information」は、そのまま連絡文として使える形に
+更新してあります。申告より広く取ってしまうのが、いちばん避けたい形です。
+
+要求数の上限は `test/bgg-fetch.mjs` が見張っています（通信しません）。
+ここの数字を変えるときは、あちらの閾値も一緒に直してください。
+
+---
+
 ## 短い項目
 
 | フォームの項目 | 記入内容 |
@@ -83,8 +108,34 @@ differently from my own measurements, so a visitor can tell at a glance which
 numbers are mine and which are BGG's. The intent is that anyone curious about a
 game is sent to BoardGameGeek to learn more, not kept on my site.
 
-I would not republish descriptions, images, reviews, forum content or user data —
-only those two community averages, with attribution.
+There is a second page, added later, which I should describe here as well.
+
+Most people who ask me "which board game should I buy first?" cannot use a
+ranking. The top of any ranked list is full of three-hour games, and a beginner
+who starts there usually never plays a second one. So I built a page that asks
+five plain questions — how many people, how long, how much experience, what kind
+of evening you want, who you are playing with — and answers them from BGG's own
+figures rather than from my opinion.
+
+The single most useful thing on it is your community's player-count poll. Being
+able to say "612 people voted, and 588 of them say this is best at two" is worth
+more to a beginner than any review, and it exists nowhere else. Alongside it I use
+the player range, playing time, minimum age, the average weight, the average
+rating with its number of votes, the Board Game Rank, and the category and
+mechanic names — the last two only to work out roughly what kind of evening a game
+gives you.
+
+Every game shown carries its BGG rating, its weight, the number of people who
+rated it, the date I retrieved all of it, and a link to its page on
+boardgamegeek.com. The page also states plainly, at the foot, that the figures
+come from BGG. Where a game is a poor fit it says so using your figures — "this
+count is not recommended by the poll", "this is heavier than you asked for" —
+because the point of the page is to stop beginners buying the wrong box, and that
+needs the unflattering numbers as much as the flattering ones.
+
+I would not republish descriptions, images, reviews, forum content or user data.
+What I read is the factual shape of a game and the community averages, with
+attribution and a link back on every single entry.
 ```
 
 ---
@@ -94,14 +145,25 @@ only those two community averages, with attribution.
 ```
 The main thing worth knowing is how little I would be asking of your servers.
 
-- Two endpoints only: /xmlapi2/search (to resolve a title to an id, once per game)
-  and /xmlapi2/thing?id=<id>&stats=1 (to read the figures).
-- Six fields read: name, yearpublished, average, bayesaverage, usersrated,
-  averageweight.
-- At most 8 requests per refresh — four games, two calls each.
+- Two endpoints only: /xmlapi2/search (to resolve a title to an id, once per title,
+  ever) and /xmlapi2/thing?id=<id>&stats=1 (to read the figures).
+- Sixteen fields read: name, yearpublished, minplayers, maxplayers, minplaytime,
+  maxplaytime, playingtime, minage, average, bayesaverage, usersrated,
+  averageweight, the Board Game Rank value, the suggested_numplayers poll, and the
+  names of boardgamecategory and boardgamemechanic links.
+- About 60 games in total.
+- Requests are batched: /thing takes twenty comma-separated ids at a time, so the
+  whole catalogue is four calls, not sixty. Resolved ids are written into the
+  snapshot and reused, so /search runs only for a title I have never fetched
+  before.
+- That makes at most 30 requests the first time a title list is fetched, and
+  around 12 for a routine refresh afterwards.
 - Refreshed manually, at most once a week.
 - At least 1.5 seconds between requests, and 202 / 429 responses are honoured with
   increasing back-off.
+- If a returned title does not match the title I asked for, I discard it rather
+  than display it. I would rather show nothing than show your data against the
+  wrong game.
 
 Crucially, this does not scale with my traffic. The results are written into my
 repository as a static snapshot and served from GitHub Pages, so visitors' browsers
@@ -166,18 +228,44 @@ PLAYBENCH は、4つの古典的ボードゲームをブラウザで遊べるサ
 どちらの数字かが一目で分かるようにします。**狙いは、興味を持った人を BGG へ送ること**
 であって、自分のサイトに留めることではありません。
 
+**あとから足したページについても、ここで説明しておきます。**
+
+「最初の1つは何を買えばいい?」と聞いてくる人の多くは、ランキングを使えません。
+上位は3時間級で埋まっていて、そこから始めた初心者はたいてい2つ目を遊びません。
+そこで、5つの平凡な質問（何人・どれくらいの時間・経験・どんな時間を過ごしたいか・
+誰と）に答えてもらい、**こちらの意見ではなく BGG の数値で**答えるページを作りました。
+
+いちばん効くのは**人数投票**です。「612人が投票し、588人が2人がベストと答えている」
+と言えることは、初心者にとってどんなレビューよりも価値があり、他のどこにもありません。
+併せて、人数の範囲・プレイ時間・対象年齢・重さ・評価（票数つき）・総合ランク・
+分類とメカニクスの名前を使います。最後の2つは「どんな時間になるゲームか」を
+おおまかに判別するためだけに使います。
+
+出す作品には必ず、評価・重さ・評価人数・取得日・BGG の当該ページへのリンクを添えます。
+ページの下部にも、数値の出どころが BGG であることを明記します。**条件に合わない
+ときは、BGG の数値を使ってそう言います** ──「この人数は投票では推奨されていない」
+「希望より重い」。初心者が箱を買い間違えないためのページなので、都合の良い数字だけ
+でなく、都合の悪い数字も要ります。
+
 説明文・画像・レビュー・フォーラムの内容・利用者データは一切再掲しません。
-この2つの平均値だけです。
+読むのは、ゲームの事実としての形と、コミュニティが付けた平均値だけです。
 
 ### その他
 
 いちばん知っていただきたいのは、**負荷がどれだけ小さいか**です。
 
 - 使う口は2つだけ（search と thing?stats=1）
-- 読む項目は6つだけ
-- 1回の更新につき最大8要求（4作 × 2口）
+- 読む項目は16（名前・発行年・人数・時間・対象年齢・評価・重さ・評価人数・
+  総合ランク・人数投票・分類とメカニクスの名前）
+- 作品数は約60
+- **まとめて引きます。** thing は id を20件ずつカンマで並べるので、一覧全体で4要求。
+  引き当てた id はスナップショットに残して使い回すので、search が走るのは
+  一度も取ったことのない題だけ
+- 初回で最大30要求、2回目以降は12前後
 - 更新は手動、多くても週1回
 - 要求間隔1.5秒以上。202・429 には待ち時間を増やして従う
+- 返ってきた題が頼んだ題と違えば、表示せずに捨てます。
+  間違ったゲームに BGG の数値を貼るより、何も出さないほうがましなので
 
 **そして、これはサイトの人気とは無関係です。** 結果はリポジトリに静的なスナップ
 ショットとして置き、GitHub Pages から配信するので、閲覧者のブラウザは BGG に一切

@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>はじめの1作をえらぶ ── Shun Nakamura</title>
+<meta name="description" content="5つの質問に答えると、BoardGameGeek の数値からあなたに向いていそうなボードゲームを出します。人数投票・プレイ時間・ルールの重さ・評価を使い、合わないところも書きます。">
+<meta name="color-scheme" content="dark light">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20fill%3D%22%231b2027%22%2F%3E%3Crect%20x%3D%225%22%20y%3D%2213%22%20width%3D%2222%22%20height%3D%226%22%20fill%3D%22%23e8e9e3%22%20fill-opacity%3D%22.22%22%2F%3E%3Crect%20x%3D%225%22%20y%3D%2213%22%20width%3D%2214%22%20height%3D%226%22%20fill%3D%22%23b03a24%22%2F%3E%3Crect%20x%3D%2210%22%20y%3D%227%22%20width%3D%221.4%22%20height%3D%2218%22%20fill%3D%22%23e8e9e3%22%2F%3E%3C%2Fsvg%3E">
+<link rel="canonical" href="https://shunshun0904.github.io/playbench/recommend.html">
+
+<!-- Search Console の所有確認はファイル方式で済ませてある。
+     リポジトリ直下の google2e24f8e4be168c53.html がそれ。消すと確認が外れる。 -->
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Shun Nakamura">
+<meta property="og:title" content="はじめの1作をえらぶ ── Shun Nakamura">
+<meta property="og:description" content="5つの質問に答えると、BoardGameGeek の数値からあなたに向いていそうなボードゲームを出します。">
+<meta property="og:url" content="https://shunshun0904.github.io/playbench/recommend.html">
+<meta property="og:locale" content="ja_JP">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+
+<header class="masthead" id="head"></header>
+
+<main>
+<section class="sheet">
+  <div class="band">
+    <h2 class="band__t" data-en="What to play first">はじめの1作をえらぶ</h2>
+    <span class="band__n"></span>
+  </div>
+
+  <p class="lead" data-en="&quot;Which board game should I buy first?&quot; is a hard question to answer with a ranking — the top of every list is full of three-hour games, and starting there is how people end up never playing a second one. So this page asks five plain questions and answers them from <strong>BoardGameGeek's own figures</strong>: the player-count poll, playing time, the 1-5 weight, the rating and its number of votes. Where a game does not fit, it says so.">
+    「ボードゲーム、最初の1つは何を買えばいい?」に、ランキングは答えてくれません。
+    上位は3時間級で埋まっていて、そこから始めると、たいてい2つ目を遊ばないまま終わります。
+    このページは5つの質問に答えてもらい、<strong>BoardGameGeek の数値</strong>で並べ直します
+    ── 人数投票・プレイ時間・ルールの重さ（1〜5）・評価とその票数。
+    合わないところがあれば、それも書きます。
+  </p>
+
+  <div id="rec-quiz"></div>
+  <div id="rec-out"></div>
+</section>
+
+<section class="sheet">
+  <div class="band">
+    <h2 class="band__t band__t--sub" data-en="How it is scored">採点のしかた</h2>
+    <span class="band__n"></span>
+  </div>
+  <p class="lead" data-en="110 points in total, shown as a percentage. Everything below the first column comes from BoardGameGeek; the weighting is mine. Games too heavy for the experience you picked are additionally scaled down, so a high rating alone cannot push a three-hour game in front of a beginner.">
+    合計110点を百分率にして出しています。配点はこちらで決めていますが、
+    材料はすべて BoardGameGeek の数値です。選んだ経験に対して重すぎる作品は
+    合計にも倍率をかけて下げます ── 評価の高さだけで、初心者の前に3時間級が
+    出てこないようにするためです。
+  </p>
+  <ul class="lead">
+    <li data-en="<b>Players, 30</b> — the suggested_numplayers poll: how many people voted that this count is best."><b>人数 30点</b> ── <code>suggested_numplayers</code> 投票。その人数を「ベスト」と答えた票の割合</li>
+    <li data-en="<b>Time, 20</b> — minplaytime / maxplaytime against the time you have."><b>時間 20点</b> ── <code>minplaytime</code> / <code>maxplaytime</code> と希望時間の重なり</li>
+    <li data-en="<b>Weight, 25</b> — averageweight, targeted at the experience level you chose."><b>重さ 25点</b> ── <code>averageweight</code>。選んだ経験に応じた目標値からの距離</li>
+    <li data-en="<b>Feel, 15</b> — inferred from boardgamecategory and boardgamemechanic."><b>遊び味 15点</b> ── <code>boardgamecategory</code> / <code>boardgamemechanic</code> から推定</li>
+    <li data-en="<b>Company, 10</b> — minage and the player range."><b>相手 10点</b> ── <code>minage</code> と人数レンジ</li>
+    <li data-en="<b>Standing, 10</b> — bayesaverage, BGG's vote-weighted rating."><b>世評 10点</b> ── <code>bayesaverage</code>（票数で補正された BGG の評価）</li>
+  </ul>
+  <p class="lead" data-en="The figures are a snapshot committed to this repository. Your browser never contacts BoardGameGeek — the date it was taken is printed on every card, because these numbers move.">
+    数値はリポジトリに固めた取得結果です。<strong>閲覧者のブラウザから BGG は叩きません。</strong>
+    値は日々動くので、取得日をカードごとに出しています。
+  </p>
+</section>
+</main>
+
+<footer class="sheet colophon" id="foot"></footer>
+
+<script src="assets/config.js"></script>
+<script src="assets/analytics.js"></script>
+<script src="data/profile.js"></script>
+<script src="data/works.js"></script>
+<script src="data/bgg.js"></script>
+<script src="data/picks.js"></script>
+<script src="data/bgg-picks.js"></script>
+<script src="data/macro.js"></script>
+<script src="data/releases.js"></script>
+<script src="assets/site.js"></script>
+</body>
+</html>

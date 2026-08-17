@@ -940,3 +940,78 @@ a { color: inherit; }
 .grid__dash { color: var(--ink-mute); }
 .grid__foot { margin: 0 0 var(--s5); font-size: .72rem; color: var(--ink-mute); }
 .grid__last { display: block; font-size: .68rem; color: var(--ink-mute); font-family: var(--serif); opacity: .85; }
+
+/* ============================================================= おすすめ
+   recommend.html。5問に答えると、BGG の数値で並べ直して出す。
+
+   ここでも色の役割は変えない。BGG から来た数値は藍、朱は押せるものだけ。
+   マッチ度はこちらの計算なので、どちらの色も持たせず地の文字色で出す ──
+   藍にすると BGG が付けた点数に見えてしまう。 */
+
+.rec { display: flex; flex-direction: column; gap: var(--s4); }
+
+/* --- 設問 --- */
+.rec__q { border: 1px solid var(--rule); background: var(--sheet); padding: var(--s4); }
+.rec__no { font-family: var(--mono); font-size: .68rem; letter-spacing: .16em; color: var(--vermilion); }
+.rec__t { font-size: 1.15rem; font-weight: 500; margin: .3rem 0 .2rem; }
+.rec__s { margin: 0 0 var(--s3); font-size: .8rem; color: var(--ink-mute); }
+
+.rec__opts { display: grid; grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr)); gap: var(--s2); }
+.rec__opt {
+  font: inherit; text-align: left; cursor: pointer;
+  color: var(--ink); background: transparent;
+  border: 1px solid var(--rule); padding: var(--s3);
+  display: block;
+}
+.rec__opt:hover { border-color: var(--vermilion); }
+.rec__opt[aria-pressed="true"] { border-color: var(--vermilion); background: var(--vermilion-dim); }
+.rec__opt b { display: block; font-weight: 600; font-size: .95rem; }
+.rec__opt span { display: block; font-size: .74rem; color: var(--ink-mute); margin-top: .15rem; }
+
+.rec__nav { display: flex; justify-content: space-between; gap: var(--s2); margin-top: var(--s3); flex-wrap: wrap; }
+.rec__bar { height: 2px; background: var(--rule-soft); margin-bottom: var(--s3); }
+.rec__bar > i { display: block; height: 100%; background: var(--vermilion); }
+
+/* --- 結果 --- */
+.rec__head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s3); flex-wrap: wrap; }
+.rec__card { border: 1px solid var(--rule); background: var(--sheet); padding: var(--s4); }
+.rec__card--top { border-color: var(--ink-mute); }
+
+.rec__top { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s3); }
+.rec__name { font-size: 1.1rem; font-weight: 600; margin: 0; }
+.rec__en { display: block; font-size: .72rem; color: var(--ink-mute); font-weight: 400; margin-top: .1rem; }
+
+/* マッチ度。こちらの計算なので朱にも藍にもしない */
+.rec__match { text-align: right; white-space: nowrap; }
+.rec__match b { display: block; font-family: var(--mono); font-size: 1.5rem; font-weight: 500; line-height: 1; }
+.rec__match span { font-family: var(--mono); font-size: .6rem; letter-spacing: .16em; color: var(--ink-mute); }
+
+.rec__note { margin: var(--s2) 0 0; font-size: .85rem; color: var(--ink-mid); }
+
+.rec__why { list-style: none; padding: 0; margin: var(--s3) 0 0; display: grid; gap: .3rem; }
+.rec__why li { font-size: .8rem; color: var(--ink-mid); display: flex; gap: .5rem; }
+.rec__why li b { color: var(--ink); font-weight: 600; }
+
+/* 都合の悪いほうの数字。ここを出さないと、勧めるだけのページになる */
+.rec__warn {
+  margin: var(--s3) 0 0; padding: var(--s2) var(--s3);
+  border-left: 2px solid var(--ink-mute); background: var(--paper);
+  font-size: .78rem; color: var(--ink-mid);
+}
+.rec__warn p { margin: 0; }
+.rec__warn p + p { margin-top: .3rem; }
+
+.rec__more { margin-top: var(--s4); }
+.rec__more summary { cursor: pointer; font-size: .85rem; color: var(--ink-mid); }
+
+/* まだ取得していないとき。空の結果を黙って出すより、そう言う */
+.rec__none { border: 1px solid var(--rule); background: var(--sheet); padding: var(--s4); }
+.rec__none code {
+  font-family: var(--mono); font-size: .78rem;
+  background: var(--paper); padding: .1rem .35rem; border: 1px solid var(--rule);
+}
+
+@media (max-width: 30rem) {
+  .rec__opts { grid-template-columns: 1fr 1fr; }
+  .rec__match b { font-size: 1.25rem; }
+}

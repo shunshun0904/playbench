@@ -281,7 +281,7 @@ function serve() {
       });
       console.log(`   ${w}px → ` +
         (tabs ? tabs.map(x => (x.ok ? '✅' : '❌') + x.t).join(' ') : 'nav が無い'));
-      if (!tabs || tabs.length !== 3) fail(`${w}px でタブが3枚出ていない`);
+      if (!tabs || tabs.length !== 4) fail(`${w}px でタブが4枚出ていない`);
       else {
         const ng = tabs.filter(x => !x.ok);
         if (ng.length) fail(`${w}px でタブが見えない: ${ng.map(x => x.t).join('/')}`);
@@ -511,6 +511,160 @@ function serve() {
     await ctx.close();
   }
 
+
+  /* ----------------------------------------------- おすすめ（recommend）
+     見張るのは4つ。
+
+     1. 閲覧者のブラウザから BGG へ1本も出ないこと。ここが破れると
+        申請文（docs/bgg-api-application.md）で BGG に約束した形が崩れる
+     2. どのカードにも取得日と評価人数が付いていること
+     3. 初心者に重すぎるものが先頭に来ないこと。それができないなら
+        このページを置く意味がない
+     4. 合わないところを黙って伏せないこと
+
+     数値は data/bgg-picks.js を差し替えて固定する（経済の表と同じやり方）。
+     リポジトリのスナップショットが空でも、中身まで検査できる。 */
+  {
+    const FIX = "'use strict';window.PB=window.PB||{};window.PB.BGG_PICKS=" + JSON.stringify({
+      fetchedAt: '2026-08-10',
+      source: 'boardgamegeek.com',
+      games: {
+        'Patchwork': {
+          id: 163412, name: 'Patchwork', year: 2014, minPlayers: 2, maxPlayers: 2,
+          minTime: 15, maxTime: 30, time: 30, minAge: 8, weight: 1.62, rating: 7.61,
+          bayes: 7.42, ratings: 102000, rank: 76,
+          poll: { '1': [1, 6, 380], '2': [588, 18, 2] },
+          categories: ['Abstract Strategy', 'Puzzle'], mechanics: ['Tile Placement']
+        },
+        'Azul': {
+          id: 230802, name: 'Azul', year: 2017, minPlayers: 2, maxPlayers: 4,
+          minTime: 30, maxTime: 45, time: 45, minAge: 8, weight: 1.77, rating: 7.75,
+          bayes: 7.58, ratings: 118000, rank: 60,
+          poll: { '2': [400, 150, 20], '4': [200, 300, 40] },
+          categories: ['Abstract Strategy'], mechanics: ['Tile Placement']
+        },
+        'Codenames': {
+          id: 178900, name: 'Codenames', year: 2015, minPlayers: 2, maxPlayers: 8,
+          minTime: 15, maxTime: 15, time: 15, minAge: 14, weight: 1.29, rating: 7.55,
+          bayes: 7.42, ratings: 92000, rank: 90,
+          /* 2人は投票でほぼ否定されている。注意書きが出るはず */
+          poll: { '2': [10, 60, 300], '6': [520, 80, 10] },
+          categories: ['Party Game', 'Word Game'], mechanics: ['Team-Based Game']
+        },
+        'Brass: Birmingham': {
+          id: 224517, name: 'Brass: Birmingham', year: 2018, minPlayers: 2, maxPlayers: 4,
+          minTime: 60, maxTime: 120, time: 120, minAge: 14, weight: 3.91, rating: 8.6,
+          bayes: 8.41, ratings: 45000, rank: 1,
+          poll: { '2': [120, 300, 60], '3': [400, 120, 20] },
+          categories: ['Economic'], mechanics: ['Network and Route Building']
+        }
+      }
+    }) + ';';
+
+    const ctx = await newContext({ viewport: { width: 1280, height: 1200 }, deviceScaleFactor: 2 });
+    await ctx.route(u => u.pathname.endsWith('/data/bgg-picks.js'), r =>
+      r.fulfill({ status: 200, contentType: 'text/javascript', body: FIX }));
+
+    /* BGG 宛ての通信を数える。0 でなければならない */
+    let toBgg = 0;
+    await ctx.route(u => /boardgamegeek\.com|geekdo\.com/.test(u.hostname), r => {
+      toBgg++;
+      return r.abort();
+    });
+
+    const page = await ctx.newPage();
+    await page.goto(URL + 'recommend.html', { waitUntil: 'load' });
+    await page.waitForSelector('.rec__opt');
+
+    const answer = async label => {
+      await page.locator('.rec__opt', { hasText: label }).first().click();
+      await page.waitForTimeout(60);
+    };
+    /* 2人 / 〜30分 / ほぼ初めて / パズル・箱庭 / ふたりで */
+    await answer('2人');
+    await answer('〜30分');
+    await answer('ほぼ初めて');
+    await answer('パズル・箱庭');
+    await page.locator('.rec__nav .lnk').nth(1).click();   // 複数選択のページは「次へ」で進む
+    await page.waitForTimeout(60);
+    await answer('ふたりで');
+    await page.waitForSelector('#rec-out .rec__card');
+
+    const got = await page.evaluate(() => ({
+      cards: [...document.querySelectorAll('#rec-out .rec__card')].map(el => ({
+        name: el.querySelector('.rec__name').firstChild.textContent.trim(),
+        score: parseInt(el.querySelector('.rec__match b').textContent, 10),
+        warn: [...el.querySelectorAll('.rec__warn p')].map(p => p.textContent),
+        bgg: !!el.querySelector('.bgg'),
+        ratings: !!el.querySelector('.bgg__n'),
+        asOf: (el.querySelector('.bgg__d') || {}).textContent || ''
+      })),
+      overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth
+    }));
+
+    console.log('── おすすめ');
+    console.log('   ' + got.cards.map(c => c.name + ' ' + c.score).join(' / '));
+    console.log('   BGG への通信 ' + toBgg + ' 本');
+
+    if (toBgg !== 0) fail('閲覧者のブラウザから BGG へ ' + toBgg + ' 本出ている（0 でなければならない）');
+    if (!got.cards.length) fail('おすすめが1件も出ていない');
+    if (got.cards.some(c => !c.bgg)) fail('BGG の行が無いカードがある');
+    if (got.cards.some(c => !c.ratings)) fail('評価人数の無いカードがある');
+    if (got.cards.some(c => !/2026-08-10/.test(c.asOf))) fail('取得日の無いカードがある');
+    if (got.overflow > 1) fail('横スクロールが出ている');
+
+    /* 初心者向けの並びになっているか。BGG 総合1位でも、重ければ先頭に来ない */
+    const top = got.cards[0];
+    if (top.name !== 'パッチワーク') fail('先頭が軽い作品でない（' + top.name + '）');
+    const brass = got.cards.find(c => /ブラス/.test(c.name));
+    if (!brass) fail('ブラスがカードに出ていない');
+    else {
+      if (brass.score >= top.score) fail('重量級が軽い作品より上に来ている');
+      if (!brass.warn.some(w => /ルール説明/.test(w))) fail('重い作品に説明の注意書きが出ていない');
+      if (!brass.warn.some(w => /長め/.test(w))) fail('時間が合わないことを書いていない');
+    }
+    /* BGG の投票が否定している人数は、そう言うこと */
+    const cn = got.cards.find(c => /コードネーム/.test(c.name));
+    if (cn && !cn.warn.some(w => /推奨されていません/.test(w))) {
+      fail('BGG の投票が推奨していない人数なのに、そう書いていない');
+    }
+
+    await page.screenshot({ path: path.join(OUT, 'recommend.png'), fullPage: true });
+    await ctx.close();
+  }
+
+  /* おすすめ ── まだ取得していないとき。
+     空の結果を黙って出さず、取っていないと言うこと（経済の表と同じ方針）。 */
+  {
+    const ctx = await newContext({ viewport: { width: 1280, height: 900 } });
+    await ctx.route(u => u.pathname.endsWith('/data/bgg-picks.js'), r =>
+      r.fulfill({ status: 200, contentType: 'text/javascript',
+        body: "'use strict';window.PB=window.PB||{};window.PB.BGG_PICKS={\"fetchedAt\":null,\"source\":\"boardgamegeek.com\",\"games\":{}};" }));
+    const page = await ctx.newPage();
+    await page.goto(URL + 'recommend.html', { waitUntil: 'load' });
+    await page.waitForSelector('.rec__opt');
+    for (const l of ['3〜4人', '30〜60分', 'ほぼ初めて', 'わいわい']) {
+      await page.locator('.rec__opt', { hasText: l }).first().click();
+      await page.waitForTimeout(50);
+    }
+    await page.locator('.rec__nav .lnk').nth(1).click();
+    await page.waitForTimeout(50);
+    await page.locator('.rec__opt', { hasText: '友人' }).first().click();
+    await page.waitForTimeout(250);
+
+    const none = await page.evaluate(() => {
+      const n = document.querySelector('.rec__none');
+      return { shown: !!n, cards: document.querySelectorAll('.rec__card').length,
+               text: n ? n.textContent : '' };
+    });
+    console.log('── おすすめ（取得前）');
+    console.log('   ' + (none.shown ? '「まだ取得していない」と出る' : '何も出ない'));
+    if (!none.shown) fail('スナップショットが空のとき、取っていないと言っていない');
+    if (none.cards) fail('データが無いのにカードが出ている');
+    if (!/npm run bgg/.test(none.text)) fail('埋め方（npm run bgg）が書かれていない');
+    await ctx.close();
+  }
+
   /* ------------------------------------------------------------- 英語 */
   {
     const ctx = await newContext({ viewport: { width: 1280, height: 1000 }, deviceScaleFactor: 2 });
@@ -536,7 +690,7 @@ function serve() {
     console.log('  ', JSON.stringify(en));
     // 収録は3作。先頭はハイソサエティ
     if (en.lang !== 'en' || en.first !== 'High Society' || !/Play/.test(en.play)) fail('英語に切り替わっていない');
-    if (!/About\/Board games\/Economy/.test(en.nav)) fail('天のタブが英語になっていない');
+    if (!/About\/Board games\/Picks\/Economy/.test(en.nav)) fail('天のタブが英語になっていない');
     if (en.overflow > 1) fail('横スクロールが出ている');
     await ctx.close();
   }

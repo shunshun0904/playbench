@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "build": "node build.js",
-    "test": "node test/bgg-parse.mjs && node test/calendar-parse.mjs && node test/shots.js",
+    "test": "node test/bgg-parse.mjs && node test/bgg-fetch.mjs && node test/calendar-parse.mjs && node test/shots.js",
     "serve": "python3 -m http.server 8080",
     "bgg": "node tools/fetch-bgg.mjs",
     "test:parse": "node test/bgg-parse.mjs",

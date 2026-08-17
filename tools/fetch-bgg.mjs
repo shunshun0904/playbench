@@ -173,6 +173,111 @@ export function parseThing(xml, id) {
   };
 }
 
+/* --------------------------------------------------- おすすめ用の取り出し
+   recommend.html のために、上の6項目より広く読む。
+   広げたぶんは docs/bgg-api-application.md に書いてある申告と一致させること。
+
+   画像・説明文・レビュー・利用者の情報は取らない。ここで読むのは
+   「箱の裏に書いてある事実」と、コミュニティが付けた数字だけにとどめる。 */
+
+/* thing は id をカンマで並べるとまとめて返る。75作でも4要求で済む。
+   入れ子の <item> は無いので、先読みで切るだけで item ごとに分けられる。
+   （<items> は "item" の直後が s なので \b に当たらず、切れない） */
+export function splitItems(xml) {
+  return xml.split(/(?=<item\b)/).slice(1);
+}
+
+/* XML の実体参照を戻す。"Sea Salt &amp; Paper" のような題は照合で外れる */
+export function decode(s) {
+  if (s == null) return s;
+  return String(s)
+    .replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"').replace(/&#0?39;/g, "'").replace(/&apos;/g, "'")
+    .replace(/&#(\d+);/g, (_, d) => String.fromCodePoint(Number(d)))
+    .replace(/&amp;/g, '&');   // 最後にやる。先にやると &amp;lt; が壊れる
+}
+
+/* 総合ランク。<rank> は複数あり、属性の並びは決め打ちにしない。
+   未ランクの作品は value="Not Ranked" が来るので、数字のときだけ採る。 */
+export function boardGameRank(xml) {
+  const m = xml.match(/<rank\b[^>]*\bname="boardgame"[^>]*>/);
+  if (!m) return null;
+  const v = m[0].match(/\bvalue="([^"]*)"/);
+  return v && /^\d+$/.test(v[1]) ? Number(v[1]) : null;
+}
+
+/* 人数投票。BGG にしかない、いちばん効く情報。
+   [ベスト, 推奨, 非推奨] の生の票数をそのまま残す ── 割合に丸めると
+   「何票の上での割合か」が読めなくなり、3票の 100% と 800票の 100% が
+   同じ顔で並んでしまう。 */
+export function playerPoll(xml) {
+  const block = xml.match(/<poll\b[^>]*\bname="suggested_numplayers"[\s\S]*?<\/poll>/);
+  if (!block) return null;
+
+  const out = {};
+  for (const r of block[0].matchAll(/<results\b([^>]*)>([\s\S]*?)<\/results>/g)) {
+    const numplayers = (r[1].match(/\bnumplayers="([^"]*)"/) || [])[1];
+    if (!numplayers) continue;
+
+    const votes = { Best: 0, Recommended: 0, 'Not Recommended': 0 };
+    for (const one of r[2].matchAll(/<result\b[^>]*>/g)) {
+      const k = (one[0].match(/\bvalue="([^"]*)"/) || [])[1];
+      const n = (one[0].match(/\bnumvotes="([^"]*)"/) || [])[1];
+      if (k in votes) votes[k] = Number(n) || 0;
+    }
+    const row = [votes.Best, votes.Recommended, votes['Not Recommended']];
+    if (row[0] + row[1] + row[2] > 0) out[numplayers] = row;
+  }
+  return Object.keys(out).length ? out : null;
+}
+
+/* <link type="..."> の value を並べる。分類とメカニクスの名前だけ */
+export function links(xml, type) {
+  return [...xml.matchAll(new RegExp(`<link\\b[^>]*\\btype="${type}"[^>]*>`, 'g'))]
+    .map(m => (m[0].match(/\bvalue="([^"]*)"/) || [])[1])
+    .filter(Boolean)
+    .map(decode);
+}
+
+const r2 = v => (v == null ? null : Math.round(v * 100) / 100);
+
+/* item 1つぶんの XML から、おすすめに要るものを取り出す */
+export function parsePick(xml) {
+  const id = (xml.match(/<item\b[^>]*\bid="(\d+)"/) || [])[1];
+  const base = parseThing(xml, id ? Number(id) : null);
+  return {
+    id: base.id,
+    name: decode(base.name),
+    year: base.year,
+    minPlayers: num(xml, 'minplayers'),
+    maxPlayers: num(xml, 'maxplayers'),
+    minTime: num(xml, 'minplaytime'),
+    maxTime: num(xml, 'maxplaytime'),
+    time: num(xml, 'playingtime'),
+    minAge: num(xml, 'minage'),
+    weight: r2(base.weight),
+    rating: r2(base.rating),
+    bayes: r2(base.bayes),
+    ratings: base.ratings,
+    rank: boardGameRank(xml),
+    poll: playerPoll(xml),
+    categories: links(xml, 'boardgamecategory'),
+    mechanics: links(xml, 'boardgamemechanic')
+  };
+}
+
+/* 題が一致しているか。記号と大文字小文字の違いだけは無視する。
+
+   前方一致は認めない。認めると「Pandemic」のつもりで
+   「Pandemic Legacy: Season 1」を掴んでも通ってしまう ── 一覧には
+   その両方が載っているので、これは実際に起こりうる取り違えだった。
+   外れたら search で引き直すだけなので、厳しくしておいて損がない。 */
+const norm = s => decode(s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+export function sameTitle(expected, actual) {
+  const a = norm(expected), b = norm(actual);
+  return Boolean(a) && a === b;
+}
+
 /* ------------------------------------------------------------ 名前で引く */
 async function resolveId(name) {
   const xml = await get(`/search?type=boardgame&exact=1&query=${encodeURIComponent(name)}`);
@@ -264,6 +369,148 @@ if (PRINT_ONLY) {
   console.log(`\n✅ data/bgg.js を更新（${got}/${works.length} 件${failed ? `・失敗 ${failed} 件` : ''}）`);
 } else {
   console.log(`\n○ 値に変化なし。書き換えない（${got} 件）`);
+}
+
+/* ══════════════════════════════════════════ おすすめ用（recommend.html）
+   data/picks.js の題名一覧を BGG で引き、data/bgg-picks.js に固める。
+
+   要求数を抑えるのが主眼:
+     - thing は id をカンマで並べてまとめて引く（20件ずつ＝75作で4要求）
+     - id は前回の結果を使い回すので、search が走るのは初めての題だけ
+     - 取れた名前が題と食い違うものだけ search で引き直す
+
+   つまり2回目以降の更新は、何作あっても数要求で終わる。 */
+
+const picks = (() => {
+  const p = path.join(ROOT, 'data', 'picks.js');
+  if (!fs.existsSync(p)) return [];
+  const sandbox = { PB: {} };
+  new Function('window', fs.readFileSync(p, 'utf8'))(sandbox);
+  return sandbox.PB.PICKS || [];
+})();
+
+if (picks.length) {
+  console.log(`\n── おすすめ用の一覧 ${picks.length} 件`);
+
+  /* 前回の結果。id が分かっていれば search を省ける */
+  const prevIds = (() => {
+    const p = path.join(ROOT, 'data', 'bgg-picks.js');
+    if (!fs.existsSync(p)) return {};
+    const sandbox = { PB: {} };
+    try { new Function('window', fs.readFileSync(p, 'utf8'))(sandbox); }
+    catch (e) { return {}; }
+    const games = (sandbox.PB.BGG_PICKS || {}).games || {};
+    const map = {};
+    Object.keys(games).forEach(k => { if (games[k].id) map[k] = games[k].id; });
+    return map;
+  })();
+
+  /* id ごとに、どの題のつもりで引いたのかを覚えておく */
+  const wanted = new Map();
+  picks.forEach(p => {
+    const id = prevIds[p.name] || p.bggId;
+    if (id) wanted.set(id, p);
+  });
+
+  const gotPicks = {};
+  const retry = picks.filter(p => !prevIds[p.name] && !p.bggId);
+
+  /* --- 1) 分かっている id をまとめて引く --- */
+  const ids = [...wanted.keys()];
+  for (let i = 0; i < ids.length; i += 20) {
+    const chunk = ids.slice(i, i + 20);
+    console.log(`— thing ${i + 1}〜${i + chunk.length} / ${ids.length}`);
+    let items = [];
+    try {
+      items = splitItems(await get(`/thing?id=${chunk.join(',')}&stats=1`));
+    } catch (e) {
+      console.log(`   ✗ ${e.message}`);
+    }
+
+    const seen = new Set();
+    for (const xml of items) {
+      const rec = parsePick(xml);
+      const want = wanted.get(rec.id);
+      if (!want) continue;
+      seen.add(rec.id);
+      if (!sameTitle(want.name, rec.name)) {
+        /* id が別のゲームを指していた。黙って混ぜず、名前で引き直す */
+        console.log(`   ⚠ id=${rec.id} は「${rec.name}」── 「${want.name}」のつもりだった。引き直す`);
+        retry.push(want);
+        continue;
+      }
+      gotPicks[want.name] = rec;
+    }
+    /* 返ってこなかった id（削除された作品など）も引き直しに回す */
+    chunk.filter(id => !seen.has(id)).forEach(id => retry.push(wanted.get(id)));
+
+    if (i + 20 < ids.length) await sleep(1500);
+  }
+
+  /* --- 2) id が無いもの・食い違ったものを、題名で引き直す ---
+     先に search で id だけ揃えてから、まとめて thing を引く。
+     1件ずつ thing を叩くと、初回だけで要求数が倍近くになる。 */
+  const found = new Map();
+  for (const p of retry) {
+    if (!p || gotPicks[p.name] || found.has(p.name)) continue;
+    try {
+      await sleep(1500);
+      found.set(p.name, await resolveId(p.name));
+    } catch (e) {
+      console.log(`   ✗ ${p.name} ── ${e.message}`);
+    }
+  }
+
+  const retryIds = [...found.values()];
+  for (let i = 0; i < retryIds.length; i += 20) {
+    const chunk = retryIds.slice(i, i + 20);
+    await sleep(1500);
+    let items = [];
+    try {
+      items = splitItems(await get(`/thing?id=${chunk.join(',')}&stats=1`));
+    } catch (e) {
+      console.log(`   ✗ ${e.message}`);
+      continue;
+    }
+    for (const xml of items) {
+      const rec = parsePick(xml);
+      /* どの題のつもりで引いたかは、search したときの対応で分かる */
+      const name = [...found.keys()].find(k => found.get(k) === rec.id);
+      if (!name) continue;
+      if (!sameTitle(name, rec.name)) {
+        console.log(`   ✗ ${name} ── 検索しても「${rec.name}」が返る。載せない`);
+        continue;
+      }
+      gotPicks[name] = rec;
+      console.log(`   検索 id=${rec.id} 「${rec.name}」`);
+    }
+  }
+
+  const n = Object.keys(gotPicks).length;
+  if (!n) {
+    console.error('\n❌ おすすめ用は1件も取れなかった。既存の data/bgg-picks.js は残す。');
+  } else {
+    const outPicks = {
+      fetchedAt: new Date().toISOString().slice(0, 10),
+      source: 'boardgamegeek.com',
+      games: gotPicks
+    };
+    const body =
+      '/* boardgamegeek.com から取得。tools/fetch-bgg.mjs が書き換えるので手で編集しない。\n' +
+      '   recommend.html がこれを読む。こちらの実測ではなく他人が付けた数字なので、\n' +
+      '   取得日と評価人数を必ず添えて表示する。\n' +
+      '   画像・説明文・レビューは取っていない（docs/bgg-api-application.md の申告どおり）。 */\n' +
+      "'use strict';\n\nwindow.PB = window.PB || {};\nwindow.PB.BGG_PICKS = " +
+      JSON.stringify(outPicks, null, 2) + ';\n';
+
+    if (PRINT_ONLY) {
+      console.log('\n----- ここから下を data/bgg-picks.js に貼る -----');
+      console.log(body);
+    } else {
+      fs.writeFileSync(path.join(ROOT, 'data', 'bgg-picks.js'), body);
+      console.log(`\n✅ data/bgg-picks.js を更新（${n}/${picks.length} 件）`);
+    }
+  }
 }
 
 }

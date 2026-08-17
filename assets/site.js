@@ -227,7 +227,14 @@
   function bggRow(w) {
     var all = PB.BGG;
     if (!all || !all.games) return null;
-    var g = all.games[w.id];
+    return bggBox(all.games[w.id], all.fetchedAt);
+  }
+
+  /* 数値1件ぶんを1行に組む。games.html のカードと recommend.html の
+     おすすめカードで、同じ見た目・同じ但し書きになるよう、ここに寄せてある。
+     取得日と評価人数は必ず添える ── 値は日々動くので、いつ時点かが
+     見えない数字ほど当てにならないものはない。 */
+  function bggBox(g, fetchedAt) {
     if (!g || (g.weight == null && g.rating == null)) return null;
 
     var box = el('div', 'bgg');
@@ -259,9 +266,9 @@
     a.rel = 'noopener';
     a.target = '_blank';
     tail.appendChild(a);
-    if (all.fetchedAt) {
+    if (fetchedAt) {
       tail.appendChild(el('span', 'bgg__d num',
-        (lang === 'en' ? 'as of ' : '') + all.fetchedAt + (lang === 'en' ? '' : ' 時点')));
+        (lang === 'en' ? 'as of ' : '') + fetchedAt + (lang === 'en' ? '' : ' 時点')));
     }
     box.appendChild(tail);
     return box;
@@ -547,13 +554,476 @@
     Array.prototype.forEach.call(nodes, function (n) { io.observe(n); });
   }
 
+  /* ══════════════════════════════════ おすすめ（recommend.html）
+     5問に答えてもらい、BGG の数値で並べ直す。
+
+     候補の題名は data/picks.js、数値は data/bgg-picks.js（BGG から取得）。
+     このページも BGG を叩かない ── 閲覧者のブラウザから外へは1本も出さない。
+
+     採点はこちらの計算だが、材料はすべて BGG の数値。何がどう効いたかは
+     カードに書き出す。「なんとなくおすすめ」にしないため。 */
+
+  var REC_STEPS = [
+    {
+      key: 'players',
+      t: '何人で遊びますか？', tEn: 'How many of you?',
+      s: 'BGG の「この人数がベスト」投票を使います',
+      sEn: 'Answered from BGG’s own player-count poll',
+      opts: [
+        { v: '2',   l: '2人',        lEn: '2 players',   d: '夫婦・カップル・友人と', dEn: 'A partner or one friend' },
+        { v: '3-4', l: '3〜4人',     lEn: '3-4 players', d: 'いちばん選択肢が多い',   dEn: 'The widest choice' },
+        { v: '5+',  l: '5人以上',    lEn: '5 or more',   d: '大人数で',               dEn: 'A crowd' },
+        { v: 'any', l: '決まってない', lEn: 'Not sure',  d: '幅広く出します',         dEn: 'Cast the net wide' }
+      ]
+    },
+    {
+      key: 'time',
+      t: 'どのくらい遊べそうですか？', tEn: 'How long have you got?',
+      s: '1回あたりの目安です', sEn: 'Per session',
+      opts: [
+        { v: 'short', l: '〜30分',    lEn: 'Up to 30 min', d: 'サクッと',       dEn: 'A quick one' },
+        { v: 'mid',   l: '30〜60分',  lEn: '30-60 min',    d: 'ちょうどいい',   dEn: 'The sweet spot' },
+        { v: 'long',  l: '60分以上',  lEn: 'Over an hour', d: 'じっくり',       dEn: 'Settle in' },
+        { v: 'any',   l: 'こだわらない', lEn: 'No limit',  d: '',               dEn: '' }
+      ]
+    },
+    {
+      key: 'exp',
+      t: 'ボードゲームの経験は？', tEn: 'How much have you played?',
+      s: 'BGG の「ルールの重さ（1〜5）」の目安を決めます',
+      sEn: 'Sets the target on BGG’s 1-5 weight scale',
+      opts: [
+        { v: 'first', l: 'ほぼ初めて',   lEn: 'Basically none', d: '人生ゲームやUNOくらい', dEn: 'Monopoly, Uno, that sort of thing' },
+        { v: 'few',   l: '何回か遊んだ', lEn: 'A few times',    d: 'カタンや人狼は知ってる', dEn: 'You know Catan' },
+        { v: 'some',  l: 'そこそこ好き', lEn: 'I like them',    d: 'もう少し歯ごたえが欲しい', dEn: 'Give me something with teeth' }
+      ]
+    },
+    {
+      key: 'vibes',
+      multi: true,
+      t: 'どんな時間を過ごしたいですか？', tEn: 'What kind of evening?',
+      s: '複数選べます。BGG の分類・メカニクスと突き合わせます',
+      sEn: 'Pick any number. Matched against BGG categories and mechanics',
+      opts: [
+        { v: 'party',       l: 'わいわい',     lEn: 'Loud',        d: '笑って盛り上がる',   dEn: 'Laughing' },
+        { v: 'think',       l: 'じっくり考える', lEn: 'Thinky',    d: '戦略を組み立てる',   dEn: 'Build something' },
+        { v: 'coop',        l: 'みんなで協力',  lEn: 'Together',   d: '勝つときは全員で',   dEn: 'All win or all lose' },
+        { v: 'negotiation', l: '駆け引き',     lEn: 'Sharp',       d: '交渉・ハッタリ',     dEn: 'Bluff and barter' },
+        { v: 'theme',       l: '世界観に浸る',  lEn: 'Immersive',  d: '物語や雰囲気',       dEn: 'Story and mood' },
+        { v: 'puzzle',      l: 'パズル・箱庭',  lEn: 'Puzzly',     d: '並べて作る',         dEn: 'Fit things together' }
+      ]
+    },
+    {
+      key: 'who',
+      t: '誰と遊びますか？', tEn: 'Who with?',
+      s: 'BGG の対象年齢と人数レンジを見ます', sEn: 'Uses BGG’s minimum age and player range',
+      opts: [
+        { v: 'family',  l: '家族・子ども',    lEn: 'Family',    d: '対象年齢を優先',   dEn: 'Age rating matters' },
+        { v: 'friends', l: '友人',           lEn: 'Friends',    d: '',                dEn: '' },
+        { v: 'couple',  l: 'ふたりで',       lEn: 'Just two',   d: '2人用の名作を優先', dEn: 'Two-player designs first' },
+        { v: 'work',    l: '職場・イベント',  lEn: 'Work event', d: '大人数向けを優先',  dEn: 'Big groups first' }
+      ]
+    }
+  ];
+
+  /* 回答は組み直し（言語切替）をまたいで残す */
+  var recA = { players: null, time: null, exp: null, vibes: [], who: null };
+  var recStep = 0;
+  var recDone = false;
+
+  function recTargets(a) {
+    if (a === '2') return [2];
+    if (a === '3-4') return [3, 4];
+    if (a === '5+') return [5, 6, 7];
+    return [2, 3, 4, 5];
+  }
+  function recTimeRange(a) {
+    if (a === 'short') return [0, 30];
+    if (a === 'mid') return [30, 60];
+    if (a === 'long') return [60, 240];
+    return [0, 240];
+  }
+  function recWeightTarget(a) {
+    if (a === 'first') return { ideal: 1.5, spread: .6, ceiling: 2.6 };
+    if (a === 'few') return { ideal: 2.2, spread: .7, ceiling: 3.3 };
+    return { ideal: 3.1, spread: .9, ceiling: 5 };
+  }
+  function clamp(v, lo, hi) { return Math.min(hi, Math.max(lo, v)); }
+
+  /* BGG の分類とメカニクスから遊び味を推す。data/picks.js の vibes は補助 */
+  function recVibes(g) {
+    var has = function (list, names) {
+      if (!list) return false;
+      for (var i = 0; i < names.length; i++) if (list.indexOf(names[i]) >= 0) return true;
+      return false;
+    };
+    var c = g.categories || [], m = g.mechanics || [];
+    var out = {};
+    if (has(m, ['Cooperative Game', 'Communication Limits'])) out.coop = 1;
+    if (has(c, ['Party Game', 'Humor', 'Word Game', 'Trivia', 'Racing']) ||
+        has(m, ['Acting', 'Team-Based Game', 'Singing', 'Storytelling', 'Player Judge'])) out.party = 1;
+    if (has(c, ['Negotiation', 'Bluffing', 'Spies/Secret Agents', 'Political', 'Mafia']) ||
+        has(m, ['Trading', 'Negotiation', 'Auction/Bidding', 'Betting and Bluffing', 'Hidden Roles', 'Take That'])) out.negotiation = 1;
+    if (has(c, ['Abstract Strategy', 'Puzzle']) ||
+        has(m, ['Tile Placement', 'Pattern Building', 'Pattern Recognition', 'Grid Coverage', 'Polyomino', 'Paper-and-Pencil'])) out.puzzle = 1;
+    if (has(c, ['Adventure', 'Fantasy', 'Science Fiction', 'Horror', 'Exploration', 'Miniatures', 'Fighting', 'Animals', 'Environmental', 'Novel-based']) ||
+        has(m, ['Legacy Game', 'Scenario / Mission / Campaign Game', 'Role Playing', 'Variable Player Powers', 'Narrative Choice / Paragraph'])) out.theme = 1;
+    if (has(c, ['Economic', 'Civilization', 'City Building', 'Industry / Manufacturing', 'Farming', 'Transportation']) ||
+        has(m, ['Worker Placement', 'Engine Building', 'Deck, Bag, and Pool Building', 'Income', 'Network and Route Building', 'Action Drafting'])) out.think = 1;
+    return out;
+  }
+
+  /* 人数（30点）。BGG の投票をそのまま点にする。票数も持ち帰る ──
+     3票の 100% と 800票の 100% を同じ顔で出さないため。 */
+  function recPlayerFit(g, want) {
+    var min = g.minPlayers || 1, max = g.maxPlayers || 99;
+    var top = { score: 0, n: null, bestVotes: 0, okVotes: 0, votes: 0, has: false };
+    recTargets(want).forEach(function (n) {
+      var fits = n >= min && n <= max;
+      var row = g.poll ? g.poll[String(n)] : null;
+      var total = row ? row[0] + row[1] + row[2] : 0;
+      var score;
+      if (total >= 5) {
+        var blend = (row[0] + row[1] * .5) / total;
+        score = fits ? 8 + 22 * blend : 22 * blend * .3;
+      } else {
+        score = fits ? 20 : 0;
+      }
+      if (score > top.score) {
+        top = {
+          score: score, n: n, votes: total, has: total >= 5,
+          bestVotes: row ? row[0] : 0, okVotes: row ? row[0] + row[1] : 0
+        };
+      }
+    });
+    return top;
+  }
+
+  /* 時間（20点） */
+  function recTimeFit(g, want) {
+    var r = recTimeRange(want);
+    var lo = g.minTime || g.time || 60;
+    var hi = g.maxTime || g.time || lo;
+    if (Math.min(r[1], hi) - Math.max(r[0], lo) >= 0) return { score: 20, fits: true, longer: false };
+    var over = lo > r[1];
+    var gap = over ? lo - r[1] : r[0] - hi;
+    return { score: clamp(20 - gap / 2.5, 0, 20), fits: false, longer: over };
+  }
+
+  /* 重さ（25点）。初心者に重い作品が回らないよう、合計にも倍率をかける */
+  function recWeightFit(g, want) {
+    var w = recWeightTarget(want);
+    if (g.weight == null) return { score: 12, penalty: 1 };
+    var s = 25 * Math.exp(-Math.pow((g.weight - w.ideal) / w.spread, 2));
+    if (g.weight > w.ceiling) s *= .35;
+    var pen = 1;
+    if (g.weight > w.ceiling + 1) pen = .6;
+    else if (g.weight > w.ceiling) pen = .75;
+    return { score: s, penalty: pen };
+  }
+
+  function recScoreOne(pick, g) {
+    var parts = {
+      players: recPlayerFit(g, recA.players),
+      time: recTimeFit(g, recA.time),
+      weight: recWeightFit(g, recA.exp)
+    };
+
+    /* 遊び味（15点） */
+    var tags = recVibes(g);
+    (pick.vibes || []).forEach(function (v) { tags[v] = 1; });
+    var wanted = recA.vibes || [];
+    var hit = wanted.filter(function (v) { return tags[v]; });
+    parts.vibes = { score: wanted.length ? 15 * (.25 + .75 * hit.length / wanted.length) : 9, hit: hit };
+
+    /* 相手（10点） */
+    var age = g.minAge || 0, mn = g.minPlayers || 1, mx = g.maxPlayers || 99;
+    var av = 5;
+    if (recA.who === 'family') av = age && age <= 8 ? 10 : age <= 10 ? 8 : age <= 12 ? 5 : 2;
+    else if (recA.who === 'couple') av = (mn === 2 && mx === 2) ? 10 : (mn <= 2 && mx >= 2) ? 8 : 2;
+    else if (recA.who === 'work') av = mx >= 5 ? 8 : 4;
+    else if (recA.who === 'friends') av = 7;
+    if ((pick.who || []).indexOf(recA.who) >= 0) av = Math.min(10, av + 2);
+    parts.who = { score: av };
+
+    /* 世評（10点）。bayesaverage を 5.5〜8.3 で正規化 */
+    parts.quality = { score: g.bayes == null ? 4 : clamp((g.bayes - 5.5) / 2.8 * 10, 0, 10) };
+
+    var total = parts.players.score + parts.time.score + parts.weight.score +
+                parts.vibes.score + parts.who.score + parts.quality.score;
+    total *= parts.weight.penalty;
+
+    return { pick: pick, g: g, parts: parts, score: clamp(Math.round(total / 110 * 100), 1, 99) };
+  }
+
+  /* 効いた理由。数字は必ず BGG のものをそのまま出す */
+  function recWhy(r) {
+    var g = r.g, p = r.parts, out = [];
+    var en = lang === 'en';
+    var pl = p.players;
+
+    if (pl.n && pl.has && pl.bestVotes / pl.votes >= .4) {
+      out.push({ b: pl.n + (en ? ' players is best' : '人がベスト'),
+        s: en ? '(' + pl.bestVotes + ' of ' + pl.votes + ' votes)'
+              : '（' + pl.votes + '票中 ' + pl.bestVotes + '票）' });
+    } else if (pl.n && pl.has && pl.okVotes / pl.votes >= .6) {
+      out.push({ b: pl.n + (en ? ' players works' : '人でも遊べる'),
+        s: en ? '(best or recommended by ' + pl.okVotes + ' of ' + pl.votes + ')'
+              : '（' + pl.votes + '票中 ' + pl.okVotes + '票が「ベスト or 推奨」）' });
+    } else if (g.minPlayers && g.maxPlayers) {
+      out.push({ b: g.minPlayers + '–' + g.maxPlayers + (en ? ' players' : '人'), s: '' });
+    }
+
+    if (p.time.fits) out.push({ b: recTimeLabel(g), s: en ? 'fits the time you have' : '希望どおりの長さ' });
+
+    if (g.weight != null) {
+      var w = g.weight;
+      var word = en
+        ? (w < 1.6 ? 'very light' : w < 2.2 ? 'light' : w < 3.0 ? 'medium' : w < 3.7 ? 'heavy' : 'very heavy')
+        : (w < 1.6 ? 'とても軽い' : w < 2.2 ? '軽め' : w < 3.0 ? 'やや歯ごたえあり' : w < 3.7 ? '重め' : 'かなり重い');
+      out.push({ b: (en ? 'Weight ' : '重さ ') + w.toFixed(2) + ' / 5', s: '（' + word + '）' });
+    }
+
+    if (g.rank) out.push({ b: (en ? 'BGG rank #' : 'BGG 総合 ') + g.rank + (en ? '' : '位'), s: '' });
+
+    if (recA.who === 'family' && g.minAge) {
+      out.push({ b: (en ? 'Age ' : '対象年齢 ') + g.minAge + (en ? '+' : '歳〜'), s: '' });
+    }
+    return out;
+  }
+
+  function recTimeLabel(g) {
+    var lo = g.minTime || g.time, hi = g.maxTime || g.time;
+    if (!lo && !hi) return '—';
+    var unit = lang === 'en' ? ' min' : '分';
+    return (lo && hi && lo !== hi ? lo + '–' + hi : (hi || lo)) + unit;
+  }
+
+  /* 都合の悪いほうの数字。これを出さないと「勧めるだけ」のページになる */
+  function recWarn(r) {
+    var g = r.g, p = r.parts, out = [], en = lang === 'en';
+
+    if (recA.exp === 'first' && g.weight != null && g.weight >= 2.5) {
+      out.push(en
+        ? 'The first game will take a while to explain. Easier with someone who knows it.'
+        : '最初の1回はルール説明に時間がかかります。知っている人がいると安心です。');
+    }
+    if ((g.maxTime || g.time || 0) >= 120) {
+      out.push(en ? 'This one wants a whole evening.' : '腰を据えて遊ぶタイプです。');
+    }
+    if (recA.players === '2' && g.minPlayers >= 3) {
+      out.push(en ? 'Cannot be played with two.' : '2人では遊べません（最少' + g.minPlayers + '人）。');
+    } else if (p.players.has && p.players.n && p.players.okVotes / p.players.votes < .35) {
+      out.push(en
+        ? 'BGG’s poll does not recommend ' + p.players.n + ' players (' + p.players.okVotes + ' of ' + p.players.votes + ').'
+        : p.players.n + '人でのプレイは、BGG の投票では推奨されていません（' +
+          p.players.votes + '票中 ' + p.players.okVotes + '票）。');
+    }
+    if (!p.time.fits && recA.time !== 'any') {
+      out.push(en
+        ? 'Actually ' + recTimeLabel(g) + ' — ' + (p.time.longer ? 'longer' : 'shorter') + ' than you asked for.'
+        : '実際は ' + recTimeLabel(g) + '。希望より' + (p.time.longer ? '長め' : '短め') + 'です。');
+    }
+    return out;
+  }
+
+  function recCard(r, top) {
+    var en = lang === 'en';
+    var card = el('article', 'rec__card' + (top ? ' rec__card--top' : ''));
+
+    var head = el('div', 'rec__top');
+    var nm = el('div');
+    var h = el('h3', 'rec__name', r.pick.ja || r.g.name);
+    h.appendChild(el('span', 'rec__en', r.g.name + (r.g.year ? ' (' + r.g.year + ')' : '')));
+    nm.appendChild(h);
+    head.appendChild(nm);
+
+    var m = el('div', 'rec__match');
+    m.appendChild(el('b', null, String(r.score)));
+    m.appendChild(el('span', null, en ? 'MATCH' : 'マッチ度'));
+    head.appendChild(m);
+    card.appendChild(head);
+
+    var note = pick(r.pick, 'note');
+    if (note) card.appendChild(el('p', 'rec__note', note));
+
+    var why = el('ul', 'rec__why');
+    recWhy(r).slice(0, 4).forEach(function (w) {
+      var li = el('li');
+      li.appendChild(el('b', null, w.b));
+      if (w.s) li.appendChild(el('span', null, w.s));
+      why.appendChild(li);
+    });
+    card.appendChild(why);
+
+    var warn = recWarn(r);
+    if (warn.length) {
+      var box = el('div', 'rec__warn');
+      warn.forEach(function (w) { box.appendChild(el('p', null, w)); });
+      card.appendChild(box);
+    }
+
+    /* BGG の数値は games.html と同じ組みで。取得日と評価人数が必ず付く */
+    var snap = PB.BGG_PICKS || {};
+    var bgg = bggBox(r.g, snap.fetchedAt);
+    if (bgg) card.appendChild(bgg);
+
+    return card;
+  }
+
+  /* 診断そのもの */
+  function recQuiz(host) {
+    var step = REC_STEPS[recStep];
+    var en = lang === 'en';
+    var cur = recA[step.key];
+
+    var box = el('div', 'rec__q');
+
+    var bar = el('div', 'rec__bar');
+    var fill = el('i');
+    fill.style.width = (recStep / REC_STEPS.length * 100) + '%';
+    bar.appendChild(fill);
+    box.appendChild(bar);
+
+    box.appendChild(el('div', 'rec__no', 'STEP ' + (recStep + 1) + ' / ' + REC_STEPS.length));
+    box.appendChild(el('h3', 'rec__t', en && step.tEn ? step.tEn : step.t));
+    box.appendChild(el('p', 'rec__s', en && step.sEn ? step.sEn : step.s));
+
+    var opts = el('div', 'rec__opts');
+    step.opts.forEach(function (o) {
+      var on = step.multi ? (cur || []).indexOf(o.v) >= 0 : cur === o.v;
+      var b = el('button', 'rec__opt');
+      b.type = 'button';
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      b.appendChild(el('b', null, en && o.lEn ? o.lEn : o.l));
+      var d = en ? o.dEn : o.d;
+      if (d) b.appendChild(el('span', null, d));
+      b.addEventListener('click', function () {
+        if (step.multi) {
+          var list = (recA[step.key] || []).slice();
+          var i = list.indexOf(o.v);
+          if (i >= 0) list.splice(i, 1); else list.push(o.v);
+          recA[step.key] = list;
+        } else {
+          recA[step.key] = o.v;
+          if (recStep < REC_STEPS.length - 1) recStep++;
+          else recDone = true;
+        }
+        buildRecommend();
+      });
+      opts.appendChild(b);
+    });
+    box.appendChild(opts);
+
+    var nav = el('div', 'rec__nav');
+    var back = el('button', 'lnk', en ? 'Back' : '戻る');
+    back.type = 'button';
+    back.disabled = recStep === 0;
+    back.addEventListener('click', function () {
+      if (recStep > 0) { recStep--; recDone = false; buildRecommend(); }
+    });
+    nav.appendChild(back);
+
+    var next = el('button', 'lnk',
+      recStep === REC_STEPS.length - 1 ? (en ? 'See the picks' : 'おすすめを見る') : (en ? 'Next' : '次へ'));
+    next.type = 'button';
+    next.addEventListener('click', function () {
+      if (recStep < REC_STEPS.length - 1) recStep++;
+      else recDone = true;
+      buildRecommend();
+    });
+    nav.appendChild(next);
+    box.appendChild(nav);
+
+    host.appendChild(box);
+  }
+
+  function buildRecommend() {
+    var quiz = document.getElementById('rec-quiz');
+    var out = document.getElementById('rec-out');
+    if (!quiz || !out) return;
+    var en = lang === 'en';
+
+    quiz.textContent = '';
+    out.textContent = '';
+    recQuiz(quiz);
+    if (!recDone) return;
+
+    var snap = PB.BGG_PICKS || {};
+    var games = snap.games || {};
+    var picks = PB.PICKS || [];
+
+    var scored = [];
+    picks.forEach(function (p) {
+      var g = games[p.name];
+      if (g && (g.weight != null || g.rating != null)) scored.push(recScoreOne(p, g));
+    });
+
+    /* まだ取ってきていない。空の結果を黙って出すより、そう言う */
+    if (!scored.length) {
+      var none = el('div', 'rec__none');
+      none.appendChild(el('p', 'rec__t', en ? 'The BGG snapshot is empty' : 'BGG のデータがまだありません'));
+      none.appendChild(el('p', 'cell__p', en
+        ? 'This page only ever reads a snapshot committed to the repository — it never calls BoardGameGeek from your browser. The snapshot has not been fetched yet.'
+        : 'このページは、リポジトリに固めた取得結果だけを読みます（閲覧者のブラウザから BGG は叩きません）。その取得がまだ行われていません。'));
+      var how = el('p', 'cell__p');
+      how.appendChild(document.createTextNode(en ? 'To fill it, run ' : '埋めるには、手元の回線で '));
+      how.appendChild(el('code', null, 'npm run bgg'));
+      how.appendChild(document.createTextNode(en
+        ? ' on a home connection and commit data/bgg-picks.js. BGG refuses requests from data centres, so it cannot be done from CI.'
+        : ' を実行し、data/bgg-picks.js をコミットしてください。BGG はデータセンターからの要求を弾くので、CI からは取得できません。'));
+      none.appendChild(how);
+      out.appendChild(none);
+      return;
+    }
+
+    scored.sort(function (a, b) { return b.score - a.score || (b.g.bayes || 0) - (a.g.bayes || 0); });
+
+    var head = el('div', 'rec__head');
+    head.appendChild(el('h3', 'rec__t', en
+      ? 'Five that should suit you' : 'あなたに向いていそうな5作'));
+    head.appendChild(el('span', 'tag', en
+      ? scored.length + ' games scored on BGG figures'
+      : 'BGG の数値で ' + scored.length + ' 作を採点'));
+    out.appendChild(head);
+
+    var list = el('div', 'rec');
+    scored.slice(0, 5).forEach(function (r, i) { list.appendChild(recCard(r, i === 0)); });
+    out.appendChild(list);
+
+    var rest = scored.slice(5, 11);
+    if (rest.length) {
+      var more = el('details', 'rec__more');
+      more.appendChild(el('summary', null, en
+        ? 'Show ' + rest.length + ' more' : 'もう少し候補を見る（' + rest.length + '件）'));
+      var inner = el('div', 'rec');
+      inner.style.marginTop = 'var(--s3)';
+      rest.forEach(function (r) { inner.appendChild(recCard(r, false)); });
+      more.appendChild(inner);
+      out.appendChild(more);
+    }
+
+    var again = el('button', 'lnk', en ? 'Change the answers' : '条件を変える');
+    again.type = 'button';
+    again.style.marginTop = 'var(--s4)';
+    again.addEventListener('click', function () {
+      recStep = 0; recDone = false; buildRecommend();
+      var q = document.getElementById('rec-quiz');
+      if (q && q.scrollIntoView) q.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+    out.appendChild(again);
+  }
+
   /* ═══════════════════════════════════════════════════ 全ページ共通の天地
      4ページあるので、天と地は HTML に写さず、ここから組む。
      文言を直す場所が1つで済む。 */
+  /* 4枚。携帯の幅（320px）でも4枚とも見えていることを test/shots.js が見張る。
+     「おすすめ」を短い札にしてあるのはそのため。 */
   var PAGES = [
-    { file: 'index.html', ja: '自己紹介',     en: 'About' },
-    { file: 'games.html', ja: 'ボードゲーム', en: 'Board games' },
-    { file: 'macro.html', ja: '経済',         en: 'Economy' }
+    { file: 'index.html',     ja: '自己紹介',     en: 'About' },
+    { file: 'games.html',     ja: 'ボードゲーム', en: 'Board games' },
+    { file: 'recommend.html', ja: 'おすすめ',     en: 'Picks' },
+    { file: 'macro.html',     ja: '経済',         en: 'Economy' }
   ];
   function here() {
     var f = (location.pathname.split('/').pop() || '').split('?')[0];
@@ -1058,6 +1528,7 @@
     buildProfile();
     buildMacroTable();
     buildMacro();
+    buildRecommend();
 
     var games = document.getElementById('works');
     if (games) {
