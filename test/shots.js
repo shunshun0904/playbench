@@ -270,18 +270,28 @@ function serve() {
       const page = await ctx.newPage();
       await page.goto(URL, { waitUntil: 'load' });
       await page.waitForTimeout(350);
-      const tabs = await page.evaluate(() => {
+      /* 枚数は site.js の PAGES から取る。ここに数を直書きすると、
+         ページを1枚足すたびに検査のほうが落ちる。 */
+      const got = await page.evaluate(() => {
         const nav = document.querySelector('.masthead__nav');
         if (!nav) return null;
-        return [...nav.querySelectorAll('a')].map(a => {
-          const r = a.getBoundingClientRect();
-          return { t: a.textContent, ok: r.width > 0 && r.height > 0
-            && r.right <= innerWidth + 0.5 && r.left >= -0.5 };
-        });
+        return {
+          want: (window.PB && window.PB.PAGES) ? window.PB.PAGES.length : null,
+          tabs: [...nav.querySelectorAll('a')].map(a => {
+            const r = a.getBoundingClientRect();
+            return { t: a.textContent, ok: r.width > 0 && r.height > 0
+              && r.right <= innerWidth + 0.5 && r.left >= -0.5 };
+          })
+        };
       });
+      const tabs = got && got.tabs;
+      const want = got && got.want;
       console.log(`   ${w}px → ` +
         (tabs ? tabs.map(x => (x.ok ? '✅' : '❌') + x.t).join(' ') : 'nav が無い'));
-      if (!tabs || tabs.length !== 3) fail(`${w}px でタブが3枚出ていない`);
+      if (!want) fail(`${w}px で PB.PAGES が読めない`);
+      else if (!tabs || tabs.length !== want) {
+        fail(`${w}px でタブが${want}枚出ていない（${tabs ? tabs.length : 0}枚）`);
+      }
       else {
         const ng = tabs.filter(x => !x.ok);
         if (ng.length) fail(`${w}px でタブが見えない: ${ng.map(x => x.t).join('/')}`);

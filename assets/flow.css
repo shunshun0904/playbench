@@ -1,0 +1,216 @@
+/* ==========================================================================
+   セクター間資金フロー ── このページだけの装い
+
+   色は playbench の紙面のものを借りる。持っているのは2色だけで、
+   ここでの役割は次のとおり。
+     朱  ── 純流出。資金が抜けていく側
+     藍  ── 純流入。資金が入ってくる側
+   矢印そのものは無彩色にした。向きは形（矢じり）で伝わるので、
+   ここに3色目を足すと、朱と藍の意味が薄まる。
+
+   単体版（web/index.html）でも同じ変数名を使うので、
+   このファイルは playbench の assets/site.css とそのまま重ねられる。
+   ========================================================================== */
+
+/* --------------------------------------------------------------- 読み込み */
+.fl-load {
+  border: 1px solid var(--rule);
+  padding: var(--s3) var(--s4);
+  margin-block: var(--s3);
+  transition: border-color .15s;
+}
+.fl-load.is-over { border-color: var(--vermilion); border-style: dashed; }
+
+.fl-load__row { display: flex; align-items: center; gap: var(--s3); flex-wrap: wrap; }
+
+.fl-file { position: relative; overflow: hidden; cursor: pointer; }
+.fl-file input {
+  position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%;
+}
+.fl-load__st {
+  font-family: var(--mono);
+  font-size: .74rem;
+  color: var(--ink-mute);
+  font-variant-numeric: tabular-nums;
+}
+
+.fl-help { margin-top: var(--s3); }
+.fl-help summary {
+  font-family: var(--mono);
+  font-size: .74rem;
+  letter-spacing: .08em;
+  color: var(--ink-mid);
+  cursor: pointer;
+}
+.fl-help__b { padding-top: var(--s2); max-width: var(--measure); }
+.fl-help__b p { margin: var(--s2) 0; font-size: .92rem; color: var(--ink-mid); }
+
+.fl-code {
+  font-family: var(--mono);
+  font-size: .72rem;
+  line-height: 1.7;
+  background: var(--sheet);
+  border: 1px solid var(--rule-soft);
+  padding: var(--s2) var(--s3);
+  overflow-x: auto;
+  color: var(--ink-mid);
+}
+
+.fl-warn {
+  border-left: 2px solid var(--vermilion);
+  padding-left: var(--s3);
+  color: var(--ink-mid);
+  font-size: .9rem;
+}
+.fl-note { color: var(--ink-mute); font-size: .86rem; max-width: var(--measure); }
+
+/* ----------------------------------------------------------------- つまみ */
+.fl-params {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: var(--s3) var(--s4);
+  border-block: 1px solid var(--rule);
+  padding-block: var(--s3);
+  margin-block: var(--s3);
+}
+.fl-param {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: baseline;
+  gap: .4rem;
+}
+.fl-param__t { font-size: .88rem; }
+.fl-param__i {
+  grid-column: 2;
+  width: 6rem;
+  font-family: var(--mono);
+  font-size: .82rem;
+  text-align: right;
+  background: var(--sheet);
+  color: var(--ink);
+  border: 1px solid var(--rule);
+  padding: .2rem .4rem;
+}
+.fl-param__i:disabled { opacity: .45; }
+.fl-param__u { grid-column: 3; font-size: .7rem; color: var(--ink-mute); }
+.fl-param__n {
+  grid-column: 1 / -1;
+  font-size: .74rem;
+  line-height: 1.6;
+  color: var(--ink-mute);
+}
+.fl-param--check { grid-column: 1 / -1; grid-template-columns: auto 1fr; }
+.fl-param--check input { grid-column: 1; }
+.fl-param--check .fl-param__t { grid-column: 2; }
+
+.fl-act { display: flex; align-items: center; gap: var(--s3); flex-wrap: wrap; margin-block: var(--s3); }
+.btn--go { border-color: var(--vermilion); color: var(--vermilion); }
+.fl-act__st {
+  font-family: var(--mono);
+  font-size: .74rem;
+  color: var(--ink-mute);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------------------------------------- 有向の図 */
+.fl-net { width: 100%; height: auto; display: block; margin-block: var(--s3); }
+
+.fl-edge {
+  stroke: var(--ink-mid);
+  stroke-opacity: .55;
+  stroke-linecap: round;
+}
+.fl-edge:hover { stroke-opacity: 1; stroke: var(--ink); }
+
+/* 矢じり。defs の中は currentColor が引き継がれないので、明示的に塗る。
+   線と同じ濃さにしておかないと、矢の先だけ浮いて見える。 */
+.fl-ah { fill: var(--ink-mid); fill-opacity: .75; }
+
+.fl-node circle { stroke: currentColor; stroke-width: 1; fill: currentColor; }
+.fl-node.is-out { color: var(--vermilion); }   /* 純流出 */
+.fl-node.is-in  { color: var(--indigo); }      /* 純流入 */
+.fl-node__t {
+  font-family: var(--serif);
+  font-size: 13px;
+  fill: var(--ink-mid);
+}
+
+.fl-legend { margin-block: var(--s3); }
+.fl-legend__l { max-width: var(--measure); color: var(--ink-mid); font-size: .92rem; }
+.fl-legend__u { list-style: none; padding: 0; margin: var(--s3) 0 0; }
+.fl-legend__u li {
+  display: grid;
+  grid-template-columns: 11rem 1fr;
+  gap: var(--s2);
+  padding: .3rem 0;
+  border-top: 1px solid var(--rule-soft);
+  font-size: .84rem;
+  line-height: 1.65;
+}
+.fl-legend__k { font-family: var(--mono); font-size: .72rem; color: var(--ink-mute); letter-spacing: .04em; }
+.fl-legend__v { color: var(--ink-mid); }
+
+@media (max-width: 34rem) {
+  .fl-legend__u li { grid-template-columns: 1fr; gap: 0; }
+}
+
+/* --------------------------------------------------------------- 表 */
+.fl-tbl { font-size: .82rem; }
+.fl-tbl tr.is-drawn .grid__n { color: var(--vermilion); }
+
+.fl-rel {
+  font-family: var(--mono);
+  font-size: .68rem;
+  letter-spacing: .06em;
+  padding: .1rem .4rem;
+  border: 1px solid var(--rule);
+  white-space: nowrap;
+}
+.fl-rel--rotation { color: var(--vermilion); border-color: var(--vermilion); }
+.fl-rel--comovement { color: var(--indigo); border-color: var(--indigo); }
+.fl-rel--ambiguous { color: var(--ink-mute); }
+
+/* 連結度表。数字が主役なので、罫は最小限にして地の濃さで読ませる */
+.fl-tbl--mat { font-size: .7rem; }
+.fl-tbl--mat td.num {
+  background: color-mix(in srgb, var(--indigo) calc(var(--heat, 0) * 26%), transparent);
+  text-align: right;
+  padding-inline: .35rem;
+}
+.fl-tbl--mat td.is-diag { color: var(--ink-mute); background: var(--sheet); }
+.fl-th--rot { font-size: .64rem; font-weight: normal; color: var(--ink-mute); }
+.fl-td--sum { border-left: 1px solid var(--rule); }
+.fl-td--tci { color: var(--vermilion); }
+.fl-tr--sum td { border-top: 1px solid var(--rule); background: var(--sheet); }
+.fl-tr--sum td.is-out { color: var(--vermilion); }
+.fl-tr--sum td.is-in { color: var(--indigo); }
+
+/* color-mix を持たない環境では地が付かないだけ。数字は読める */
+@supports not (background: color-mix(in srgb, red 10%, transparent)) {
+  .fl-tbl--mat td.num { background: none; }
+}
+
+/* ----------------------------------------------------------- 折れ線 */
+.fl-chart { width: 100%; height: auto; display: block; margin-block: var(--s3); }
+.fl-chart__rule { stroke: var(--rule-soft); stroke-width: 1; }
+.fl-chart__year { stroke: var(--rule-soft); stroke-width: 1; stroke-dasharray: 2 4; }
+.fl-chart__line { stroke: var(--vermilion); stroke-width: 1.6; stroke-linejoin: round; }
+.fl-chart__ax { font-family: var(--mono); font-size: 10px; fill: var(--ink-mute); }
+
+.fl-gate {
+  border: 1px solid var(--rule);
+  padding: var(--s3) var(--s4);
+  margin-block: var(--s3);
+}
+.fl-gate__t {
+  font-family: var(--mono);
+  font-size: .74rem;
+  letter-spacing: .1em;
+  color: var(--ink-mid);
+  margin: 0;
+}
+
+/* ------------------------------------------------------------- 留保 */
+.fl-caveat { max-width: var(--measure); }
+.fl-caveat li { margin-block: var(--s2); color: var(--ink-mid); font-size: .92rem; line-height: 1.85; }
+.fl-caveat li strong { color: var(--ink); font-weight: normal; border-bottom: 1px solid var(--vermilion); }

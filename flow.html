@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>売買資金フロー ── Shun Nakamura</title>
+<meta name="description" content="日本株の業種間で資金がどちらへ移っているかを、有向ネットワークとして描くブラウザ道具。Diebold-Yilmaz の分散分解と Pesaran-Shin のインパルス応答を併用します。データは手元の CSV を読み込むだけで、どこにも送りません。">
+<meta name="color-scheme" content="dark light">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20fill%3D%22%231b2027%22%2F%3E%3Crect%20x%3D%225%22%20y%3D%2213%22%20width%3D%2222%22%20height%3D%226%22%20fill%3D%22%23e8e9e3%22%20fill-opacity%3D%22.22%22%2F%3E%3Crect%20x%3D%225%22%20y%3D%2213%22%20width%3D%2214%22%20height%3D%226%22%20fill%3D%22%23b03a24%22%2F%3E%3Crect%20x%3D%2210%22%20y%3D%227%22%20width%3D%221.4%22%20height%3D%2218%22%20fill%3D%22%23e8e9e3%22%2F%3E%3C%2Fsvg%3E">
+<link rel="canonical" href="https://shunshun0904.github.io/playbench/flow.html">
+
+<!-- Search Console の所有確認はファイル方式で済ませてある。
+     リポジトリ直下の google2e24f8e4be168c53.html がそれ。消すと確認が外れる。 -->
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Shun Nakamura">
+<meta property="og:title" content="売買資金フロー ── Shun Nakamura">
+<meta property="og:description" content="日本株の業種間で資金がどちらへ移っているかを、有向ネットワークとして描くブラウザ道具。データは手元の CSV を読み込むだけで、どこにも送りません。">
+<meta property="og:url" content="https://shunshun0904.github.io/playbench/flow.html">
+<meta property="og:locale" content="ja_JP">
+<link rel="stylesheet" href="assets/site.css">
+<link rel="stylesheet" href="assets/flow.css">
+</head>
+<body>
+
+<header class="masthead" id="head"></header>
+
+<main>
+
+<section class="sheet">
+  <div class="band">
+    <h2 class="band__t" data-en="Sector money flow">売買資金フロー</h2>
+    <span class="band__n"></span>
+    <span class="tag">directed network</span>
+  </div>
+
+  <p class="lead" data-en="Which industry is money moving out of, and which is it moving into? This page estimates that from daily turnover and draws it as a directed network. It is descriptive only — no forecasts, no signals, no weights. Nothing here is investment advice.">
+    どの業種から、どの業種へ資金が移っているのか。
+    日次の売買代金からそれを推定して、矢印つきの有向ネットワークとして描きます。
+    記述だけを目的にした道具で、予測もシグナルもウェイトも出しません。
+    投資助言ではありません。
+  </p>
+
+  <p data-en="The starting point was a Qiita article that estimates partial correlations with Graphical Lasso and draws an undirected network. The precision matrix it estimates is symmetric, so no arrow can come out of it. To get a direction you need either a time asymmetry or an identifying assumption. Here it comes from the time asymmetry: a generalised forecast error variance decomposition (Diebold-Yilmaz) for the size of the link, and a generalised impulse response (Pesaran-Shin) for its sign.">
+    出発点は Graphical Lasso で偏相関を推定して無向ネットワークを描く
+    <a href="https://qiita.com/ii_python/items/e376a2015a2454ef0a45" rel="noopener" target="_blank">Qiita の記事</a>です。
+    ただし精度行列は対称なので、あの手法からは矢印が出ません。
+    向きを得るには時間の非対称性か、因果識別の仮定が要ります。
+    ここでは前者を使い、つながりの<em>大きさ</em>を一般化予測誤差分散分解
+    （Diebold-Yilmaz）で、<em>符号</em>を一般化インパルス応答（Pesaran-Shin）で測ります。
+  </p>
+
+  <p data-en="It runs entirely in your browser. The page ships with no data at all: you hand it your own turnover panel as a CSV, it is read locally with FileReader, and it is never uploaded anywhere.">
+    計算はすべてブラウザの中で走ります。
+    このページはデータを1つも持っていません。手元の売買代金パネルを CSV で渡すと、
+    その場で読んで、その場で計算します。ファイルはどこにも送りません。
+  </p>
+</section>
+
+<section class="sheet">
+  <div class="band">
+    <h2 class="band__t band__t--sub" data-en="Load data">データを読み込む</h2>
+    <span class="band__n"></span>
+  </div>
+  <div id="flow-load"></div>
+</section>
+
+<section class="sheet">
+  <div class="band">
+    <h2 class="band__t band__t--sub" data-en="Settings">推定の条件</h2>
+    <span class="band__n"></span>
+  </div>
+  <div id="flow-params"></div>
+</section>
+
+<section class="sheet">
+  <div class="band">
+    <h2 class="band__t band__t--sub" data-en="Directed network">有向ネットワーク</h2>
+    <span class="band__n"></span>
+  </div>
+  <p data-en="Arrows point the way the money goes — out of the follower, into the leader — which is the opposite of the lead-lag arrow. Only pairs that clear both gates are drawn: the pairwise net link must exceed the null distribution built under &quot;no cross-lags&quot; after FDR correction, and the cumulative impulse response must be negative by more than the sign tolerance, i.e. the two sectors must be substitutes rather than co-moving.">
+    矢印は資金の向き（追随側から先導側へ）で、リードラグの矢印とは逆を向きます。
+    描くのは2つのゲートを両方通ったペアだけです。ペアワイズ純連結度が
+    「交差ラグなし」の帰無分布を FDR 補正後に超えていること、
+    そのうえで累積インパルス応答が符号ゲートより負であること
+    ── つまり共変動ではなく代替の関係にあることです。
+  </p>
+  <div id="flow-net"></div>
+</section>
+
+<section class="sheet">
+  <div class="band">
+    <h2 class="band__t band__t--sub" data-en="Pair by pair">ペアごとの内訳</h2>
+    <span class="band__n"></span>
+  </div>
+  <div id="flow-edges"></div>
+</section>
+
+<section class="sheet">
+  <div class="band">
+    <h2 class="band__t band__t--sub" data-en="Total connectedness over time">総連結度の推移</h2>
+    <span class="band__n"></span>
+  </div>
+  <p data-en="This one is a test of the implementation, not a finding. Total connectedness rising during a crisis is the most robust result in the whole Diebold-Yilmaz literature, so if the series does not lift around March 2020, something upstream is wrong — usually the variable construction — and the arrows above should not be read yet.">
+    これは発見ではなく、実装の検査です。危機時に総連結度が上がることは
+    Diebold-Yilmaz 系の実証でもっとも頑健な現象なので、
+    2020年3月あたりで持ち上がらないなら、その手前のどこか
+    ── たいていは変数構築 ── が間違っています。
+    そのあいだは上の矢印を読まないでください。
+  </p>
+  <div id="flow-tci"></div>
+</section>
+
+<section class="sheet">
+  <div class="band">
+    <h2 class="band__t band__t--sub" data-en="Connectedness table">連結度表</h2>
+    <span class="band__n"></span>
+  </div>
+  <div id="flow-table"></div>
+</section>
+
+<section class="sheet">
+  <div class="band">
+    <h2 class="band__t band__t--sub" data-en="What the arrows do not mean">矢印が言っていないこと</h2>
+    <span class="band__n"></span>
+  </div>
+
+  <ol class="fl-caveat">
+    <li data-en="<strong>Money is not a conserved quantity.</strong> Nothing here measures yen leaving one industry and arriving in another. What is estimated is a substitution relationship, and the arrow is drawn on the assumption that substitution is what a negative response means. It is an estimate under that assumption, not a measured flow.">
+      <strong>資金は保存量ではありません。</strong>
+      ある業種から出た円が別の業種に入った、という量をここでは測っていません。
+      推定しているのは代替の関係で、負の応答を代替と読むという前提のうえに
+      矢印を引いています。前提つきの推定であって、実測されたフローではありません。
+    </li>
+
+    <li data-en="<strong>The impulse response is linear.</strong> So the arrow is a conditional response pattern that is symmetric in the sign of the shock. It is not the direction money actually moved in any particular episode. Read it as structure, not as history.">
+      <strong>インパルス応答は線形です。</strong>
+      したがって矢印はショックの符号に対して対称な条件付き応答パターンであって、
+      個々の局面で実際に資金が動いた向きではありません。
+      歴史ではなく構造として読んでください。
+    </li>
+
+    <li data-en="<strong>&quot;Who leads&quot; and &quot;where the money goes&quot; are different things.</strong> If a leads b and b responds negatively, the lead-lag arrow runs a → b while the money arrow runs b → a. The table below the figure keeps both, in separate columns.">
+      <strong>「先導方向」と「資金の流れの方向」は別物です。</strong>
+      a が b を先導し、b が負に応答するなら、リードラグの矢印は a → b ですが、
+      資金の矢印は b → a です。図の下の表は、この2つを別の列に分けて出しています。
+    </li>
+
+    <li data-en="<strong>Row normalisation manufactures direction.</strong> With three white-noise variables and no dynamics at all, row-normalised GFEVD still produces a net link of 1/30 ≈ 3.3pp, purely because the row sums differ. A hub that correlates with many others therefore looks like a source. Direction here is judged on the scalar-normalised decomposition, where that particular artefact is exactly zero; the connectedness table keeps row normalisation because that is what makes its percentages readable.">
+      <strong>行正規化は向きを作ってしまいます。</strong>
+      動学がまったくない3変数のホワイトノイズでも、行正規化した GFEVD は
+      行和が違うというだけの理由で net = 1/30 ≒ 3.3pp を出します。
+      多くの業種と同時に相関するハブほど、見かけの発信源になります。
+      ここでの方向判定はスカラー正規化のほうで行っていて、その正規化では
+      このアーティファクトが厳密に 0 になります。連結度表のほうは
+      百分率として読むために行正規化のままにしてあります。
+    </li>
+
+    <li data-en="<strong>The gate is about sampling error, not bias.</strong> Under scalar normalisation the population net is exactly zero when there are no cross-lags, at any horizon. So the bootstrap gate is protecting against finite-sample estimation error, whose width falls roughly with the square root of the window. A short window therefore has little power, and &quot;no arrow&quot; means &quot;did not clear the gate&quot;, never &quot;no relationship&quot;.">
+      <strong>ゲートが防いでいるのは偏りではなく推定誤差です。</strong>
+      スカラー正規化のもとでは、交差ラグが無ければ母集団の net はどのホライズンでも
+      厳密に 0 になります。したがってブートストラップのゲートが管理しているのは
+      有限標本の推定誤差で、その幅はおおむね窓長の平方根に反比例します。
+      窓が短ければ検出力は低く、矢印が出ないことは
+      「ゲートを通らなかった」であって「関係が無い」ではありません。
+    </li>
+
+    <li data-en="<strong>Residualising against the market total injects a small negative correlation.</strong> Roughly −1/(N−1): about −0.06 with 17 industries, about −0.03 with 33. It is done anyway, because without it the dominant pattern is simply every industry swelling at once. The CLR transform of shares was not used: it forces the components to sum to zero, which makes the covariance matrix singular and breaks the VAR.">
+      <strong>市場合計に対する残差化は、機械的な負相関を入れます。</strong>
+      おおむね −1/(N−1) 程度で、17業種なら約 −0.06、33業種なら約 −0.03。
+      それでも残差化するのは、しないと「全業種が同時に膨らむ」だけが
+      支配的な模様になってしまうからです。シェアの CLR 変換は使っていません。
+      あれは総和を 0 に縛るので共分散行列が特異になり、VAR が破綻します。
+    </li>
+
+    <li data-en="<strong>This is not a forecast.</strong> The horizon H is a measurement scale, not a period over which anything is predicted. No signal, no weight, no future value is produced anywhere on this page.">
+      <strong>予測ではありません。</strong>
+      ホライズン H は測定のスケールであって、何かを予測する期間ではありません。
+      このページはシグナルもウェイトも将来値も出しません。
+    </li>
+  </ol>
+
+  <p class="fl-note" data-en="Method: Diebold &amp; Yilmaz (2012, Int. J. Forecasting 28(1), 57-66; 2014, J. Econometrics 182(1), 119-134), Pesaran &amp; Shin (1998, Economics Letters 58(1), 17-29), and on the choice of normalisation, Caloia, Cipollini &amp; Muzzioli (2019, Energy Economics 84, 104536).">
+    手法の出どころ: Diebold &amp; Yilmaz (2012, Int. J. Forecasting 28(1), 57-66;
+    2014, J. Econometrics 182(1), 119-134)、Pesaran &amp; Shin (1998,
+    Economics Letters 58(1), 17-29)。正規化の選択については
+    Caloia, Cipollini &amp; Muzzioli (2019, Energy Economics 84, 104536)。
+  </p>
+</section>
+
+</main>
+
+<footer class="sheet colophon" id="foot"></footer>
+
+<script src="assets/config.js"></script>
+<script src="assets/analytics.js"></script>
+<script src="data/profile.js"></script>
+<script src="data/works.js"></script>
+<script src="data/bgg.js"></script>
+<script src="data/macro.js"></script>
+<script src="data/releases.js"></script>
+<script src="assets/site.js"></script>
+<script src="assets/flow-engine.js"></script>
+<script src="assets/flow-app.js"></script>
+</body>
+</html>
