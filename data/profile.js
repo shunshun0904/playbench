@@ -36,7 +36,7 @@ window.PB.PROFILE = {
        + '4色のキューブが置かれている。',
     altEn: 'A game of El Grande in progress. Beyond the Castillo tower, cubes in four '
          + 'colours are spread across Toledo, Valencia, Cataluña and the other regions.',
-    cap: 'エルグランデ', capEn: 'El Grande'
+    
   },
 
   /* 自己紹介。段落ごとに配列の1要素。 */
