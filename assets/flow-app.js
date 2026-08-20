@@ -58,14 +58,18 @@
     turnover: null,     /* 読み込んだ売買代金パネル */
     flow: null,         /* 残差化まで済んだフロー変数 */
     est: null,          /* 窓1つぶんの推定結果 */
-    gate: null,         /* 帰無分布のゲートを通したエッジ */
+    gate: null,         /* 帰無分布のゲートを通したエッジ（仕様書どおり） */
+    granger: null,      /* Granger 因果で選んだエッジ（参考） */
     roll: null,         /* ローリング総連結度 */
     busy: false,
     params: {
       window: 250, p: 2, H: 10, ridgeAlpha: 0,
       residualize: true, betaWindow: 250,
-      nBoot: 200, block: 20, alpha: 0.10, girfQ: 0.90, seed: 0,
-      rollStep: 5
+      nBoot: 2000, block: 1, alpha: 0.10, girfQ: 0.90, seed: 0,
+      rollStep: 5,
+      /* 'spec' = 仕様書どおりのブートストラップ・ゲート、
+         'granger' = ペアごとの Granger 因果（参考） */
+      criterion: 'spec'
     }
   };
 
@@ -185,8 +189,10 @@
       note: '0 で無効。33業種＋250日窓では必須。' },
     { k: 'betaWindow', t: 'β の窓', unit: '営業日', min: 0, max: 2000, step: 10,
       note: '0 で全期間 β。ローリング連結度を出すなら全期間 β は将来情報の混入になる。' },
-    { k: 'nBoot', t: 'ブートストラップ', unit: '回', min: 20, max: 2000, step: 20, note: '' },
-    { k: 'block', t: 'ブロック長', unit: '', min: 2, max: 120, step: 1, note: '' },
+    { k: 'nBoot', t: 'ブートストラップ', unit: '回', min: 20, max: 4000, step: 20,
+      note: 'BH は m 本の検定の rank1 で p ≦ α/m を要求するが、ブートストラップ p 値の最小値は 1/(nBoot+1)。136ペアなら 1400 回以上ないと閾値を表現できない。' },
+    { k: 'block', t: 'ブロック長', unit: '', min: 1, max: 120, step: 1,
+      note: '1 は残差ベクトルを i.i.d. で引き直す。20 だと対角ARの残差に残った交差ラグごと再標本化してしまい、「交差ラグなし」の帰無に交差ラグが混入する（実測で最小 p 値が 0.0025 → 0.32 まで甘くなった）。' },
     { k: 'alpha', t: 'FDR の α', unit: '', min: 0.01, max: 0.5, step: 0.01,
       note: '17業種なら136ペアぶんの多重検定。' },
     { k: 'girfQ', t: '符号ゲートの分位点', unit: '', min: 0.5, max: 0.999, step: 0.005,
@@ -322,6 +328,15 @@
         S.gate = F.gateEdges(S.est.edges, boot, { alpha: p.alpha, girfQ: p.girfQ });
         S.est.boot = boot;
 
+        /* 参考レイヤー。符号の閾値は仕様書側と同じ girf_tol を使うので、
+           2つのレイヤーの違いは「どの検定でエッジを選んだか」だけになる。 */
+        try {
+          S.granger = F.grangerEdges(X, S.est.thetaDir, S.est.psi, S.est.names,
+            { p: p.p, alpha: p.alpha, girfTol: S.gate.girfTol });
+        } catch (err) {
+          S.granger = null;
+        }
+
         lock(false);
         say(boot.failed
           ? '完了（' + boot.failed + ' 回は推定できず捨てた）'
@@ -372,7 +387,52 @@
     });
   }
 
-  function drawAll() { drawNet(); drawEdges(); drawTable(); }
+  /* いま表示しているレイヤーのエッジ。criterion で切り替える。 */
+  function activeEdges() {
+    if (S.params.criterion === 'granger') {
+      return S.granger ? S.granger.edges : [];
+    }
+    return S.gate ? S.gate.edges : [];
+  }
+
+  function drawAll() { drawCriterion(); drawNet(); drawEdges(); drawTable(); }
+
+  /* どちらの基準で見ているかを、図の手前に必ず出す。
+     2つのレイヤーは通る本数がまるで違うので、どちらを見ているのか
+     分からないまま矢印を読まれるのがいちばん困る。 */
+  function drawCriterion() {
+    var host = clear('flow-criterion');
+    if (!host || !S.gate) return;
+    var isG = S.params.criterion === 'granger';
+    var nSpec = S.gate.edges.filter(function (e) { return e.drawn; }).length;
+    var nG = S.granger ? S.granger.edges.filter(function (e) { return e.drawn; }).length : 0;
+
+    var box = el('div', 'fl-crit');
+    var row = el('div', 'fl-crit__row');
+    [['spec', '仕様書どおり', nSpec], ['granger', 'Granger（参考）', nG]].forEach(function (o) {
+      var b = el('button', 'fl-crit__b' + (S.params.criterion === o[0] ? ' is-on' : ''));
+      b.type = 'button';
+      b.textContent = o[1] + '  矢印 ' + o[2] + ' 本';
+      b.onclick = function () {
+        if (S.params.criterion === o[0]) return;
+        S.params.criterion = o[0];
+        drawAll();
+      };
+      row.appendChild(b);
+    });
+    box.appendChild(row);
+
+    box.appendChild(el('p', 'fl-crit__n', isG
+      ? '参考レイヤー。エッジの選別は「業種 j のラグを業種 i の式から落とせるか」の '
+        + 'F 検定（Granger 因果、BH 補正）で、仕様書 §2.5 が指定するブートストラップ・'
+        + 'ゲートとは別の基準です。net の大きさと符号は仕様書どおり GFEVD と GIRF から '
+        + '取っています。仕様書の基準では ' + nSpec + ' 本しか残りません。'
+      : '仕様書 §2.5 どおりの基準。帰無仮説「交差ラグなし」のブートストラップ分布を '
+        + 'FDR で補正して net を選別します。net は MA(∞) 表現の全係数と Σ を混ぜた量な'
+        + 'ので帰無分布が広く、交差ラグが実在しても拾えないことがあります'
+        + '（実データではそうなりました）。Granger の参考レイヤーでは ' + nG + ' 本です。'));
+    host.appendChild(box);
+  }
 
   function drawNet() {
     var host = clear('flow-net');
@@ -381,7 +441,7 @@
     var est = S.est, names = est.names;
     var labels = S.flow.labels || names;
     var N = names.length;
-    var drawn = S.gate.edges.filter(function (e) { return e.drawn; });
+    var drawn = activeEdges().filter(function (e) { return e.drawn; });
 
     /* ノードの大きさ ∝ その窓での売買代金シェア。
        売買代金そのものは turnover 側にしか無いので、日付で引き当てる。 */
@@ -419,7 +479,12 @@
 
     /* エッジ。太さ ∝ net、向き = flow_from → flow_to（＝資金の向き）。
        先導の向きではない。§2.4 のとおり両者は逆になる。 */
-    var maxW = Math.max.apply(null, drawn.map(function (e) { return e.net; })) || 1;
+    /* 太さは |net|。仕様書側の net は directedEdges が正へ揃えてあるが、
+       Granger 側は向きを Granger が決めるので、GFEVD が逆を向いていれば
+       net は負になる。そのまま太さに使うと負の stroke-width になる。 */
+    var maxW = Math.max.apply(null, drawn.map(function (e) {
+      return Math.abs(e.net);
+    })) || 1;
     var gEdge = sh(s, 'g', { class: 'fl-net__edges' });
 
     drawn.forEach(function (e) {
@@ -440,7 +505,7 @@
           + ' Q' + qx.toFixed(1) + ' ' + qy.toFixed(1)
           + ' ' + ex.toFixed(1) + ' ' + ey.toFixed(1),
         fill: 'none',
-        'stroke-width': (0.9 + 4.6 * (e.net / maxW)).toFixed(2),
+        'stroke-width': (0.9 + 4.6 * (Math.abs(e.net) / maxW)).toFixed(2),
         'marker-end': 'url(#fl-ah)',
         class: 'fl-edge'
       }).appendChild(titleOf(
@@ -523,13 +588,21 @@
       ['VAR', 'p = ' + est.p + ' / H = ' + est.H
         + (est.ridgeAlpha ? ' / ridge = ' + est.ridgeAlpha : ' / ridge なし')],
       ['方向判定の正規化', 'scalar（§2.5 対策1。行正規化はリードラグ皆無でも向きを作る）'],
-      ['矢印のゲート', '帰無仮説「交差ラグなし」の分布を ' + g.nBoot + ' 回、'
-        + 'FDR α = ' + g.alpha + ' で補正。通ったのは '
-        + S.gate.edges.filter(function (e) { return e.passNet; }).length
-        + ' / ' + S.gate.edges.length + ' ペア'],
+      ['矢印のゲート', S.params.criterion === 'granger'
+        ? 'Granger 因果（F 検定）を FDR α = ' + S.params.alpha + ' で補正。'
+          + '片方向だけ有意だったペアが ' + (S.granger ? S.granger.edges.length : 0)
+          + ' / ' + (est.names.length * (est.names.length - 1) / 2) + ' ペア'
+          + '（双方向とも有意なペアは「どちらが先か」を言えないので落としている）'
+        : '帰無仮説「交差ラグなし」の分布を ' + g.nBoot + ' 回、'
+          + 'FDR α = ' + g.alpha + ' で補正。通ったのは '
+          + S.gate.edges.filter(function (e) { return e.passNet; }).length
+          + ' / ' + S.gate.edges.length + ' ペア'],
       ['符号ゲート', 'girf_tol = ' + fmt(g.girfTol, 4)
         + '（帰無分布の |累積GIRF| の ' + (S.params.girfQ * 100).toFixed(1) + '%点）'],
-      ['描いた矢印', nDrawn + ' 本（ゲートを通り、かつ代替関係と判定されたもの）']
+      ['描いた矢印', nDrawn + ' 本（ゲートを通り、かつ代替関係と判定されたもの）'],
+      ['基準', S.params.criterion === 'granger'
+        ? 'Granger 因果（参考。仕様書の指定とは別の基準）'
+        : '仕様書 §2.5 のブートストラップ・ゲート']
     ].forEach(function (kv) {
       var li = el('li');
       li.appendChild(el('span', 'fl-legend__k', kv[0]));
@@ -539,11 +612,15 @@
     box.appendChild(ul);
 
     if (!nDrawn) {
-      box.appendChild(el('p', 'fl-warn',
-        '矢印が1本も残りませんでした。ゲートを通らなかったということで、'
-        + '「フローが無い」ではありません。仕様書 §2.5-2 のとおり、'
-        + '帰無分布の幅は窓長の平方根に反比例します。'
-        + '窓長を伸ばすか、α を緩めるかを検討してください。'));
+      box.appendChild(el('p', 'fl-warn', S.params.criterion === 'granger'
+        ? '矢印が1本も残りませんでした。片方向だけ有意なペアが無かったか、'
+          + 'あっても符号ゲートで代替関係と判定されなかったということです。'
+        : '矢印が1本も残りませんでした。ゲートを通らなかったということで、'
+          + '「フローが無い」ではありません。net は MA(∞) 表現の全係数と Σ を'
+          + '混ぜた量なので帰無分布が広く、交差ラグが実在しても拾えないことが'
+          + 'あります。実データ（17業種・10年・窓を全期間まで伸ばしても）では'
+          + '1本も通りませんでした。上の「Granger（参考）」に切り替えると、'
+          + '同じデータで片方向の因果がどれだけあるかを見られます。'));
     }
     return box;
   }
@@ -555,7 +632,7 @@
     if (!host || !S.gate) return;
 
     var est = S.est, unit = F.unitOf(est.normalize);
-    var rows = S.gate.edges.slice().sort(function (a, b) {
+    var rows = activeEdges().slice().sort(function (a, b) {
       if (a.drawn !== b.drawn) return a.drawn ? -1 : 1;
       return b.net - a.net;
     });
@@ -586,7 +663,9 @@
       tr.appendChild(rel);
 
       tr.appendChild(el('td', 'num', fmt(e.p, 3)));
-      tr.appendChild(el('td', null, e.drawn ? '●' : (e.passNet ? '符号で落選' : '—')));
+      tr.appendChild(el('td', null, e.drawn ? '●'
+        : (e.criterion === 'granger' ? '符号で落選'
+          : (e.passNet ? '符号で落選' : '—'))));
       tb.appendChild(tr);
     });
     tbl.appendChild(tb);

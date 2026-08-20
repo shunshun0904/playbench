@@ -78,13 +78,13 @@
     <h2 class="band__t band__t--sub" data-en="Directed network">有向ネットワーク</h2>
     <span class="band__n"></span>
   </div>
-  <p data-en="Arrows point the way the money goes — out of the follower, into the leader — which is the opposite of the lead-lag arrow. Only pairs that clear both gates are drawn: the pairwise net link must exceed the null distribution built under &quot;no cross-lags&quot; after FDR correction, and the cumulative impulse response must be negative by more than the sign tolerance, i.e. the two sectors must be substitutes rather than co-moving.">
+  <p data-en="Arrows point the way the money goes — out of the follower, into the leader — which is the opposite of the lead-lag arrow. There are two ways to decide which pairs get an edge, and the buttons below switch between them. Under either one, an arrow is drawn only where the cumulative impulse response is negative by more than the sign tolerance — that is, where the two sectors substitute for each other rather than moving together.">
     矢印は資金の向き（追随側から先導側へ）で、リードラグの矢印とは逆を向きます。
-    描くのは2つのゲートを両方通ったペアだけです。ペアワイズ純連結度が
-    「交差ラグなし」の帰無分布を FDR 補正後に超えていること、
-    そのうえで累積インパルス応答が符号ゲートより負であること
-    ── つまり共変動ではなく代替の関係にあることです。
+    エッジをどの検定で選ぶかは2通りあり、下のボタンで切り替えられます。
+    どちらの場合も、矢印にするのは累積インパルス応答が符号ゲートより負
+    ── つまり共変動ではなく代替の関係にある ── と判定されたペアだけです。
   </p>
+  <div id="flow-criterion"></div>
   <div id="flow-net"></div>
 </section>
 

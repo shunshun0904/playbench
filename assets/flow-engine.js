@@ -497,7 +497,19 @@
   function bootstrapRunner(X, opt) {
     opt = opt || {};
     var p = opt.p || 2, H = opt.H || 10;
-    var nBoot = opt.nBoot || 200, block = opt.block || 20;
+    var nBoot = opt.nBoot || 2000;
+    /* ブロック長の既定は 1（残差ベクトルを i.i.d. で引き直す）。
+       20 だと、対角 AR が取り切れずに残差へ残った交差ラグごと再標本化して
+       しまい、「交差ラグ無し」のはずの帰無に交差ラグが混入する。実データで
+       帰無 |net| の中央値が 0.096pp（block=1）→ 0.183pp（block=20）と倍に
+       広がり、最小 p 値が 0.0025 → 0.32 まで甘くなった。
+       代償としてボラティリティ・クラスタリングは壊れる（帰無がやや狭く
+       ＝甘くなる方向）。§6.4-2 は移動ブロック法を指定しているので、
+       block を渡せば従来どおりにできる。
+       nBoot の既定も 200 → 2000。BH は m 本の検定の rank1 で
+       p ≦ alpha/m を要求するが、ブートストラップ p 値の最小値は
+       1/(nBoot+1) なので、200 では 136 ペアの閾値 0.00074 を表現できない。 */
+    var block = opt.block == null ? 1 : opt.block;
     var ridge = opt.ridgeAlpha || null;
     var normalize = opt.normalize || 'scalar';
     var nullModel = opt.nullModel || 'no_crosslag';
@@ -645,6 +657,190 @@
     });
     return { edges: edges, girfTol: girfTol, alpha: alpha, nBoot: nBoot };
   }
+
+  /* ═══════════════════════════════════════════ 5b. Granger 因果（直接検定）
+
+     §2.5 のブートストラップ・ゲートは GFEVD の net を統計量にする。net は
+     MA(∞) 表現の全係数と Σ を混ぜた量なので、帰無分布が広く検出力が低い。
+     実データ（17業種・10年）では、交差ラグが実在しても net は1本も
+     拾えなかった（最小 p 値 0.0025、BH が rank1 で要求するのは 0.00074）。
+
+     こちらは「業種 j のラグを業種 i の式から落とせるか」を F 検定で直接
+     見る。落とす係数は p 本だけなので、同じ標本でも検出力が段違いに高い。
+     矢印の選別に使う場合、大きさは GFEVD net、符号は GIRF から取る ──
+     この関数が答えるのは「向きがあるか」だけで、「どちらへ資金が動くか」
+     ではない。 */
+
+  /* 正則化不完全ベータ関数 I_x(a,b)。連分数展開（Lentz 法）。 */
+  function betacf(x, a, b) {
+    var FPMIN = 1e-300, EPS = 3e-16;
+    var qab = a + b, qap = a + 1, qam = a - 1;
+    var c = 1, d = 1 - qab * x / qap;
+    if (Math.abs(d) < FPMIN) d = FPMIN;
+    d = 1 / d;
+    var h = d;
+    for (var m = 1; m <= 300; m++) {
+      var m2 = 2 * m;
+      var aa = m * (b - m) * x / ((qam + m2) * (a + m2));
+      d = 1 + aa * d; if (Math.abs(d) < FPMIN) d = FPMIN;
+      c = 1 + aa / c; if (Math.abs(c) < FPMIN) c = FPMIN;
+      d = 1 / d; h *= d * c;
+      aa = -(a + m) * (qab + m) * x / ((a + m2) * (qap + m2));
+      d = 1 + aa * d; if (Math.abs(d) < FPMIN) d = FPMIN;
+      c = 1 + aa / c; if (Math.abs(c) < FPMIN) c = FPMIN;
+      d = 1 / d;
+      var del = d * c; h *= del;
+      if (Math.abs(del - 1) < EPS) break;
+    }
+    return h;
+  }
+
+  /* log Γ(x)。Lanczos 近似。 */
+  function lgamma(x) {
+    var g = [76.18009172947146, -86.50532032941677, 24.01409824083091,
+             -1.231739572450155, 0.1208650973866179e-2, -0.5395239384953e-5];
+    var y = x, tmp = x + 5.5;
+    tmp -= (x + 0.5) * Math.log(tmp);
+    var ser = 1.000000000190015;
+    for (var j = 0; j < 6; j++) ser += g[j] / ++y;
+    return -tmp + Math.log(2.5066282746310005 * ser / x);
+  }
+
+  function betainc(x, a, b) {
+    if (x <= 0) return 0;
+    if (x >= 1) return 1;
+    var bt = Math.exp(lgamma(a + b) - lgamma(a) - lgamma(b)
+      + a * Math.log(x) + b * Math.log(1 - x));
+    return x < (a + 1) / (a + b + 2)
+      ? bt * betacf(x, a, b) / a
+      : 1 - bt * betacf(1 - x, b, a) / b;
+  }
+
+  /* F 分布の上側確率 P(F_{d1,d2} > f) */
+  function fSf(f, d1, d2) {
+    if (!(f > 0)) return 1;
+    return betainc(d2 / (d2 + d1 * f), d2 / 2, d1 / 2);
+  }
+
+  /* 最小二乗の残差平方和。Z の列を部分集合で指定できる。 */
+  function ssrOf(Z, y, cols) {
+    var rows = Z.length, k = cols.length;
+    var G = zeros(k, k), c = zeros(k, 1);
+    var r, i, j;
+    for (r = 0; r < rows; r++) {
+      var zr = Z[r];
+      for (i = 0; i < k; i++) {
+        var zi = zr[cols[i]];
+        c[i][0] += zi * y[r];
+        for (j = i; j < k; j++) G[i][j] += zi * zr[cols[j]];
+      }
+    }
+    for (i = 0; i < k; i++) for (j = 0; j < i; j++) G[i][j] = G[j][i];
+    var b = solveSym(G, c);
+    var ssr = 0;
+    for (r = 0; r < rows; r++) {
+      var fit = 0;
+      for (i = 0; i < k; i++) fit += Z[r][cols[i]] * b[i][0];
+      var e = y[r] - fit; ssr += e * e;
+    }
+    return ssr;
+  }
+
+  /* G.p[i][j] = 「業種 j のラグは業種 i の式に要らない」の p 値。対角は NaN。 */
+  function grangerMatrix(X, p) {
+    var T = X.length, N = X[0].length;
+    var rows = T - p, k = 1 + N * p;
+    if (rows <= k + p) throw new Error('標本が足りません。');
+
+    var Z = zeros(rows, k), Y = zeros(rows, N);
+    var r, lag, i, j;
+    for (r = 0; r < rows; r++) {
+      var t = p + r;
+      Z[r][0] = 1;
+      for (lag = 0; lag < p; lag++) {
+        var src = X[t - lag - 1], base = 1 + lag * N;
+        for (j = 0; j < N; j++) Z[r][base + j] = src[j];
+      }
+      for (j = 0; j < N; j++) Y[r][j] = X[t][j];
+    }
+
+    var all = [];
+    for (i = 0; i < k; i++) all.push(i);
+
+    var P = zeros(N, N), Fm = zeros(N, N);
+    for (i = 0; i < N; i++) {
+      var y = [];
+      for (r = 0; r < rows; r++) y.push(Y[r][i]);
+      var ssrFull = ssrOf(Z, y, all);
+      var dofF = rows - k;
+      for (j = 0; j < N; j++) {
+        if (i === j) { P[i][j] = NaN; Fm[i][j] = NaN; continue; }
+        var drop = {};
+        for (lag = 0; lag < p; lag++) drop[1 + lag * N + j] = true;
+        var cols = all.filter(function (c) { return !drop[c]; });
+        var ssrR = ssrOf(Z, y, cols);
+        var F = ((ssrR - ssrFull) / p) / (ssrFull / dofF);
+        Fm[i][j] = F;
+        P[i][j] = fSf(F, p, dofF);
+      }
+    }
+    return { p: P, F: Fm, dofNum: p, dofDen: rows - k, n: rows };
+  }
+
+  /* Granger でエッジを選ぶ。BH は N(N-1) 本の有向検定に掛ける。
+
+     片方向だけ通ったペアだけを矢印にする。双方向とも通ったペアは
+     「どちらが先か」を言えないので落とす。
+     大きさは GFEVD net、符号（rotation / comovement）は GIRF から取る。 */
+  function grangerEdges(X, theta, psi, names, opt) {
+    opt = opt || {};
+    var p = opt.p || 2, alpha = opt.alpha == null ? 0.10 : opt.alpha;
+    var girfTol = opt.girfTol || 0;
+    var N = names.length;
+    var g = grangerMatrix(X, p);
+
+    var idx = [], pv = [];
+    for (var i = 0; i < N; i++) for (var j = 0; j < N; j++) {
+      if (i !== j) { idx.push([i, j]); pv.push(g.p[i][j]); }
+    }
+    var keep = bhReject(pv, alpha);
+    var sig = zeros(N, N);
+    idx.forEach(function (ij, q) { sig[ij[0]][ij[1]] = keep[q] ? 1 : 0; });
+
+    var rows = [];
+    for (var a = 0; a < N; a++) {
+      for (var b = a + 1; b < N; b++) {
+        var aToB = sig[b][a], bToA = sig[a][b];   /* sig[i][j]: j が i を導く */
+        if (aToB === bToA) continue;              /* 両方向 or どちらも無し */
+        var driver = aToB ? a : b, follower = aToB ? b : a;
+        var resp = psi[follower][driver];
+        var net = (theta[follower][driver] - theta[driver][follower]) * 100;
+        rows.push({
+          i: a, j: b,
+          driver: names[driver], follower: names[follower],
+          driverIdx: driver, followerIdx: follower,
+          net: net, girf: resp,
+          p: g.p[follower][driver],
+          relation: resp < -girfTol ? 'rotation'
+            : (resp > girfTol ? 'comovement' : 'ambiguous'),
+          criterion: 'granger'
+        });
+      }
+    }
+    rows.forEach(function (e) {
+      var rot = e.relation === 'rotation';
+      e.flowFrom = rot ? e.follower : null;
+      e.flowTo = rot ? e.driver : null;
+      /* 添字も必ず一緒に入れる。描画側は名前ではなく添字で座標を引くので、
+         ここが undefined だと矢印が1本も出ないまま表には残る。 */
+      e.flowFromIdx = rot ? e.followerIdx : -1;
+      e.flowToIdx = rot ? e.driverIdx : -1;
+      e.drawn = rot;
+    });
+    rows.sort(function (x, y) { return x.p - y.p; });
+    return { edges: rows, granger: g, alpha: alpha };
+  }
+
 
   /* ═════════════════════════════════════════════════════ 6. ローリング推定 */
 
@@ -815,6 +1011,7 @@
     gfevd: gfevd, girfCumulative: girfCumulative, connectednessTable: connectednessTable,
     unitOf: unitOf,
     directedEdges: directedEdges, bootstrapNet: bootstrapNet, bhReject: bhReject,
+    grangerMatrix: grangerMatrix, grangerEdges: grangerEdges, fSf: fSf, betainc: betainc,
     bootstrapRunner: bootstrapRunner, rollingRunner: rollingRunner,
     gateEdges: gateEdges, rollingConnectedness: rollingConnectedness,
     estimate: estimate, parseCsv: parseCsv, labelSectors: labelSectors,
