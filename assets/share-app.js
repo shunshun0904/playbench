@@ -8,7 +8,12 @@
   'use strict';
   var S = window.PBSHARE;
 
-  var st = { data: null, view: 'm3' };
+  /* 同梱データの置き場所。頁からの相対パス。
+     sectorflow の Actions が日次で作り、playbench へ push する。
+     無ければ（単体版など）静かに諦めて、読み込みの箱だけ出す。 */
+  var BUNDLED = 'data/share_sector17.json';
+
+  var st = { data: null, view: 'm3', source: null };
 
   function el(tag, cls, text) {
     var n = document.createElement(tag);
@@ -48,8 +53,9 @@
     box.appendChild(row);
 
     box.appendChild(el('p', 'fl-help',
-      'python/jquants_fetch.py share-json が書き出した JSON を渡してください。'
-      + 'この頁はデータを持っていません。読み込んだファイルは、あなたのブラウザから外に出ません。'));
+      '既定では、この頁に置いてある最新のデータを自動で読みます。'
+      + '別の期間を見たいときは、python/jquants_fetch.py share-json で作った JSON を選んでください。'
+      + '選んだファイルは、あなたのブラウザから外に出ません。'));
     box.appendChild(el('p', 'fl-load__state', '未読込'));
     box.lastChild.id = 'sh-state';
     host.appendChild(box);
@@ -57,24 +63,49 @@
 
   function read(file) {
     var r = new FileReader();
-    r.onload = function () {
-      try {
-        st.data = S.validate(JSON.parse(r.result));
-      } catch (err) {
-        st.data = null;
-        say('読めませんでした: ' + err.message);
-        blank('データを読み込むと、ここに出ます。');
-        return;
-      }
-      var d = st.data;
-      say(d.sectors.length + '業種 / ' + d.dates.length + '営業日 / '
-        + d.dates[0] + '〜' + d.dates[d.dates.length - 1]
-        + (d.generated ? '（作成 ' + d.generated + '）' : ''));
-      buildTabs();
-      draw();
-    };
+    r.onload = function () { accept(r.result, 'file'); };
     r.onerror = function () { say('ファイルを開けませんでした。'); };
     r.readAsText(file);
+  }
+
+  /* 文字列を受け取って、通れば描く。通らなければ理由を言って止まる。
+     ファイル選択と自動取得で同じ道を通す。 */
+  function accept(text, source) {
+    try {
+      st.data = S.validate(JSON.parse(text));
+    } catch (err) {
+      st.data = null;
+      say((source === 'auto' ? 'この頁のデータが読めません: ' : '読めませんでした: ')
+        + err.message);
+      blank('データを読み込むと、ここに出ます。');
+      return false;
+    }
+    st.source = source;
+    var d = st.data;
+    say((source === 'auto' ? '' : '選んだファイル: ')
+      + d.sectors.length + '業種 / ' + d.dates.length + '営業日 / '
+      + d.dates[0] + '〜' + d.dates[d.dates.length - 1]
+      + (d.generated ? '（作成 ' + d.generated + '）' : ''));
+    buildTabs();
+    draw();
+    return true;
+  }
+
+  /* 同梱データを取りに行く。無くても壊れない ── 単体版や、まだ
+     置いていない頁では 404 になるので、その場合は黙って諦める。 */
+  function autoLoad() {
+    if (!window.fetch) return;
+    fetch(BUNDLED, { cache: 'no-cache' })
+      .then(function (r) {
+        if (!r.ok) throw new Error(String(r.status));
+        return r.text();
+      })
+      .then(function (t) { accept(t, 'auto'); })
+      .catch(function () {
+        /* 置いていないだけなら、読み込みの箱から選んでもらえばよい。
+           ここで赤字を出すと、単体版で毎回エラーが出ることになる。 */
+        say('未読込（下からファイルを選んでください）');
+      });
   }
 
   function blank(msg) {
@@ -199,5 +230,6 @@
   document.addEventListener('DOMContentLoaded', function () {
     buildLoad();
     blank('データを読み込むと、ここに出ます。');
+    autoLoad();
   });
 }());
