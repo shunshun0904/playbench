@@ -18,8 +18,9 @@ window.PB = window.PB || {};
 
 window.PB.SENTIMENT = {
   /* 集計結果の置き場。配備したら、その latest.json のURLをここに書きます。
-     例: https://<バケット名>.s3.ap-northeast-1.amazonaws.com/public/latest.json
-     CloudFront を前に置いたら、そちらのURLに差し替えます。 */
+     例: https://shunshun0904.github.io/sentiment_analysis/public/latest.json
+     GitHub Pages は access-control-allow-origin: * を返すので、
+     別オリジンでも設定なしで読めます。 */
   endpoint: '',
 
   /* いま見ている指数。増やすときは配列にする前に、まず1本で運用してから */
