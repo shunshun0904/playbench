@@ -68,7 +68,6 @@ window.PB.WORKS = [
       'measurements.',
 
     play: 'https://shunshun0904.github.io/highsociety/',
-    repo: 'https://github.com/shunshun0904/highsociety',
     figure: 'cards'
   },
   /* ---------------------------------------------------------------- 02 */
@@ -124,7 +123,6 @@ window.PB.WORKS = [
       '(0.2→22.0% / 0.5→26.4% / 0.7→29.1% / 1.0→26.0% / 1.8→20.0%). 0.7 was adopted.',
 
     play: 'https://shunshun0904.github.io/aquire/',
-    repo: 'https://github.com/shunshun0904/aquire',
     figure: 'grid'
   },
 ];

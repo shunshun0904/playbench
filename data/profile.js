@@ -36,7 +36,7 @@ window.PB.PROFILE = {
        + '4色のキューブが置かれている。',
     altEn: 'A game of El Grande in progress. Beyond the Castillo tower, cubes in four '
          + 'colours are spread across Toledo, Valencia, Cataluña and the other regions.',
-    cap: 'エルグランデ', capEn: 'El Grande'
+    
   },
 
   /* 自己紹介。段落ごとに配列の1要素。 */
@@ -72,7 +72,7 @@ window.PB.PROFILE = {
       {
         from: '2026-01', to: '',        /* to が空なら「現在」と出る */
         org: '大手総合旅行会社', orgEn: 'A major travel company',
-        role: 'データサイエンティスト ── 海外のダイナミックプライシング／レベニューマネジメント',
+        role: 'データサイエンティスト ── 旅行パッケージのプライシングアルゴリズムの改良',
         roleEn: 'Data scientist — dynamic pricing and revenue management for overseas travel',
         body: '海外（ハワイ、ショート／ロングアジア）向けのプライシングアルゴリズムの精度改善と保守運用。' +
               '需要予測モデル・マージン弾力性モデル・価格シナリオ最適化モデルの3層構成です。' +
