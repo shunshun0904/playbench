@@ -141,12 +141,11 @@
     var view = S.VIEWS.filter(function (v) { return v.k === st.view; })[0];
     var cut = S.slice(d, view);
     var n = cut.dates.length;
-    var w = Math.max(3, Math.min(26, Math.floor(880 / n)));
 
     var rg = clear('sh-range');
     if (rg) {
       rg.appendChild(el('span', 'tag',
-        cut.dates[0] + ' 〜 ' + cut.dates[n - 1] + ' / ' + n + '営業日 / 1コマ' + w + 'px'));
+        cut.dates[0] + ' 〜 ' + cut.dates[n - 1] + ' / ' + n + '営業日'));
     }
 
     var host = clear('sh-table');
@@ -154,8 +153,11 @@
 
     var tbl = el('table', 'grid sh-tbl');
     var hr = el('tr');
-    ['業種', 'シェアの遷移', '直近', '期間変化', '広がりの遷移', '直近', '実効銘柄', '上位1社']
-      .forEach(function (h) { hr.appendChild(el('th', null, h)); });
+    /* 帯の見出しには印を付ける。文字の列だけを内容幅まで縮めたいので、
+       この2列を巻き込まないようにするため（巻き込むと帯まで縮む）。 */
+    [['業種', 0], ['シェアの遷移', 1], ['直近', 0], ['期間変化', 0],
+     ['広がりの遷移', 1], ['直近', 0], ['実効銘柄', 0], ['上位1社', 0]]
+      .forEach(function (h) { hr.appendChild(el('th', h[1] ? 'sh-band-h' : null, h[0])); });
     var th = el('thead'); th.appendChild(hr); tbl.appendChild(th);
 
     var tb = el('tbody');
@@ -168,11 +170,11 @@
       tr.appendChild(el('td', 'grid__n', label(c)));
       tr.appendChild(band(sv, cut.dates, function (v) {
         return S.shareColor(v, ref[0], ref[1]);
-      }, w, 'シェア', '%'));
+      }, 'シェア', '%'));
       tr.appendChild(el('td', 'num', sv[sv.length - 1].toFixed(1) + '%'));
       var chg = sv[sv.length - 1] - sv[0];
       tr.appendChild(el('td', 'num', (chg >= 0 ? '+' : '') + chg.toFixed(1) + 'pp'));
-      tr.appendChild(band(bv, cut.dates, S.breadthColor, w, '広がり', ''));
+      tr.appendChild(band(bv, cut.dates, S.breadthColor, '広がり', ''));
 
       var last5 = S.avg(bv.slice(-5));
       tr.appendChild(el('td', 'num', last5 == null ? '—' : last5.toFixed(2)));
@@ -190,17 +192,25 @@
     host.appendChild(legend());
   }
 
-  /* 1行ぶんの色帯。1コマに日付と値を title で持たせる */
-  function band(vals, dates, color, w, name, unit) {
+  /* 1行ぶんの色帯。1コマに日付と値を title で持たせる。
+
+     コマの幅は指定しない。以前は 880/コマ数 で px を計算していたが、
+     それだと期間が延びるほど帯が伸びて表が画面からはみ出し、横に
+     スクロールしないと 読めなくなっていた（4か月で表 1994px に対し
+     器は 1024px）。いまは帯の td に残り幅を割り当てて、その中を
+     flex で等分する。期間を延ばすとコマが細くなるだけで、
+     表の幅は変わらない。 */
+  function band(vals, dates, color, name, unit) {
     var td = el('td', 'sh-band');
+    var box = el('div', 'sh-band__in');
     for (var i = 0; i < vals.length; i++) {
       var c = el('i');
-      c.style.width = w + 'px';
       c.style.background = color(vals[i]);
       c.title = dates[i] + '  ' + name + ' '
         + (vals[i] == null ? '—' : vals[i].toFixed(2) + unit);
-      td.appendChild(c);
+      box.appendChild(c);
     }
+    td.appendChild(box);
     return td;
   }
 

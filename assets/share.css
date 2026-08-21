@@ -10,11 +10,27 @@
 .sh-range { margin: 0 0 var(--s3); min-height: 1.2em; }
 
 /* 色帯。1コマが1営業日。行間を詰めないと17行が画面に入らない */
+.sh-tbl { table-layout: auto; }
 .sh-tbl td, .sh-tbl th { padding: .2rem .5rem; }
-.sh-tbl td.num { font-family: var(--mono); font-size: .78rem; text-align: right; white-space: nowrap; }
-.sh-tbl th { white-space: nowrap; }
-.sh-band { padding: 0 !important; line-height: 0; white-space: nowrap; }
-.sh-band i { display: inline-block; height: 15px; }
+.sh-tbl td.num { font-family: var(--mono); font-size: .78rem; text-align: right; }
+
+/* 文字の列は中身の幅まで縮める。width:1% は「できるだけ狭く」の意味で、
+   nowrap と組むと内容ちょうどになる。こうしておくと、残りが全部
+   色帯に回る。業種名を折り返させない（以前は4行になって高さ82pxだった）。 */
+.sh-tbl th:not(.sh-band-h),
+.sh-tbl td.num,
+.sh-tbl td.grid__n { white-space: nowrap; width: 1%; }
+/* 帯の見出しは折り返させないが、幅は指定しない ── ここに width:1% を
+   掛けると帯まで内容幅に縮み、残りが余ってしまう（実測で137pxになった）。 */
+.sh-tbl th.sh-band-h { white-space: nowrap; }
+
+/* 色帯は残り幅を2列で分け合い、中のコマを flex で等分する。
+   コマ幅を px で決めると、期間を延ばしたとき表が器からはみ出す。
+   等分なら、期間が延びてもコマが細くなるだけで幅は変わらない。 */
+.sh-band { padding: 0 !important; line-height: 0; }
+.sh-band__in { display: flex; width: 100%; }
+.sh-band i { flex: 1 1 0; min-width: 0; height: 15px; }
+
 .sh-tbl tbody tr:hover { background: var(--rule-soft); }
 
 /* 帯（見出し＋タグ）は flex 1行。この頁は見出しが長いので、
