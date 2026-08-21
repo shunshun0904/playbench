@@ -1,0 +1,26 @@
+/* 業種別 売買シェアの遷移。器の共通部分（.grid / .ctl など）は
+   web/index.html と playbench の site.css が持っている。ここは差分だけ。 */
+
+.sh-tabs { display: flex; gap: var(--s2); flex-wrap: wrap; margin-bottom: var(--s2); }
+.sh-tab.is-on {
+  border-color: var(--vermilion);
+  color: var(--ink);
+  box-shadow: inset 0 -2px 0 var(--vermilion);
+}
+.sh-range { margin: 0 0 var(--s3); min-height: 1.2em; }
+
+/* 色帯。1コマが1営業日。行間を詰めないと17行が画面に入らない */
+.sh-tbl td, .sh-tbl th { padding: .2rem .5rem; }
+.sh-tbl td.num { font-family: var(--mono); font-size: .78rem; text-align: right; white-space: nowrap; }
+.sh-tbl th { white-space: nowrap; }
+.sh-band { padding: 0 !important; line-height: 0; white-space: nowrap; }
+.sh-band i { display: inline-block; height: 15px; }
+.sh-tbl tbody tr:hover { background: var(--rule-soft); }
+
+/* 帯（見出し＋タグ）は flex 1行。この頁は見出しが長いので、
+   狭い画面でタグが押し出されて横スクロールが出る（390px で 21px）。
+   site.css の .band を触ると他の頁にも効くので、この頁だけで折り返す。 */
+@media (max-width: 520px) {
+  .band { flex-wrap: wrap; }
+  .band .tag { flex-basis: 100%; }
+}

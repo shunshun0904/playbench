@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>業種別 売買シェアの遷移 ── Shun Nakamura</title>
+<meta name="description" content="日本株の売買代金を業種別の構成比にして、その推移を並べるブラウザ道具。シェアが少数銘柄で作られているかどうかも同時に出します。データは手元のファイルを読み込むだけで、どこにも送りません。">
+<meta name="color-scheme" content="dark light">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20fill%3D%22%231b2027%22%2F%3E%3Crect%20x%3D%225%22%20y%3D%2213%22%20width%3D%2222%22%20height%3D%226%22%20fill%3D%22%23e8e9e3%22%20fill-opacity%3D%22.22%22%2F%3E%3Crect%20x%3D%225%22%20y%3D%2213%22%20width%3D%2214%22%20height%3D%226%22%20fill%3D%22%23b03a24%22%2F%3E%3Crect%20x%3D%2210%22%20y%3D%227%22%20width%3D%221.4%22%20height%3D%2218%22%20fill%3D%22%23e8e9e3%22%2F%3E%3C%2Fsvg%3E">
+<link rel="canonical" href="https://shunshun0904.github.io/playbench/share.html">
+
+<!-- この頁はタブに出していない（assets/site.js の UNLISTED）。
+     URL を知っている人だけが見る前提なので、検索にも載せない。
+     sitemap.xml にも入れていない。表に出すときは、この2行と
+     sitemap の項目を戻し、PAGES へ移す。 -->
+<meta name="robots" content="noindex, nofollow">
+
+<!-- Search Console の所有確認はファイル方式で済ませてある。
+     リポジトリ直下の google2e24f8e4be168c53.html がそれ。消すと確認が外れる。 -->
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Shun Nakamura">
+<meta property="og:title" content="業種別 売買シェアの遷移 ── Shun Nakamura">
+<meta property="og:description" content="日本株の売買代金を業種別の構成比にして、その推移を並べるブラウザ道具。データは手元のファイルを読み込むだけで、どこにも送りません。">
+<meta property="og:url" content="https://shunshun0904.github.io/playbench/share.html">
+<meta property="og:locale" content="ja_JP">
+<link rel="stylesheet" href="assets/site.css">
+<link rel="stylesheet" href="assets/share.css">
+</head>
+<body>
+
+<header class="masthead" id="head"></header>
+
+<main>
+
+<section class="sheet">
+  <div class="band">
+    <h2 class="band__t" data-en="Sector share of turnover">業種別 売買シェアの遷移</h2>
+    <span class="band__n"></span>
+    <span class="tag">descriptive</span>
+  </div>
+
+  <p class="lead" data-en="Japanese equity turnover, summed into the 17 TOPIX sectors and turned into each day&#39;s composition. Nothing is estimated and nothing is tested — these are measured values, laid out side by side. Not investment advice.">
+    日本株の売買代金を TOPIX-17 の業種で足し、その日の構成比にしたものです。
+    推定も検定もしていません。測った値をそのまま並べています。
+    投資助言ではありません。
+  </p>
+
+  <p data-en="Share alone cannot tell you whether money went to a sector or to one stock inside it. In one month of the measured data, a single name accounted for half of the electric-appliances sector and a quarter of the whole market. So a second measure sits next to it — breadth: how active the typical stock in that sector is compared with the typical stock in the market, taken as a within-sector median. One large name cannot move it.">
+    シェアだけでは、業種にお金が集まったのか、その中の1銘柄に集まったのかが分かりません。
+    実測では、ある月の電機・精密で1社が業種の半分、市場全体の4分の1を占めていました。
+    そこで「広がり」を並べています ── その業種の典型的な銘柄が、市場の典型的な銘柄と比べて
+    どれだけ活発かを、業種内の中央値で測ったものです。1銘柄がいくら大きくても動きません。
+  </p>
+</section>
+
+<section class="sheet">
+  <div class="band">
+    <h2 class="band__t" data-en="Load the data">データを読み込む</h2>
+    <span class="band__n"></span>
+  </div>
+  <div id="sh-load"></div>
+</section>
+
+<section class="sheet">
+  <div class="band">
+    <h2 class="band__t" data-en="Transition">遷移</h2>
+    <span class="band__n"></span>
+  </div>
+  <div id="sh-tabs" class="sh-tabs"></div>
+  <p id="sh-range" class="sh-range"></p>
+  <div id="sh-table"></div>
+</section>
+
+<section class="sheet">
+  <div class="band">
+    <h2 class="band__t" data-en="What this figure does not say">この図が言っていないこと</h2>
+    <span class="band__n"></span>
+  </div>
+  <p data-en="It cannot tell you which way money moved. What is here is each sector&#39;s share and how it changed — not an estimate of movement from one sector to another. There is a separate page that tries to estimate direction; it ends with no significant arrow surviving.">
+    <b>どちらへ資金が動いたかは言えません。</b>ここにあるのは各業種の構成比とその推移だけで、
+    業種から業種への移動を推定したものではありません。向きを推定する試みは別の頁にありますが、
+    そちらは有意な矢印が1本も残らないという結果になっています。
+  </p>
+  <p data-en="It does not mean the sector was bought. Turnover counts both sides of a trade. A rising share means trading gathered there, not that the sector was bought.">
+    <b>買われたとは限りません。</b>売買代金は売りと買いの両方を含みます。
+    シェアが上がったのは「売買が集まった」であって「買われた」ではありません。
+  </p>
+  <p data-en="High breadth does not mean prices rose. Only trading activity is measured here; price is never touched.">
+    <b>広がりが高いことは、値上がりを意味しません。</b>測っているのは売買の活発さだけで、
+    価格には触れていません。
+  </p>
+</section>
+
+</main>
+
+<footer class="sheet colophon" id="foot"></footer>
+
+<script src="assets/config.js"></script>
+<script src="assets/analytics.js"></script>
+<script src="data/profile.js"></script>
+<script src="data/works.js"></script>
+<script src="data/bgg.js"></script>
+<script src="data/macro.js"></script>
+<script src="data/releases.js"></script>
+<script src="assets/site.js"></script>
+<script src="assets/share-core.js"></script>
+<script src="assets/share-app.js"></script>
+</body>
+</html>

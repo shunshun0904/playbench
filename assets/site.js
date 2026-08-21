@@ -558,9 +558,10 @@
 
   /* タブに出さない頁。ファイルは置いてあるので URL を知っていれば見られる。
      flow.html は、矢印の向きがまだ読めない段階（README のフェーズ5・6を
-     参照）なので、表に出さずに置いている。タブに戻すときは PAGES へ
+     参照）なので、表に出さずに置いている。share.html はそれと対になる頁で、
+     推定をやめて測った値だけを並べたもの。タブに戻すときは PAGES へ
      移すだけでよく、test/shots.js は PB.PAGES から枚数を取るので直さなくてよい。 */
-  var UNLISTED = ['flow.html'];
+  var UNLISTED = ['flow.html', 'share.html'];
   PB.UNLISTED = UNLISTED;
   /* 検査から見えるようにしておく。ページを増やすたびに test/shots.js の
      「タブが N 枚」を書き換えるのは、いつか忘れる。 */
@@ -637,11 +638,11 @@
        中だけで完結する。書いておかないと、配信していると誤解されうる。
        ただしこの頁はタブに出していないので、注記もその頁でだけ出す ──
        他の頁に載せると、行けない頁の話が全ページに並ぶことになる。 */
-    if (here() === 'flow.html') {
+    if (here() === 'flow.html' || here() === 'share.html') {
       host.appendChild(col(en ? 'This page' : 'この頁について', [
         el('p', null, en
-          ? 'The money-flow page ships with no market data. Whatever you load stays in your own browser and is never uploaded.'
-          : '売買資金フローの頁は市場データを持っていません。'
+          ? 'This page ships with no market data. Whatever you load stays in your own browser and is never uploaded.'
+          : 'この頁は市場データを持っていません。'
             + '読み込んだファイルは閲覧者のブラウザから外に出ません。')
       ]));
     }
