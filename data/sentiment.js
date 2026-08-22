@@ -1,8 +1,8 @@
 /* ==========================================================================
    市場センチメントの設定。
 
-   数字そのものはここには入りません。120分ごとに GitHub Actions が集計して
-   GitHub Pages に置いた JSON を、開いている間だけ読みに行きます。
+   数字そのものはここには入りません。120分ごとに AWS 側（Lambda）が集計して
+   S3 に置いた JSON を、開いている間だけ読みに行きます。
    仕組みは https://github.com/shunshun0904/sentiment_analysis
 
    取得は120分に1回ですが、図は5分刻みで描きます。記事1件ずつに発行時刻が
@@ -17,11 +17,13 @@
 window.PB = window.PB || {};
 
 window.PB.SENTIMENT = {
-  /* 集計結果の置き場。集計は sentiment_analysis リポジトリの GitHub Actions が
-     2時間おきに走り、その data ブランチを GitHub Pages が配信しています。
-     GitHub Pages は access-control-allow-origin: * を返すので、
-     別オリジンでも設定なしで読めます（S3 のときに要った CORS 設定が不要）。 */
-  endpoint: 'https://shunshun0904.github.io/sentiment_analysis/public/latest.json',
+  /* 集計結果の置き場。集計は sentiment_analysis リポジトリの構成で、
+     AWS の Lambda が2時間おきに走り、S3 に置いたものを読みます。
+     バケット側で AllowedOrigin をこのサイトに絞ってあるので、
+     ここ以外のページから読むと CORS で弾かれます。
+     GitHub Actions 版に切り替えるときは、そちらの Pages のURLに差し替えます:
+       https://shunshun0904.github.io/sentiment_analysis/public/latest.json */
+  endpoint: 'https://sentiment-280323902559.s3.ap-northeast-1.amazonaws.com/public/latest.json',
 
   /* いま見ている指数。増やすときは配列にする前に、まず1本で運用してから */
   index: { id: 'SPX', ja: 'S&P 500', en: 'S&P 500' },
