@@ -732,7 +732,9 @@ a { color: inherit; }
      （以前ここは同じページ内への links だったので畳んでいた）
      名乗りと切替ボタンを1行目、タブを2行目に落として、3枚で幅を分ける。 */
   .masthead__in { gap: .4rem; padding-block: .6rem; }
-  .masthead__nav { gap: .15rem; flex-wrap: nowrap; min-width: 0; }
+  /* タブは5枚。狭いところでは2段に折る ── 押せる幅を削るより、
+     天が1行ぶん高くなるほうがまし */
+  .masthead__nav { gap: .15rem; flex-wrap: wrap; min-width: 0; }
   .masthead__nav a { padding: .32rem .5rem; font-size: .78rem; }
   .ctl { padding: .32rem .5rem; }
   .ctl__now, .ctl__long { display: none; }
@@ -940,3 +942,71 @@ a { color: inherit; }
 .grid__dash { color: var(--ink-mute); }
 .grid__foot { margin: 0 0 var(--s5); font-size: .72rem; color: var(--ink-mute); }
 .grid__last { display: block; font-size: .68rem; color: var(--ink-mute); font-family: var(--serif); opacity: .85; }
+
+/* ══════════════════════════════════════════════ 市場センチメント
+   数字は1つだけ大きく、あとは小さく。色は朱（強気）と藍（弱気）の2つで、
+   ここでも役割のあるものにしか色を持たせない。
+   色だけに意味を持たせないよう、数値と語（「やや弱気」など）を必ず並べる。 */
+.sent__now { margin-bottom: var(--s5); }
+.sent__head { display: flex; align-items: baseline; gap: var(--s3); flex-wrap: wrap; }
+.sent__big {
+  font-family: var(--mono); font-size: clamp(2.4rem, 8vw, 3.4rem);
+  font-weight: 600; letter-spacing: -.01em; line-height: 1.1;
+}
+.sent__label { font-size: 1.05rem; color: var(--ink); }
+
+.sent__plates { display: flex; flex-wrap: wrap; gap: var(--s2) var(--s5); margin-top: var(--s3); }
+.sent__plate { display: grid; gap: .1rem; }
+.sent__k { font-size: .72rem; letter-spacing: .08em; color: var(--ink-mute); }
+.sent__v { font-family: var(--mono); font-size: 1.05rem; color: var(--ink); }
+.sent__note { font-size: .7rem; color: var(--ink-mute); }
+
+/* −1〜+1 の帯。中央が0。塗りは符号の側にだけ伸びる */
+.sent__track {
+  position: relative; height: 10px; margin-top: var(--s4);
+  background: var(--rule-soft); border: 1px solid var(--rule);
+}
+.sent__fill { position: absolute; top: 0; bottom: 0; }
+.sent__zero { position: absolute; left: 50%; top: -3px; bottom: -3px; width: 1px; background: var(--ink-mute); }
+.sent__scale {
+  display: flex; justify-content: space-between; margin-top: .35rem;
+  font-size: .7rem; color: var(--ink-mute);
+}
+.sent__meta { margin: var(--s3) 0 0; font-family: var(--mono); font-size: .7rem; color: var(--ink-mute); }
+
+.sent__fig { width: 100%; height: auto; }
+
+/* 凡例。線が2種類ある以上は要る ── 対照の破線が何なのかは図の中では言えない */
+.sent__legend {
+  display: flex; flex-wrap: wrap; gap: .3rem var(--s3);
+  margin: .4rem 0 0; font-size: .72rem; color: var(--ink-mute);
+}
+.sent__lk { display: inline-flex; align-items: center; gap: .35rem; }
+.sent__lki { width: 24px; height: 8px; flex: none; }
+
+.sent__how {
+  max-width: 44rem; margin: var(--s3) 0 var(--s5);
+  font-size: .84rem; line-height: 1.9; color: var(--ink-mid);
+}
+
+/* 根拠の記事。職務経歴と同じ組み ── 左に数値、右に中身 */
+.sent__srcs { display: grid; gap: 1px; margin-bottom: var(--s3); }
+.sent__a {
+  display: grid; grid-template-columns: 3.6rem 1fr; gap: var(--s2) var(--s3);
+  padding: var(--s2) 0; border-top: 1px solid var(--rule);
+}
+.sent__a:last-child { border-bottom: 1px solid var(--rule); }
+.sent__as { font-family: var(--mono); font-size: .92rem; font-weight: 600; }
+.sent__at { margin: 0; font-size: .9rem; line-height: 1.7; }
+.sent__at a { text-decoration-color: var(--rule); text-underline-offset: .2em; }
+.sent__at a:hover { color: var(--vermilion); }
+.sent__aw { margin: .15rem 0 0; font-size: .72rem; color: var(--ink-mute); }
+@media (max-width: 34rem) {
+  .sent__a { grid-template-columns: 3rem 1fr; }
+  .sent__plates { gap: var(--s2) var(--s4); }
+}
+.sent__caveat {
+  max-width: 44rem; margin: 0 0 var(--s4);
+  padding: var(--s2) var(--s3); border-left: 2px solid var(--rule);
+  font-size: .82rem; line-height: 1.85; color: var(--ink-mute);
+}

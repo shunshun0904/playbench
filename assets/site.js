@@ -551,9 +551,10 @@
      天と地は HTML に写さず、ここから組む。
      文言を直す場所が1つで済む。 */
   var PAGES = [
-    { file: 'index.html', ja: '自己紹介',     en: 'About' },
-    { file: 'games.html', ja: 'ボードゲーム', en: 'Board games' },
-    { file: 'macro.html', ja: '経済',         en: 'Economy' }
+    { file: 'index.html',     ja: '自己紹介',         en: 'About' },
+    { file: 'games.html',     ja: 'ボードゲーム',     en: 'Board games' },
+    { file: 'macro.html',     ja: '経済',             en: 'Economy' },
+    { file: 'sentiment.html', ja: '市場センチメント', en: 'Market sentiment' }
   ];
 
   /* タブに出さない頁。ファイルは置いてあるので URL を知っていれば見られる。
@@ -630,8 +631,11 @@
           + 'ここの実装はいずれも学習目的の非公式なファンメイドで、'
           + '商標もアートワークも含みません。'),
       el('p', null, en
-        ? 'Macro figures come from Alpha Vantage. Nothing here is investment advice.'
-        : '経済指標の数字は Alpha Vantage から取っています。投資助言ではありません。'),
+        ? 'Macro figures and news sentiment both come from Alpha Vantage; the market-sentiment '
+          + 'page combines the per-article scores into one number. Nothing here is investment advice.'
+        : '経済指標の数字も、市場センチメントの記事とそのスコアも Alpha Vantage のものです。'
+          + '市場センチメントのページは、記事ごとのスコアを1つの数字にまとめています。'
+          + 'いずれも投資助言ではありません。')
     ]));
 
     /* 資金フローの頁はデータを1つも持たない。読み込みは閲覧者のブラウザの
@@ -1074,6 +1078,470 @@
     });
   }
 
+  /* ═══════════════════════════════════════════════ 市場センチメント
+     ここだけは数字を手元に持たない。120分ごとに AWS 側（Lambda）が集計して
+     S3 に置いた JSON を、開いているあいだ読みに行く。
+     読めなければ、読めないと書く ── 前の値を残して「今」のふりをさせない。
+
+     取得は120分に1回だが、図は5分刻みで描く。記事1件ずつに発行時刻が付いていて、
+     重みが時間で減っていく式なので、任意の時刻の値をこちら側で計算できる。
+     取得間隔で決まるのは遅れ（最大120分）であって、図の細かさではない。
+
+     色は朱と藍の2つだけ。朱が強気、藍が弱気。ただし色だけで意味を持たせず、
+     数値と「やや弱気」などの語を必ず並べる（色が分からなくても読めるように）。 */
+  var SENT = { state: 'idle', data: null, err: '', timer: 0, tick: 0, wired: false };
+  var SENT_SCHEMA = 2;
+
+  /* 外から来る URL は http/https だけ通す。記事の見出しは textContent で入れる */
+  function safeUrl(u) {
+    if (!u) return '';
+    return /^https?:\/\//i.test(String(u)) ? String(u) : '';
+  }
+  /* 符号を必ず付ける。−0.05 と 0.05 を見間違えないため */
+  function sfmt(v, d) {
+    var n = Math.abs(Number(v)).toFixed(d == null ? 2 : d);
+    return (Number(v) < 0 ? '−' : '+') + n;
+  }
+  function sentTone(v) {
+    return v > .02 ? 'var(--vermilion)' : v < -.02 ? 'var(--indigo)' : 'var(--ink-mute)';
+  }
+  /* data/sentiment.js の {ja, en} を言語で選ぶ。
+     pick2 は自己紹介用で fill を要求するので、こちらは素の2択 */
+  function jaen(o) {
+    if (!o) return '';
+    return (lang === 'en' && o.en) ? o.en : (o.ja || '');
+  }
+  function clockAt(ms) {
+    var d = new Date(ms);
+    if (isNaN(d)) return '';
+    return d.toLocaleTimeString(lang === 'en' ? 'en-GB' : 'ja-JP',
+      { hour: '2-digit', minute: '2-digit' });
+  }
+  function dayAt(ms) {
+    var d = new Date(ms);
+    if (isNaN(d)) return '';
+    return d.toLocaleDateString(lang === 'en' ? 'en-GB' : 'ja-JP',
+      { month: 'numeric', day: 'numeric' });
+  }
+
+  /* 集計側の時刻は YYYYMMDDTHHMM（記事は秒まで付く）。
+     ⚠️ このタイムゾーンは API の資料に明示が無く未確定。集計側と揃えて当面 UTC
+     として扱う（sentiment_analysis/src/fetch.py と同じ扱い）。 */
+  function parseAV(s) {
+    if (!s) return NaN;
+    var m = String(s).match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})?$/);
+    if (!m) return NaN;
+    return Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +(m[6] || 0));
+  }
+
+  /* 語の閾値は集計側（Alpha Vantage）の定義に合わせる。
+     ±0.35 / ±0.15 は「上下限」ではなく語の境目 ── 実測で 0.434 の記事がある */
+  function sentWord(v) {
+    var en = lang === 'en';
+    if (v <= -.35) return en ? 'bearish' : '弱気';
+    if (v <= -.15) return en ? 'somewhat bearish' : 'やや弱気';
+    if (v < .15) return en ? 'neutral' : '中立';
+    if (v < .35) return en ? 'somewhat bullish' : 'やや強気';
+    return en ? 'bullish' : '強気';
+  }
+
+  /* ある時刻 t の値。t より後に出た記事は入れない（先の情報を漏らさない）。
+     S(t) = Σ d·r·s / Σ d·r,  d = 0.5^((t − 発行時刻) / 半減期)
+     u は対照の単純平均 ── 主系列と離れたら、減衰や relevance の設定を疑う */
+  function sentAt(win, t, halfLife, span, useRel) {
+    var num = 0, den = 0, raw = 0, n = 0;
+    for (var i = 0; i < win.length; i++) {
+      var age = t - win[i].ms;
+      if (age < 0 || age > span) continue;
+      var w = Math.pow(.5, age / halfLife) * (useRel ? win[i].r : 1);
+      if (w <= 0) continue;
+      num += w * win[i].s; den += w; raw += win[i].s; n += 1;
+    }
+    return { t: t, v: den > 0 ? num / den : null, u: n ? raw / n : null, n: n };
+  }
+
+  function sentSeries(win, p, endMs) {
+    var half = (p.half_life_hours || 6) * 36e5;
+    var span = (p.window_hours || 24) * 36e5;
+    var step = (p.step_min || 5) * 6e4;
+    var useRel = p.use_relevance !== false;
+    var out = [];
+    for (var t = endMs - span; t <= endMs; t += step) {
+      out.push(sentAt(win, t, half, span, useRel));
+    }
+    return out;
+  }
+
+  /* 自分の再構成が、集計側の毎時の値と合っているか。
+     大きく離れていたら式かパラメータがずれている ── 黙って描かない */
+  function sentCheck(mine, server) {
+    var worst = 0, n = 0;
+    for (var i = 0; i < server.length; i++) {
+      if (server[i].v == null) continue;
+      var ms = parseAV(server[i].t), best = null;
+      for (var j = 0; j < mine.length; j++) {
+        if (mine[j].v == null) continue;
+        if (!best || Math.abs(mine[j].t - ms) < Math.abs(best.t - ms)) best = mine[j];
+      }
+      if (!best || Math.abs(best.t - ms) > 5 * 6e4) continue;
+      worst = Math.max(worst, Math.abs(best.v - server[i].v));
+      n += 1;
+    }
+    return { n: n, worst: worst };
+  }
+
+  function loadSentiment() {
+    var conf = PB.SENTIMENT;
+    if (!conf || !conf.endpoint) { SENT.state = 'unset'; buildSentiment(); return; }
+    SENT.state = SENT.data ? SENT.state : 'loading';
+    fetch(conf.endpoint, { cache: 'no-store' }).then(function (r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    }).then(function (j) {
+      if (j.schema_version !== SENT_SCHEMA) throw new Error(lang === 'en'
+        ? 'the data format has changed' : 'データの形が変わっています');
+      /* 時刻は一度だけ数に直す。1分ごとに描き直すので、そのたびに文字列を解析しない */
+      j.win = (j.window || []).map(function (a) {
+        return { ms: parseAV(a.t), s: +a.s, r: a.r == null ? 1 : +a.r };
+      }).filter(function (a) {
+        return isFinite(a.ms) && isFinite(a.s);
+      }).sort(function (a, b) { return a.ms - b.ms; });
+      SENT.data = j; SENT.state = 'ok'; SENT.err = '';
+    })['catch'](function (e) {
+      SENT.state = SENT.data ? 'stale' : 'error';
+      SENT.err = e.message || String(e);
+    }).then(function () {
+      buildSentiment();
+      var p = (SENT.data && SENT.data.params) || {};
+      var wait = (p.update_interval_seconds || 3600) * 1000;
+      clearTimeout(SENT.timer);
+      SENT.timer = setTimeout(loadSentiment, SENT.state === 'error' ? 60000 : wait);
+
+      /* 取得は120分に1回でも、値は時間とともに減衰して動く。
+         1分ごとに描き直して、画面の数字を止めない */
+      clearInterval(SENT.tick);
+      if (SENT.state === 'ok' || SENT.state === 'stale') {
+        SENT.tick = setInterval(buildSentiment, 60000);
+      }
+    });
+  }
+
+  /* いまの値。図の前に、数字と語と −1〜+1 の位置で三重に出す。
+     now は再構成した「この瞬間」の点、prev は1時間前の点 */
+  function sentimentNow(now, prev, p) {
+    var en = lang === 'en';
+    var box = el('div', 'sent__now');
+    var v = now.v;
+
+    var head = el('div', 'sent__head');
+    var big = el('strong', 'sent__big', sfmt(v));
+    big.style.color = sentTone(v);
+    head.appendChild(big);
+    head.appendChild(el('span', 'sent__label', sentWord(v)));
+    box.appendChild(head);
+
+    var plates = el('div', 'sent__plates');
+    function plate(k, val, note) {
+      var d = el('div', 'sent__plate');
+      d.appendChild(el('span', 'sent__k', k));
+      d.appendChild(el('span', 'sent__v num', val));
+      if (note) d.appendChild(el('span', 'sent__note', note));
+      plates.appendChild(d);
+    }
+    var delta = (prev && prev.v != null) ? v - prev.v : null;
+    plate(en ? 'vs 1 h ago' : '1時間前比',
+      delta == null ? '—' : sfmt(delta),
+      delta == null ? (en ? 'not enough history' : '履歴がまだ足りません') : '');
+    plate(en ? 'Articles' : '対象記事', String(now.n),
+      en ? 'in the window' : '減衰ウィンドウ内');
+    /* 対照の単純平均。主系列と離れていたら、減衰と relevance の効き方を疑う */
+    plate(en ? 'Plain mean' : '単純平均',
+      now.u == null ? '—' : sfmt(now.u),
+      en ? 'no weighting — a control' : '重み無しの対照');
+    box.appendChild(plates);
+
+    /* −1〜+1 の帯。中央が0 */
+    var half = Math.min(Math.abs(v), 1) * 50;
+    var track = el('div', 'sent__track');
+    var fill = el('div', 'sent__fill');
+    fill.style.background = sentTone(v);
+    if (v >= 0) { fill.style.left = '50%'; fill.style.right = (50 - half) + '%'; }
+    else { fill.style.left = (50 - half) + '%'; fill.style.right = '50%'; }
+    track.appendChild(fill);
+    track.appendChild(el('span', 'sent__zero'));
+    box.appendChild(track);
+
+    var scale = el('div', 'sent__scale');
+    scale.appendChild(el('span', null, en ? '−1.0 bearish' : '−1.0 弱気'));
+    scale.appendChild(el('span', 'num', '0'));
+    scale.appendChild(el('span', null, en ? 'bullish +1.0' : '強気 +1.0'));
+    box.appendChild(scale);
+
+    if (p && p.half_life_hours) {
+      box.appendChild(el('p', 'sent__meta', en
+        ? 'Half-life ' + p.half_life_hours + ' h · window ' + p.window_hours
+          + ' h · scores from Alpha Vantage'
+        : '半減期 ' + p.half_life_hours + ' 時間 · 対象 ' + p.window_hours
+          + ' 時間 · スコアは Alpha Vantage のもの'));
+    }
+    return box;
+  }
+
+  /* 24時間の図。0の線を境に、上は朱、下は藍。面は薄く、線は細く。
+     対照の単純平均は無彩色の破線で重ねる ── 色で語らない系列は色を持たない */
+  function sentimentFig(series) {
+    var pts = [];
+    for (var i = 0; i < series.length; i++) {
+      if (series[i].v != null && isFinite(series[i].v)) pts.push(series[i]);
+    }
+    if (pts.length < 2) return null;
+
+    var W = 640, H = 170, PADL = 30, PADR = 12, PADT = 10, PADB = 20;
+    var top = 0;
+    pts.forEach(function (p) {
+      top = Math.max(top, Math.abs(p.v));
+      if (p.u != null) top = Math.max(top, Math.abs(p.u));
+    });
+    var hi = Math.min(1, Math.max(.2, Math.ceil(top * 10) / 10)), lo = -hi;
+
+    var t0 = pts[0].t, t1 = pts[pts.length - 1].t;
+    if (!(t1 > t0)) t1 = t0 + 1;
+    var x = function (t) { return PADL + (W - PADL - PADR) * ((t - t0) / (t1 - t0)); };
+    var y = function (v) { return PADT + (H - PADT - PADB) * ((hi - v) / (hi - lo)); };
+
+    var s = svg(W, H), ink = 'currentColor';
+    s.setAttribute('class', 'spark sent__fig');
+    s.setAttribute('aria-label', lang === 'en'
+      ? 'Sentiment over the last 24 hours, rebuilt in 5-minute steps'
+      : '直近24時間のセンチメントの推移（5分刻みで再構成）');
+
+    /* 上下の目盛は破線、0だけは実線。0が境目だと分かるように */
+    [hi, 0, lo].forEach(function (v) {
+      var zero = v === 0;
+      sh(s, 'line', { x1: PADL, y1: y(v), x2: W - PADR, y2: y(v), stroke: ink,
+        'stroke-width': zero ? .8 : .5, 'stroke-opacity': zero ? .45 : .25,
+        'stroke-dasharray': zero ? '' : '3 3' });
+      var tx = sh(s, 'text', { x: PADL - 5, y: y(v) + 3.5, 'text-anchor': 'end',
+        fill: ink, 'font-size': 9, 'fill-opacity': .55 });
+      tx.textContent = v.toFixed(1);
+    });
+
+    /* 符号で色を変える。0の高さで硬く切り替える1本のグラデーション */
+    var gid = 'sent-sign';
+    var defs = sh(s, 'defs', {});
+    var lg = sh(defs, 'linearGradient', { id: gid, x1: '0', y1: '0', x2: '0', y2: '1' });
+    var cut = ((y(0) - PADT) / (H - PADT - PADB) * 100).toFixed(2) + '%';
+    sh(lg, 'stop', { offset: '0%', 'stop-color': 'var(--vermilion)' });
+    sh(lg, 'stop', { offset: cut, 'stop-color': 'var(--vermilion)' });
+    sh(lg, 'stop', { offset: cut, 'stop-color': 'var(--indigo)' });
+    sh(lg, 'stop', { offset: '100%', 'stop-color': 'var(--indigo)' });
+
+    var d = '';
+    pts.forEach(function (p, i) {
+      d += (i ? ' L' : 'M') + x(p.t).toFixed(1) + ' ' + y(p.v).toFixed(1);
+    });
+    sh(s, 'path', { d: d + ' L' + x(pts[pts.length - 1].t).toFixed(1) + ' ' + y(0).toFixed(1)
+        + ' L' + x(pts[0].t).toFixed(1) + ' ' + y(0).toFixed(1) + ' Z',
+      fill: 'url(#' + gid + ')', 'fill-opacity': .13, stroke: 'none' });
+    sh(s, 'path', { d: d, fill: 'none', stroke: 'url(#' + gid + ')',
+      'stroke-width': 1.4, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' });
+
+    /* 対照の単純平均。重みを一切かけない値で、主系列がどれだけ動かされたかを見る */
+    var du = '', started = false;
+    pts.forEach(function (p) {
+      if (p.u == null) return;
+      du += (started ? ' L' : 'M') + x(p.t).toFixed(1) + ' ' + y(p.u).toFixed(1);
+      started = true;
+    });
+    if (started) {
+      sh(s, 'path', { d: du, fill: 'none', stroke: ink, 'stroke-opacity': .5,
+        'stroke-width': 1, 'stroke-dasharray': '4 3', 'stroke-linejoin': 'round' });
+    }
+
+    var last = pts[pts.length - 1];
+    sh(s, 'circle', { cx: x(last.t), cy: y(last.v), r: 2.6, fill: sentTone(last.v) });
+
+    /* 24時間の窓は日をまたぐ。時刻だけだと両端が同じ「08:43」になって
+       どちらが古いのか分からなくなるので、日が違えば日付も添える */
+    var crossesDay = new Date(t0).getDate() !== new Date(t1).getDate();
+    [[pts[0], 'start'], [pts[pts.length - 1], 'end']].forEach(function (p) {
+      var tx = sh(s, 'text', { x: p[1] === 'start' ? PADL : W - PADR, y: H - 5,
+        'text-anchor': p[1], fill: ink, 'font-size': 9, 'fill-opacity': .55 });
+      tx.textContent = crossesDay ? dayAt(p[0].t) + ' ' + clockAt(p[0].t) : clockAt(p[0].t);
+    });
+    return s;
+  }
+
+  /* 線が2本ある以上、凡例は要る。線の見た目をそのまま小さく描いて添える。
+     主系列は1本だが0を境に色が変わるので、見本も半分ずつで示す */
+  function sentimentLegend() {
+    var en = lang === 'en';
+    var box = el('div', 'sent__legend');
+    function key(text, draw) {
+      var item = el('span', 'sent__lk');
+      var s = svg(24, 8);
+      s.setAttribute('class', 'sent__lki');
+      draw(s);
+      item.appendChild(s);
+      item.appendChild(el('span', null, text));
+      box.appendChild(item);
+    }
+    key(en ? 'weighted mean — vermilion above 0, indigo below'
+          : '加重平均 ── 0より上は朱、下は藍', function (s) {
+      sh(s, 'line', { x1: 0, y1: 4, x2: 12, y2: 4,
+        stroke: 'var(--vermilion)', 'stroke-width': 1.6 });
+      sh(s, 'line', { x1: 12, y1: 4, x2: 24, y2: 4,
+        stroke: 'var(--indigo)', 'stroke-width': 1.6 });
+    });
+    key(en ? 'plain mean — a control' : '単純平均 ── 重み無しの対照', function (s) {
+      sh(s, 'line', { x1: 0, y1: 4, x2: 24, y2: 4, stroke: 'currentColor',
+        'stroke-width': 1, 'stroke-opacity': .5, 'stroke-dasharray': '4 3' });
+    });
+    return box;
+  }
+
+  /* 根拠。どの記事がこの値を作ったのか、出どころ付きで並べる。
+     出典の無い数字は載せない、というこの site の決まりはここにも効く */
+  function sentimentArticles(list) {
+    var box = el('div', 'sent__srcs');
+    (list || []).forEach(function (a) {
+      var row = el('div', 'sent__a');
+
+      var sc = el('span', 'sent__as num', sfmt(a.score));
+      sc.style.color = sentTone(a.score);
+      row.appendChild(sc);
+
+      var body = el('div');
+      var url = safeUrl(a.url);
+      var t = el('p', 'sent__at');
+      if (url) {
+        var link = el('a', null, a.title);
+        link.href = url; link.rel = 'noopener'; link.target = '_blank';
+        link.appendChild(el('span', 'srcs__go', '↗'));
+        t.appendChild(link);
+      } else {
+        t.textContent = a.title;
+      }
+      body.appendChild(t);
+      body.appendChild(el('p', 'sent__aw', a.source + ' · ' + clockAt(parseAV(a.t))));
+      row.appendChild(body);
+      box.appendChild(row);
+    });
+    return box;
+  }
+
+  function buildSentiment() {
+    var host = document.getElementById('sentiment');
+    if (!host) return;
+    var conf = PB.SENTIMENT || {};
+    var en = lang === 'en';
+    host.textContent = '';
+
+    var when = document.getElementById('sent-when');
+    var stamp = document.getElementById('sent-index');
+    if (stamp) stamp.textContent = jaen(conf.index);
+
+    if (SENT.state === 'idle' || SENT.state === 'loading') {
+      if (when) when.textContent = en ? 'loading' : '読み込み中';
+      host.appendChild(el('p', 'blank', en ? 'Fetching…' : '読み込んでいます…'));
+      return;
+    }
+    if (SENT.state === 'unset') {
+      if (when) when.textContent = en ? 'not deployed' : '未配備';
+      host.appendChild(el('p', 'blank', en
+        ? 'Not deployed yet. Once the collector is running on AWS, put its latest.json URL '
+          + 'into data/sentiment.js and the figures appear here.'
+        : 'まだ配備していません。AWS 側の集計が動きだしたら、その latest.json の URL を '
+          + 'data/sentiment.js に書くと、ここに数字が入ります。'));
+      return;
+    }
+    if (SENT.state === 'error') {
+      if (when) when.textContent = en ? 'unreachable' : '取得できず';
+      host.appendChild(el('p', 'blank', (en
+        ? 'Could not read the figures (' : '数字を取得できませんでした（') + SENT.err
+        + (en ? '). Retrying shortly.' : '）。しばらくして取り直します。')));
+      return;
+    }
+
+    var data = SENT.data;
+    var p = data.params || {};
+    var win = data.win || [];
+
+    if (when) {
+      when.textContent = (en ? 'collected ' : '取得 ') + clockAt(parseAV(data.updated_at))
+        + (en ? '' : '')
+        + (SENT.state === 'stale' ? (en ? ' · stale' : ' · 更新できず') : '');
+    }
+
+    /* 図も数字も、集計時刻ではなく「いま」で作る。
+       記事は増えていなくても、重みが減るぶん値は動き続ける */
+    var nowMs = Date.now();
+    var series = sentSeries(win, p, nowMs);
+    var half = (p.half_life_hours || 6) * 36e5;
+    var span = (p.window_hours || 24) * 36e5;
+    var useRel = p.use_relevance !== false;
+    var cur = sentAt(win, nowMs, half, span, useRel);
+    var prev = sentAt(win, nowMs - 36e5, half, span, useRel);
+
+    if (cur.v == null) {
+      host.appendChild(el('p', 'blank', en
+        ? 'No articles in the last ' + (p.window_hours || 24) + ' hours yet. '
+          + 'The first readings appear once the collector has been running for a while.'
+        : 'まだ直近' + (p.window_hours || 24) + '時間の記事がありません。'
+          + '集計がしばらく動くと、ここに数字が入ります。'));
+      return;
+    }
+
+    host.appendChild(sentimentNow(cur, prev, p));
+
+    /* 注意書きは図より先。数字を見る前に読んでほしい */
+    var caveat = jaen(conf.caveat);
+    if (caveat) host.appendChild(el('p', 'sent__caveat', caveat));
+
+    var fig = sentimentFig(series);
+    if (fig) {
+      var wrap = el('div', 'gauge__fig');
+      wrap.appendChild(fig);
+      host.appendChild(wrap);
+      host.appendChild(sentimentLegend());
+
+      /* 再構成が集計側と合っているかを、その場で照合して出す。
+         合わない図を黙って描くより、差を書いてしまうほうが早く気づける */
+      var chk = sentCheck(series, data.series || []);
+      /* 描けた点だけ数える。窓の古い側に記事が1件も無ければ、そこは線にならない
+         ── 全部で289点と書いておいて70点しか描かないほうが分かりにくい */
+      var drawn = 0;
+      for (var k = 0; k < series.length; k++) if (series[k].v != null) drawn += 1;
+      var foot = (en ? 'Last ' : '直近')
+        + (p.window_hours || 24) + (en ? ' hours · ' : '時間 · ')
+        + drawn + (en ? ' points, ' : '点・')
+        + (p.step_min || 5) + (en ? '-minute steps, rebuilt in the browser from '
+                                  : '分刻み。ブラウザ側で ')
+        + win.length + (en ? ' articles' : ' 件の記事から再構成');
+      if (chk.n) {
+        foot += (en ? ' · checked against ' : ' · 集計側の毎時の値 ')
+          + chk.n + (en ? ' hourly server values, largest gap ' : ' 点と照合、最大差 ')
+          + chk.worst.toFixed(4);
+      }
+      host.appendChild(el('p', 'gauge__src', foot));
+    }
+
+    host.appendChild(el('p', 'sent__how', jaen(conf.method)));
+
+    if (data.top_articles && data.top_articles.length) {
+      host.appendChild(el('h3', 'rsc__gt', en ? 'Latest articles taken in' : '直近の採用記事'));
+      host.appendChild(sentimentArticles(data.top_articles));
+      /* この一覧は「最後の1回の取得で採った記事」であって、上の数字を作った
+         24時間ぶんの全記事ではない。取り違えると根拠を読み誤るので、そう書く */
+      host.appendChild(el('p', 'grid__foot', (en
+        ? 'From the most recent collection only, largest scores first — not the whole '
+          + (p.window_hours || 24) + ' hours behind the number above. Articles via '
+        : '最後の取得ぶんから、スコアの大きい順に。上の数字を作った'
+          + (p.window_hours || 24) + '時間ぶん全部ではありません。記事の出どころ ')
+        + jaen(conf.provider)));
+    }
+  }
+
   /* --------------------------------------------------------------- 描画 */
   function render() {
     buildHead();
@@ -1082,6 +1550,7 @@
     buildProfile();
     buildMacroTable();
     buildMacro();
+    buildSentiment();
 
     var games = document.getElementById('works');
     if (games) {
@@ -1164,6 +1633,16 @@
 
     applyLang();
     applyTheme(document.documentElement.getAttribute('data-theme'));
+
+    /* センチメントのページだけ、外の数字を読みに行く。
+       閉じているあいだは取りに行かない ── 戻ってきたときに取り直す。 */
+    if (document.getElementById('sentiment') && !SENT.wired) {
+      SENT.wired = true;
+      loadSentiment();
+      document.addEventListener('visibilitychange', function () {
+        if (document.visibilityState === 'visible') loadSentiment();
+      });
+    }
 
     /* 切替ボタンは天と一緒に作り直されるので、要素に直接ではなく
        document で受ける。付け直しの漏れが起きない。 */

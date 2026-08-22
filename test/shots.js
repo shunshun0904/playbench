@@ -546,9 +546,157 @@ function serve() {
     console.log('  ', JSON.stringify(en));
     // 収録は3作。先頭はハイソサエティ
     if (en.lang !== 'en' || en.first !== 'High Society' || !/Play/.test(en.play)) fail('英語に切り替わっていない');
-    if (!/About\/Board games\/Economy/.test(en.nav)) fail('天のタブが英語になっていない');
+    if (!/About\/Board games\/Economy\/Market sentiment/.test(en.nav)) fail('天のタブが英語になっていない');
     if (en.overflow > 1) fail('横スクロールが出ている');
     await ctx.close();
+  }
+
+
+  /* ------------------------------------------------ 市場センチメント
+     数字は AWS 側から来るので、リポジトリの中には無い。
+     配信を差し替えて、(a) 配備前の断り書き (b) 数字が来たときの画面、
+     の両方を通す。見本は検査の中だけに存在する。 */
+  {
+    /* 見本は「いま」から作る。ページは取得時刻ではなく現在時刻で再構成するので、
+       固定の日付を置くと窓から外れて空になる。
+
+       仕掛けは2群。半減期ちょうど6時間ぶん離してあるので、答えが手で出る:
+         A  1分前   −0.5 × 12件   重み k
+         B  6時間1分前  +0.1 × 12件   重み k/2   （k は約分で消える）
+       いま       = (12k(−.5) + 6k(.1)) / (12k + 6k) = −0.30
+       単純平均    = (−0.5 + 0.1) / 2                = −0.20
+       1時間前     = A がまだ無いので B だけ         = +0.10 → 前比 −0.40 */
+    const MIN = 60e3;
+    const av = (msAgo, sec) => {
+      const d = new Date(Date.now() - msAgo);
+      const p = (n, w) => String(n).padStart(w || 2, '0');
+      return p(d.getUTCFullYear(), 4) + p(d.getUTCMonth() + 1) + p(d.getUTCDate())
+        + 'T' + p(d.getUTCHours()) + p(d.getUTCMinutes()) + (sec ? p(d.getUTCSeconds()) : '');
+    };
+    const win = [];
+    for (let i = 0; i < 12; i++) win.push({ t: av(1 * MIN, true), s: -0.5, r: 1 });
+    for (let i = 0; i < 12; i++) win.push({ t: av(361 * MIN, true), s: 0.1, r: 1 });
+
+    const FIX = {
+      schema_version: 2,
+      updated_at: av(1 * MIN),
+      next_update_at: av(-59 * MIN),
+      current: -0.30, label: 'Somewhat-Bearish', raw_mean: -0.20, n_articles: 24,
+      top_tickers: [{ s: 'NVDA', n: 9 }],
+      /* 集計側の毎時の値。ページはこれと自分の再構成を突き合わせて差を出す。
+         この時刻には B しか窓に入らないので、どちらも +0.10 になるはず */
+      series: [
+        { t: av(120 * MIN), v: 0.1, u: 0.1 },
+        { t: av(60 * MIN), v: 0.1, u: 0.1 }
+      ],
+      params: { half_life_hours: 6, window_hours: 24, step_min: 5,
+                use_relevance: true, update_interval_seconds: 3600 },
+      window: win,
+      top_articles: [
+        { title: 'Jobless claims rise more than expected', url: 'https://example.com/a',
+          source: 'wsj.com', t: av(1 * MIN, true), score: -0.52 },
+        { title: 'Tech megacaps lead broad rally into the close', url: 'https://example.com/b',
+          source: 'bloomberg.com', t: av(75 * MIN, true), score: 0.61 }
+      ]
+    };
+
+    /* (a) 配備前 ── endpoint が空。数字を出さず、そう書けているか。
+       本物の data/sentiment.js は配備済みでURLが入っているので、
+       ここは空の設定を差し込んで確かめる（本番の設定に依存させない）。 */
+    {
+      const ctx = await newContext({ viewport: { width: 1280, height: 1000 }, deviceScaleFactor: 2 });
+      const page = await ctx.newPage();
+      await page.route(u => u.pathname.endsWith('/data/sentiment.js'), r => r.fulfill({
+        status: 200, contentType: 'text/javascript',
+        body: `window.PB = window.PB || {};
+               window.PB.SENTIMENT = { endpoint: '',
+                 index: { id: 'SPX', ja: 'S&P 500', en: 'S&P 500' } };`
+      }));
+      await page.goto(URL + 'sentiment.html', { waitUntil: 'load' });
+      await page.waitForTimeout(300);
+      const blank = await page.evaluate(() => ({
+        blank: !!document.querySelector('#sentiment .blank'),
+        big: !!document.querySelector('.sent__big'),
+        tag: (document.getElementById('sent-when') || {}).textContent
+      }));
+      console.log('── 市場センチメント（配備前）');
+      console.log('  ', JSON.stringify(blank));
+      if (!blank.blank) fail('配備前の断り書きが出ていない');
+      if (blank.big) fail('数字が無いのに数字を出している');
+      if (!/未配備/.test(blank.tag)) fail(`未配備と書けていない（${blank.tag}）`);
+      await ctx.close();
+    }
+
+    /* (b) 数字が来たとき */
+    {
+      const ctx = await newContext({ viewport: { width: 1280, height: 1200 }, deviceScaleFactor: 2 });
+      const page = await ctx.newPage();
+      await page.route(u => u.pathname.endsWith('/data/sentiment.js'), r => r.fulfill({
+        status: 200, contentType: 'text/javascript',
+        body: `window.PB = window.PB || {};
+               window.PB.SENTIMENT = {
+                 endpoint: '/fixture-sentiment.json',
+                 index: { id: 'SPX', ja: 'S&P 500', en: 'S&P 500' },
+                 provider: { ja: 'Alpha Vantage（記事とスコア）', en: 'Alpha Vantage (articles and scores)' },
+                 method: { ja: '半減期6時間の加重平均です。', en: 'Time-decayed mean, 6-hour half-life.' },
+                 caveat: { ja: '相場の予測ではありません。', en: 'Not a forecast.' }
+               };`
+      }));
+      await page.route(u => u.pathname.endsWith('/fixture-sentiment.json'), r => r.fulfill({
+        status: 200, contentType: 'application/json', body: JSON.stringify(FIX)
+      }));
+      await page.goto(URL + 'sentiment.html', { waitUntil: 'load' });
+      await page.waitForFunction(() => !!document.querySelector('.sent__big'));
+
+      const got = await page.evaluate(() => ({
+        big: document.querySelector('.sent__big').textContent,
+        label: document.querySelector('.sent__label').textContent,
+        plates: [...document.querySelectorAll('.sent__v')].map(n => n.textContent),
+        rows: document.querySelectorAll('.sent__a').length,
+        first: document.querySelector('.sent__as').textContent,
+        href: document.querySelector('.sent__at a').getAttribute('href'),
+        paths: document.querySelectorAll('.sent__fig path').length,
+        keys: document.querySelectorAll('.sent__legend .sent__lk').length,
+        foot: (document.querySelector('.gauge__src') || {}).textContent,
+        tabs: document.querySelectorAll('.masthead__nav a').length,
+        here: (document.querySelector('.masthead__nav a.is-here') || {}).textContent,
+        idx: (document.getElementById('sent-index') || {}).textContent,
+        how: (document.querySelector('.sent__how') || {}).textContent,
+        caveat: (document.querySelector('.sent__caveat') || {}).textContent,
+        note: (document.querySelector('.grid__foot') || {}).textContent,
+        overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth
+      }));
+      console.log('── 市場センチメント（見本）');
+      console.log('  ', JSON.stringify(got));
+      // 符号は必ず付ける。−0.30 と 0.30 を見間違えないため
+      if (got.big !== '−0.30') fail(`いまの値が符号つきで出ていない（${got.big}）`);
+      if (got.label !== 'やや弱気') fail('語が出ていない ── 色だけに意味を持たせない');
+      // 前比・件数・単純平均。値は上のコメントの手計算どおりになるはず
+      if (got.plates.join('/') !== '−0.40/24/−0.20') fail(`前比・件数・単純平均が合わない（${got.plates}）`);
+      if (got.rows !== 2) fail(`記事が2件出ていない（${got.rows}）`);
+      if (got.first !== '−0.52') fail('記事のスコアが符号つきで出ていない');
+      if (!/^https:\/\//.test(got.href)) fail('記事のリンクが http(s) でない');
+      if (got.paths < 3) fail('図（面・主系列・対照の破線）が3本そろっていない');
+      // 線が2種類ある以上、凡例が無いと破線が何なのか分からない
+      if (got.keys !== 2) fail(`凡例が2つ出ていない（${got.keys}）`);
+      if (!/5分刻み/.test(got.foot)) fail('5分刻みで再構成したと書けていない');
+      // 再構成が集計側とずれていないか。仕掛け上ぴったり合うはず
+      const gap = (got.foot.match(/最大差\s*([\d.]+)/) || [])[1];
+      if (gap == null) fail('集計側との照合が出ていない');
+      else if (Number(gap) > 0.01) fail(`再構成が集計側とずれている（最大差 ${gap}）`);
+      if (got.tabs !== 4) fail('天のタブが4枚出ていない');
+      if (got.here !== '市場センチメント') fail('いま開いている耳に印が付いていない');
+      if (got.idx !== 'S&P 500') fail('どの指数か出ていない');
+      // 出どころと読み取り方は、無ければ数字だけが独り歩きする
+      if (!got.how) fail('算出方法の説明が出ていない');
+      if (!got.caveat) fail('読み取り方の注意が出ていない');
+      // 記事一覧は最後の取得ぶんだけ。上の数字の全根拠だと読まれると誤る
+      if (!/全部ではありません/.test(got.note)) fail('記事一覧が一部だという断りが無い');
+      if (got.overflow > 1) fail('横スクロールが出ている');
+
+      await page.screenshot({ path: path.join(OUT, 'sentiment.png'), fullPage: true });
+      await ctx.close();
+    }
   }
 
   await browser.close();
