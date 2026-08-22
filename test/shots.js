@@ -588,10 +588,18 @@ function serve() {
       ]
     };
 
-    /* (a) 配備前 ── endpoint が空。数字を出さず、そう書けているか */
+    /* (a) 配備前 ── endpoint が空。数字を出さず、そう書けているか。
+       本物の data/sentiment.js は配備済みでURLが入っているので、
+       ここは空の設定を差し込んで確かめる（本番の設定に依存させない）。 */
     {
       const ctx = await newContext({ viewport: { width: 1280, height: 1000 }, deviceScaleFactor: 2 });
       const page = await ctx.newPage();
+      await page.route(u => u.pathname.endsWith('/data/sentiment.js'), r => r.fulfill({
+        status: 200, contentType: 'text/javascript',
+        body: `window.PB = window.PB || {};
+               window.PB.SENTIMENT = { endpoint: '',
+                 index: { id: 'SPX', ja: 'S&P 500', en: 'S&P 500' } };`
+      }));
       await page.goto(URL + 'sentiment.html', { waitUntil: 'load' });
       await page.waitForTimeout(300);
       const blank = await page.evaluate(() => ({
