@@ -49,9 +49,9 @@ build.js            盤上のページを1枚にまとめる
 
 金融ニュースの論調を −1〜+1 の1つの数字にまとめています。
 **このリポジトリに数字は入っていません。** 集計するのは別のところ
-（<https://github.com/shunshun0904/sentiment_analysis>）で、AWS 上の Lambda が
-120分ごとに Alpha Vantage からニュースとそのスコアを取り、JSON を置きます
-（GitHub Actions が集計して、そのリポジトリの Pages から配ります）。
+（<https://github.com/shunshun0904/sentiment_analysis>）で、**GitHub Actions** が
+120分ごとに Alpha Vantage からニュースとそのスコアを取り、
+そのリポジトリの `data` ブランチに置いて GitHub Pages から配ります。
 このページは開いているあいだ、その JSON を読みに行くだけです。
 
 ### 取得は120分に1回、図は5分刻み
