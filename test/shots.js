@@ -593,7 +593,9 @@ function serve() {
       params: { half_life_hours: 6, window_hours: 24, step_min: 60,
                 use_relevance: true, update_interval_seconds: 3600 },
       window: win,
-      top_articles: [
+      /* 公開の新しい順。並べ替えは集計側の仕事なので、ここは並んだ状態で渡す。
+         旧名 top_articles でも読めることは画面側のフォールバックが担う */
+      recent_articles: [
         { title: 'Jobless claims rise more than expected', url: 'https://example.com/a',
           source: 'wsj.com', t: av(1 * MIN, true), score: -0.52 },
         { title: 'Tech megacaps lead broad rally into the close', url: 'https://example.com/b',
@@ -691,8 +693,9 @@ function serve() {
       // 出どころと読み取り方は、無ければ数字だけが独り歩きする
       if (!got.how) fail('算出方法の説明が出ていない');
       if (!got.caveat) fail('読み取り方の注意が出ていない');
-      // 記事一覧は最後の取得ぶんだけ。上の数字の全根拠だと読まれると誤る
-      if (!/全部ではありません/.test(got.note)) fail('記事一覧が一部だという断りが無い');
+      // 一覧は新しい順の先頭だけ。上の数字の全根拠だと読まれると誤る
+      if (!/全部では/.test(got.note)) fail('記事一覧が一部だという断りが無い');
+      if (!/新しい順/.test(got.note)) fail('どの順で並んでいるか書けていない');
       if (got.overflow > 1) fail('横スクロールが出ている');
 
       await page.screenshot({ path: path.join(OUT, 'sentiment.png'), fullPage: true });

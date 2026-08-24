@@ -1532,16 +1532,20 @@
 
     host.appendChild(el('p', 'sent__how', jaen(conf.method)));
 
-    if (data.top_articles && data.top_articles.length) {
-      host.appendChild(el('h3', 'rsc__gt', en ? 'Latest articles taken in' : '直近の採用記事'));
-      host.appendChild(sentimentArticles(data.top_articles));
-      /* この一覧は「最後の1回の取得で採った記事」であって、上の数字を作った
-         24時間ぶんの全記事ではない。取り違えると根拠を読み誤るので、そう書く */
+    /* 旧名 top_articles でも読めるようにしておく（集計側と画面側の配備が
+       前後しても、一覧が消えない） */
+    var arts = data.recent_articles || data.top_articles;
+    if (arts && arts.length) {
+      host.appendChild(el('h3', 'rsc__gt', en ? 'Most recent articles' : '直近の記事'));
+      host.appendChild(sentimentArticles(arts));
+      /* 一覧は新しい順の先頭20件で、上の数字を作った窓の全記事ではない。
+         抜粋だと書いておかないと、これが内訳だと読まれる */
       host.appendChild(el('p', 'grid__foot', (en
-        ? 'From the most recent collection only, largest scores first — not the whole '
-          + (p.window_hours || 24) + ' hours behind the number above. Articles via '
-        : '最後の取得ぶんから、スコアの大きい順に。上の数字を作った'
-          + (p.window_hours || 24) + '時間ぶん全部ではありません。記事の出どころ ')
+        ? 'The ' + arts.length + ' most recent of the '
+          + (p.window_hours || 24) + ' hours behind the number above — the head of the list, '
+          + 'not the whole of it. Articles via '
+        : '上の数字を作った' + (p.window_hours || 24) + '時間ぶんのうち、公開の新しい順に'
+          + arts.length + '件。全部ではなく先頭だけです。記事の出どころ ')
         + jaen(conf.provider)));
     }
   }
