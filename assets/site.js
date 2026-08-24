@@ -1079,13 +1079,13 @@
   }
 
   /* ═══════════════════════════════════════════════ 市場センチメント
-     ここだけは数字を手元に持たない。120分ごとに AWS 側（Lambda）が集計して
+     ここだけは数字を手元に持たない。60分ごとに AWS 側（Lambda）が集計して
      S3 に置いた JSON を、開いているあいだ読みに行く。
      読めなければ、読めないと書く ── 前の値を残して「今」のふりをさせない。
 
-     取得は120分に1回だが、図は5分刻みで描く。記事1件ずつに発行時刻が付いていて、
+     取得は60分に1回で、図の刻みもそれに揃えている。記事1件ずつに発行時刻が付いていて、
      重みが時間で減っていく式なので、任意の時刻の値をこちら側で計算できる。
-     取得間隔で決まるのは遅れ（最大120分）であって、図の細かさではない。
+     刻みは取得間隔に縛られないが、情報が入るのが60分に1回なので揃えてある。
 
      色は朱と藍の2つだけ。朱が強気、藍が弱気。ただし色だけで意味を持たせず、
      数値と「やや弱気」などの語を必ず並べる（色が分からなくても読めるように）。 */
@@ -1172,19 +1172,23 @@
     return out;
   }
 
-  /* 自分の再構成が、集計側の毎時の値と合っているか。
-     大きく離れていたら式かパラメータがずれている ── 黙って描かない */
-  function sentCheck(mine, server) {
+  /* 自分の再構成が、集計側の値と合っているか。
+     大きく離れていたら式かパラメータがずれている ── 黙って描かない。
+
+     表示のグリッドに寄せて比べると、格子のずれ（最大で刻みの半分）が
+     そのまま差として出てしまう。刻みを60分にした時点でサーバ側の時刻が
+     どの格子にも近くなくなり、照合そのものが止まった。
+     グリッドは使わず、**サーバが集計した時刻そのもので計算し直して**比べる。 */
+  function sentCheck(win, p, server) {
+    var half = (p.half_life_hours || 6) * 36e5;
+    var span = (p.window_hours || 24) * 36e5;
+    var useRel = p.use_relevance !== false;
     var worst = 0, n = 0;
     for (var i = 0; i < server.length; i++) {
       if (server[i].v == null) continue;
-      var ms = parseAV(server[i].t), best = null;
-      for (var j = 0; j < mine.length; j++) {
-        if (mine[j].v == null) continue;
-        if (!best || Math.abs(mine[j].t - ms) < Math.abs(best.t - ms)) best = mine[j];
-      }
-      if (!best || Math.abs(best.t - ms) > 5 * 6e4) continue;
-      worst = Math.max(worst, Math.abs(best.v - server[i].v));
+      var mine = sentAt(win, parseAV(server[i].t), half, span, useRel);
+      if (mine.v == null) continue;
+      worst = Math.max(worst, Math.abs(mine.v - server[i].v));
       n += 1;
     }
     return { n: n, worst: worst };
@@ -1217,7 +1221,7 @@
       clearTimeout(SENT.timer);
       SENT.timer = setTimeout(loadSentiment, SENT.state === 'error' ? 60000 : wait);
 
-      /* 取得は120分に1回でも、値は時間とともに減衰して動く。
+      /* 取得は60分に1回でも、値は時間とともに減衰して動く。
          1分ごとに描き直して、画面の数字を止めない */
       clearInterval(SENT.tick);
       if (SENT.state === 'ok' || SENT.state === 'stale') {
@@ -1312,8 +1316,8 @@
     var s = svg(W, H), ink = 'currentColor';
     s.setAttribute('class', 'spark sent__fig');
     s.setAttribute('aria-label', lang === 'en'
-      ? 'Sentiment over the last 24 hours, rebuilt in 5-minute steps'
-      : '直近24時間のセンチメントの推移（5分刻みで再構成）');
+      ? 'Sentiment over the last 24 hours, rebuilt from article publication times'
+      : '直近24時間のセンチメントの推移（記事の発行時刻から再構成）');
 
     /* 上下の目盛は破線、0だけは実線。0が境目だと分かるように */
     [hi, 0, lo].forEach(function (v) {
@@ -1507,7 +1511,7 @@
 
       /* 再構成が集計側と合っているかを、その場で照合して出す。
          合わない図を黙って描くより、差を書いてしまうほうが早く気づける */
-      var chk = sentCheck(series, data.series || []);
+      var chk = sentCheck(win, p, data.series || []);
       /* 描けた点だけ数える。窓の古い側に記事が1件も無ければ、そこは線にならない
          ── 全部で289点と書いておいて70点しか描かないほうが分かりにくい */
       var drawn = 0;
@@ -1519,8 +1523,8 @@
                                   : '分刻み。ブラウザ側で ')
         + win.length + (en ? ' articles' : ' 件の記事から再構成');
       if (chk.n) {
-        foot += (en ? ' · checked against ' : ' · 集計側の毎時の値 ')
-          + chk.n + (en ? ' hourly server values, largest gap ' : ' 点と照合、最大差 ')
+        foot += (en ? ' · checked against ' : ' · 集計側の値 ')
+          + chk.n + (en ? ' server values, largest gap ' : ' 点と照合、最大差 ')
           + chk.worst.toFixed(4);
       }
       host.appendChild(el('p', 'gauge__src', foot));

@@ -583,13 +583,14 @@ function serve() {
       next_update_at: av(-59 * MIN),
       current: -0.30, label: 'Somewhat-Bearish', raw_mean: -0.20, n_articles: 24,
       top_tickers: [{ s: 'NVDA', n: 9 }],
-      /* 集計側の毎時の値。ページはこれと自分の再構成を突き合わせて差を出す。
-         この時刻には B しか窓に入らないので、どちらも +0.10 になるはず */
+      /* 集計側の値。ページはこれと自分の再構成を突き合わせて差を出す。
+         照合は表示のグリッドではなく**この時刻そのもの**で行うので、刻みに依らない。
+         この時刻には B しか窓に入らないため、どちらも +0.10 になるはず */
       series: [
         { t: av(120 * MIN), v: 0.1, u: 0.1 },
         { t: av(60 * MIN), v: 0.1, u: 0.1 }
       ],
-      params: { half_life_hours: 6, window_hours: 24, step_min: 5,
+      params: { half_life_hours: 6, window_hours: 24, step_min: 60,
                 use_relevance: true, update_interval_seconds: 3600 },
       window: win,
       top_articles: [
@@ -679,7 +680,7 @@ function serve() {
       if (got.paths < 3) fail('図（面・主系列・対照の破線）が3本そろっていない');
       // 線が2種類ある以上、凡例が無いと破線が何なのか分からない
       if (got.keys !== 2) fail(`凡例が2つ出ていない（${got.keys}）`);
-      if (!/5分刻み/.test(got.foot)) fail('5分刻みで再構成したと書けていない');
+      if (!/60分刻み/.test(got.foot)) fail('60分刻みで再構成したと書けていない');
       // 再構成が集計側とずれていないか。仕掛け上ぴったり合うはず
       const gap = (got.foot.match(/最大差\s*([\d.]+)/) || [])[1];
       if (gap == null) fail('集計側との照合が出ていない');
