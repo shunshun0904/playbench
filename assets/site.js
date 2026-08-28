@@ -562,7 +562,7 @@
      参照）なので、表に出さずに置いている。share.html はそれと対になる頁で、
      推定をやめて測った値だけを並べたもの。タブに戻すときは PAGES へ
      移すだけでよく、test/shots.js は PB.PAGES から枚数を取るので直さなくてよい。 */
-  var UNLISTED = ['flow.html', 'share.html'];
+  var UNLISTED = ['flow.html', 'share.html', 'demand.html'];
   PB.UNLISTED = UNLISTED;
   /* 検査から見えるようにしておく。ページを増やすたびに test/shots.js の
      「タブが N 枚」を書き換えるのは、いつか忘れる。 */
@@ -638,16 +638,29 @@
           + 'いずれも投資助言ではありません。')
     ]));
 
-    /* 資金フローの頁はデータを1つも持たない。読み込みは閲覧者のブラウザの
-       中だけで完結する。書いておかないと、配信していると誤解されうる。
-       ただしこの頁はタブに出していないので、注記もその頁でだけ出す ──
-       他の頁に載せると、行けない頁の話が全ページに並ぶことになる。 */
-    if (here() === 'flow.html' || here() === 'share.html') {
+    /* 読み込んだファイルが外に出ないことを書いておく。書かないと、
+       配信していると誤解されうる。タブに出していない頁の話なので、
+       注記もその頁でだけ出す ── 他の頁に載せると、行けない頁の話が
+       全ページに並ぶ。
+
+       ★ share.html だけ言い方が違う。この頁は data/share_sector17.json を
+         同梱していて（2026-08、abada6a）、開くと自動で読む。
+         「市場データを持っていません」は事実に反するので、同梱している
+         ことと、その中身に銘柄コードが無いことを書く。
+         flow.html と demand.html は本当に何も持っていない。 */
+    var bundled = here() === 'share.html';
+    if (here() === 'flow.html' || here() === 'demand.html' || bundled) {
       host.appendChild(col(en ? 'This page' : 'この頁について', [
-        el('p', null, en
-          ? 'This page ships with no market data. Whatever you load stays in your own browser and is never uploaded.'
-          : 'この頁は市場データを持っていません。'
-            + '読み込んだファイルは閲覧者のブラウザから外に出ません。')
+        el('p', null, bundled
+          ? (en
+            ? 'This page ships with aggregated data — sector shares and related figures, with no stock codes and no yen amounts. If you load a file of your own instead, it stays in your browser and is never uploaded.'
+            : 'この頁には集計済みのデータを同梱しています ── 業種の構成比などで、'
+              + '銘柄コードも金額も含みません。'
+              + '別のファイルを読み込んだ場合、それは閲覧者のブラウザから外に出ません。')
+          : (en
+            ? 'This page ships with no market data. Whatever you load stays in your own browser and is never uploaded.'
+            : 'この頁は市場データを持っていません。'
+              + '読み込んだファイルは閲覧者のブラウザから外に出ません。'))
       ]));
     }
 

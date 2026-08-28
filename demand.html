@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>需給フロー ── Shun Nakamura</title>
+<meta name="description" content="信用需給・海外投資家のフロー・価格帯別出来高の3つを順に通して、銘柄を買い推奨／様子見／厳禁に分けるブラウザ道具。絞り込みの過程がそのまま出ます。データは手元のファイルを読み込むだけで、どこにも送りません。">
+<meta name="color-scheme" content="dark light">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20fill%3D%22%231b2027%22%2F%3E%3Crect%20x%3D%225%22%20y%3D%2213%22%20width%3D%2222%22%20height%3D%226%22%20fill%3D%22%23e8e9e3%22%20fill-opacity%3D%22.22%22%2F%3E%3Crect%20x%3D%225%22%20y%3D%2213%22%20width%3D%2214%22%20height%3D%226%22%20fill%3D%22%23b03a24%22%2F%3E%3Crect%20x%3D%2210%22%20y%3D%227%22%20width%3D%221.4%22%20height%3D%2218%22%20fill%3D%22%23e8e9e3%22%2F%3E%3C%2Fsvg%3E">
+<link rel="canonical" href="https://shunshun0904.github.io/playbench/demand.html">
+
+<!-- この頁はタブに出していない（assets/site.js の UNLISTED）。
+     URL を知っている人だけが見る前提なので、検索にも載せない。
+     sitemap.xml にも入れていない。表に出すときは、この2行と
+     sitemap の項目を戻し、PAGES へ移す。 -->
+<meta name="robots" content="noindex, nofollow">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Shun Nakamura">
+<meta property="og:title" content="需給フロー ── Shun Nakamura">
+<meta property="og:description" content="信用需給・海外投資家のフロー・価格帯別出来高の3つを順に通して銘柄を分ける道具。データは手元のファイルを読み込むだけで、どこにも送りません。">
+<meta property="og:url" content="https://shunshun0904.github.io/playbench/demand.html">
+<meta property="og:locale" content="ja_JP">
+<link rel="stylesheet" href="assets/site.css">
+<link rel="stylesheet" href="assets/demand.css">
+</head>
+<body>
+
+<header class="masthead" id="head"></header>
+
+<main>
+
+<section class="sheet">
+  <div class="band">
+    <h2 class="band__t" data-en="Demand flow — a three-layer funnel">需給フロー ── 3レイヤーの絞り込み</h2>
+    <span class="band__n"></span>
+    <span class="tag">demand flow</span>
+  </div>
+
+  <p class="lead" data-en="Three things in sequence — margin balances, foreign investors&#39; weekly net buying, and volume-by-price — sorting stocks into buy / watch / avoid. The funnel itself is on display, so on a day that yields nothing you can see which stage stopped it. Not investment advice.">
+    信用取引の需給、海外投資家の売買動向、価格帯別出来高の3つを順に通して、
+    銘柄を「買い推奨・様子見・厳禁」に分けた結果を見る画面です。
+    絞り込みの過程がそのまま出るので、<b>0件になった日は、どの段で止まったのかが分かります。</b>
+    投資助言ではありません。
+  </p>
+
+  <div class="dm-warn">
+    <p class="dm-warn__t" data-en="★ This is not a tool for making more money">★ これは儲けを増やす道具ではありません</p>
+    <p data-en="Over ten years and 87 judgement dates, what the backtest shows is a smaller downside. The share of positions falling 20% or more, at six months, was 7.98% for diagnosis B against 10.66% for A and 14.04% for C, and B was the better of the two in 9 of 10 years.">
+      10年・87判断日のバックテストで効いていたのは<b>下振れのほう</b>です。
+      「−20% 以下になった割合」は6ヶ月で 診断B 7.98% / 診断A 10.66% / 診断C 14.04%、
+      年ごとに見ても 9/10 年で診断B が優れていました。
+    </p>
+    <p data-en="Higher returns cannot be claimed. The median difference between B and A clears zero only at three months (+1.17%), and at three months the downside difference does not. No holding period shows both at once. Read it as a way to make fewer bad entries.">
+      一方で<b>リターンの上乗せは主張できません。</b>診断B と診断A の中央値の差が
+      0 を挟まないのは3ヶ月だけで（+1.17%）、その3ヶ月は下振れのほうが有意になりません。
+      両方が同時に立つ保有期間がありません。エントリーの失敗を減らす道具として見てください。
+    </p>
+  </div>
+</section>
+
+<section class="sheet">
+  <div class="band">
+    <h2 class="band__t" data-en="Load the data">データを読み込む</h2>
+    <span class="band__n"></span>
+  </div>
+  <div id="dm-load"></div>
+</section>
+
+<section class="sheet">
+  <div class="band">
+    <h2 class="band__t" data-en="Judgement date and the gate">判断日とゲート</h2>
+    <span class="band__n"></span>
+  </div>
+  <div id="dm-head"></div>
+</section>
+
+<section class="sheet">
+  <div class="band">
+    <h2 class="band__t" data-en="Layer 1 — margin pressure by sector">Layer 1 ── 業種の需給ストレス</h2>
+    <span class="band__n"></span>
+    <span class="tag">margin pressure</span>
+  </div>
+  <p data-en="Margin buying balance minus selling balance, divided by 20-day average volume, then aggregated by sector. The unit is &#39;days of volume needed to clear the balance&#39; — the smaller, the lighter the supply-demand. Only the lightest N sectors go through to the next stage.">
+    信用買残から売残を引き、20日平均出来高で割った値を業種でまとめたものです。
+    単位は「何日分の出来高で買い残を捌けるか」で、<b>小さいほど需給が軽い</b>。
+    軽いほうから上位N業種だけが次の段へ進みます。
+  </p>
+  <div id="dm-l1"></div>
+</section>
+
+<section class="sheet">
+  <div class="band">
+    <h2 class="band__t" data-en="Layer 2 — foreign investors&#39; weekly flow">Layer 2 ── 海外投資家の週次フロー</h2>
+    <span class="band__n"></span>
+    <span class="tag">foreign flow</span>
+  </div>
+  <p data-en="Net buying (buy minus sell, in thousands of yen) by foreign investors, from the investor-type statistics. Unless the most recent N weeks are all net buying, everything stops here. Weeks are laid out by the week they cover, with the publication date beside them — only weeks that were actually published by the judgement date are shown.">
+    投資部門別情報の「海外投資家」の差引（買い − 売り、単位は千円）です。
+    <b>直近N週が連続して買い越しでなければ、ここで止まります。</b>
+    週は集計週で並べ、公表日を併記しています ── 判断日の時点で読めていた週だけを出しています。
+  </p>
+  <div id="dm-l2"></div>
+</section>
+
+<section class="sheet">
+  <div class="band">
+    <h2 class="band__t" data-en="Layer 3 — per-stock diagnosis">Layer 3 ── 銘柄ごとの診断</h2>
+    <span class="band__n"></span>
+    <span class="tag">volume profile</span>
+  </div>
+  <p data-en="From a year of volume-by-price, the band where trading piled up most (the POC) is taken, and stocks are split by whether the current price sits above or below it. Above the band, with a low margin buying balance, is diagnosis B. Below the band is C.">
+    過去1年の価格帯別出来高から、いちばん商いが重なった帯（POC）を出し、
+    いまの株価がその上にいるか下にいるかで分けます。
+    帯の上にいて、かつ信用買残が低水準なら診断B。帯の下なら診断C。
+  </p>
+  <div id="dm-l3tabs" class="dm-tabs"></div>
+  <div id="dm-l3"></div>
+</section>
+
+<section class="sheet">
+  <div class="band">
+    <h2 class="band__t" data-en="What this screen does not say">この画面が言っていないこと</h2>
+    <span class="band__n"></span>
+  </div>
+  <p data-en="It does not say diagnosis B will rise. The backtest found no added return. What falls is the frequency of losing badly.">
+    <b>診断B が値上がりするとは言っていません。</b>バックテストでリターンの上乗せは
+    確認できていません。減っているのは大きく負ける頻度のほうです。
+  </p>
+  <p data-en="Zero is not a fault. Foreign investors have bought for three consecutive weeks in only 19% of the weeks over the past decade. Most weeks producing nothing is the design. Whether the data is missing, or they were net sellers, or fewer than three weeks had been published, is shown above under the gate.">
+    <b>0件は異常ではありません。</b>海外投資家が3週連続で買い越している週は、
+    過去10年で19%しかありません。<b>ほとんどの週は何も出ないのが設計どおり</b>です。
+    データが取れていないのか、売り越しなのか、公表が足りないのかは上の「判断日とゲート」に出ます。
+  </p>
+  <p data-en="The POC is not a support line. It is only the price band where trading gathered in the past; nothing guarantees a bounce there, and no claim is made that it will hold in future.">
+    <b>POC は支持線ではありません。</b>過去に商いが集まった価格帯というだけで、
+    そこで反発する保証はありません。将来にわたって支持するという主張ではありません。
+  </p>
+  <p data-en="It does not tell you when to trade. The judgement date sits after the margin-balance publication, but that is the reference date for the calculation, not an instruction to trade that day.">
+    <b>売買のタイミングを指示していません。</b>判断日は信用残の公表後に置いていますが、
+    それは計算の基準日であって、その日に売買せよという意味ではありません。
+  </p>
+</section>
+
+</main>
+
+<footer class="sheet colophon" id="foot"></footer>
+
+<script src="assets/config.js"></script>
+<script src="assets/analytics.js"></script>
+<script src="data/profile.js"></script>
+<script src="data/works.js"></script>
+<script src="data/bgg.js"></script>
+<script src="data/macro.js"></script>
+<script src="data/releases.js"></script>
+<script src="assets/site.js"></script>
+<script src="assets/demand-app.js"></script>
+</body>
+</html>

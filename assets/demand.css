@@ -1,0 +1,103 @@
+/* 需給フロー ── 3レイヤーの絞り込み。
+   器の共通部分（.grid / .ctl / .band など）は site.css が持っている。
+   ここは差分だけ。
+
+   --indigo-dim だけは site.css に無いので、この頁で足す。site.css を
+   触ると全頁に効くので、こちらに置く。site.css と同じく、素の :root が
+   黒で、白は data-theme="light" のときだけ（端末の設定は見ない）。 */
+:root { --indigo-dim: rgba(130, 180, 218, .16); }
+:root[data-theme="light"] { --indigo-dim: rgba(43, 76, 111, .13); }
+
+/* ── 読み込み ─────────────────────────────────────────────── */
+.dm-load__row { display: flex; align-items: center; gap: var(--s2); flex-wrap: wrap; }
+.dm-load__state { font-family: var(--mono); font-size: .78rem; color: var(--ink-mid); margin: var(--s2) 0 0; }
+.dm-help { color: var(--ink-mute); font-size: .86rem; max-width: var(--measure); }
+
+/* ── 儲けの道具ではない、という但し書き ───────────────────── */
+.dm-warn {
+  border-left: 2px solid var(--vermilion);
+  padding: var(--s2) 0 var(--s2) var(--s3);
+  margin-block: var(--s4);
+}
+.dm-warn__t { font-family: var(--mono); font-size: .8rem; letter-spacing: .06em; color: var(--vermilion); margin: 0 0 var(--s2); }
+.dm-warn p { font-size: .92rem; margin-block: 0 var(--s2); }
+.dm-warn p:last-child { margin-bottom: 0; }
+
+/* ── 判断日とゲート ───────────────────────────────────────── */
+.dm-head { display: flex; gap: var(--s5); flex-wrap: wrap; align-items: flex-start; }
+.dm-stat__k { font-family: var(--mono); font-size: .66rem; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-mute); }
+.dm-stat__v { font-family: var(--mono); font-size: 1.5rem; line-height: 1.3; }
+.dm-open { color: var(--indigo); }
+.dm-shut { color: var(--vermilion); }
+.dm-note {
+  max-width: var(--measure); font-size: .9rem; color: var(--ink-mid);
+  margin: var(--s3) 0 0;
+}
+.dm-src { font-family: var(--mono); font-size: .72rem; color: var(--ink-mute); margin: var(--s2) 0 0; max-width: none; }
+
+/* 3段の絞り込みを1行で示す。どこで止まったかが一目で分かる */
+.dm-funnel { display: flex; gap: var(--s2); flex-wrap: wrap; align-items: center; margin: var(--s3) 0 0; }
+.dm-step {
+  font-family: var(--mono); font-size: .74rem;
+  border: 1px solid var(--rule); padding: .3rem .7rem;
+}
+.dm-step.is-pass { border-color: var(--indigo); color: var(--ink); }
+.dm-step.is-stop { border-color: var(--vermilion); color: var(--vermilion); }
+.dm-step.is-skip { color: var(--ink-mute); }
+.dm-arrow { color: var(--ink-mute); font-family: var(--mono); }
+
+/* ── Layer 1 の横棒 ───────────────────────────────────────── */
+.dm-bar { display: block; height: 14px; background: var(--rule-soft); position: relative; min-width: 60px; }
+.dm-bar i { display: block; height: 100%; background: var(--ink-mute); }
+tr.is-pass .dm-bar i { background: var(--indigo); }
+tr.is-pass td { background: var(--indigo-dim); }
+.dm-cut td {
+  border-bottom: 1px solid var(--vermilion) !important;
+}
+.dm-cutnote { color: var(--vermilion); font-family: var(--mono); font-size: .68rem; }
+
+/* ── Layer 2 の週次 ───────────────────────────────────────── */
+/* 0 を中心に、買い越しは右（藍）、売り越しは左（朱）へ伸ばす。
+   片側だけの棒にすると、符号が色でしか分からなくなる。 */
+.dm-flow { width: 100%; }
+.dm-flow td, .dm-flow th { padding: .2rem .5rem; }
+.dm-fbar { display: flex; width: 100%; min-width: 120px; align-items: center; }
+.dm-fbar__l, .dm-fbar__r { flex: 1 1 0; height: 13px; display: flex; }
+.dm-fbar__l { justify-content: flex-end; }
+.dm-fbar__l i { background: var(--vermilion); height: 100%; }
+.dm-fbar__r i { background: var(--indigo); height: 100%; }
+.dm-fbar__z { width: 1px; background: var(--rule); height: 17px; }
+.dm-streak td { background: var(--indigo-dim); }
+.dm-flow tbody tr:hover { background: var(--rule-soft); }
+
+/* ── Layer 3 ──────────────────────────────────────────────── */
+.dm-tabs { display: flex; gap: var(--s2); flex-wrap: wrap; margin-bottom: var(--s3); }
+.dm-tab.is-on { border-color: var(--vermilion); color: var(--ink); box-shadow: inset 0 -2px 0 var(--vermilion); }
+
+/* POC 帯と現在値の位置。帯の中に縦線で株価を置く。
+   数字だけだと「帯のすぐ上」と「はるか上」が読み分けられない。 */
+.dm-poc { position: relative; height: 16px; min-width: 90px; background: var(--rule-soft); }
+.dm-poc__band { position: absolute; top: 0; bottom: 0; background: var(--ink-mute); opacity: .5; }
+.dm-poc__px { position: absolute; top: -2px; bottom: -2px; width: 2px; background: var(--ink); }
+.dm-b .dm-poc__px { background: var(--indigo); }
+.dm-c .dm-poc__px { background: var(--vermilion); }
+.dm-reg { font-family: var(--mono); font-size: .72rem; white-space: nowrap; }
+.dm-b .dm-reg { color: var(--indigo); }
+.dm-c .dm-reg { color: var(--vermilion); }
+.dm-tbl td, .dm-tbl th { padding: .25rem .5rem; }
+.dm-tbl td.num { font-family: var(--mono); font-size: .78rem; text-align: right; white-space: nowrap; }
+.dm-tbl tbody tr:hover { background: var(--rule-soft); }
+.dm-more { color: var(--ink-mute); font-size: .82rem; margin-top: var(--s2); }
+
+/* 帯（見出し＋タグ）は flex 1行。狭い画面で見出しが長いとタグが
+   押し出されて横スクロールが出るので、この頁の中だけで折り返す。 */
+@media (max-width: 560px) {
+  .band { flex-wrap: wrap; }
+  .band .tag { flex-basis: 100%; }
+  /* site.css は .band__t を nowrap にしている。他の頁の見出しは短いので
+     問題にならないが、この頁は「Layer 2 ── 海外投資家の週次フロー」など
+     長い見出しがあり、390px で器を 19px 突き破る。
+     site.css を触ると全頁に効くので、この頁の中だけ折り返す。 */
+  .band__t { white-space: normal; }
+  .dm-head { gap: var(--s3); }
+}
