@@ -1,12 +1,20 @@
 /* ==========================================================================
    需給フロー ── 3レイヤーの絞り込み。画面の組み立て
 
-   データは持たない。診断には銘柄コードが入るので、public な置き場に
-   同梱すると銘柄別データの再配布になる。閲覧者が読み込んだ JSON だけを描く。
+   ★ この頁自身はデータを持たない。同じ場所に data/demand_flow.json が
+     置いてあれば自動で読み、無ければファイル選択に落ちる。
+
+     診断には銘柄コードと終値が入るので、**JSON を公開の置き場に置いては
+     いけない。** 置いた瞬間に、銘柄別データを誰でも取得できる状態になる
+     （静的な頁が fetch する URL は、頁を見られる人には必ず読める。
+     鍵を頁に埋めても鍵にならない）。
+
+     置いてよいのは、ローカルか、閲覧に認証の掛かった配備先だけ。
+     playbench（public）には JSON を置かない ── 検査で見ている。
 
    作り方:
      python python/demand_flow.py screen --root data/jquants \
-       --out-json data/jquants/processed/demand_flow.json
+       --out-json web/data/demand_flow.json
    ========================================================================== */
 (function () {
   'use strict';
@@ -29,7 +37,12 @@
      行数だけで読めなくなる。件数そのものは必ず出す。 */
   var MAX_ROWS = 200;
 
-  var st = { data: null, view: 'buy' };
+  /* 同じ場所に置いてあれば自動で読む。無ければ静かに諦めてファイル選択に
+     落ちる ── public な配備では「無い」のが正しい状態なので、
+     ここで赤字を出すと毎回エラーが見えることになる。 */
+  var BUNDLED = 'data/demand_flow.json';
+
+  var st = { data: null, view: 'buy', source: null };
 
   function el(tag, cls, text) {
     var n = document.createElement(tag);
@@ -103,9 +116,9 @@
     box.appendChild(row);
 
     box.appendChild(el('p', 'dm-help',
-      'この頁はデータを持っていません。診断には銘柄コードが入るので、'
-      + '公開の置き場に同梱していません。'
-      + 'python/demand_flow.py screen --out-json で作った JSON を選んでください。'
+      'この頁と同じ場所に data/demand_flow.json があれば自動で読みます。'
+      + '無ければ、python/demand_flow.py screen --out-json で作った JSON を'
+      + 'ここから選んでください。'
       + '選んだファイルは、あなたのブラウザから外に出ません。'));
 
     var state = el('p', 'dm-load__state', '未読込');
@@ -116,20 +129,22 @@
 
   function read(file) {
     var r = new FileReader();
-    r.onload = function () { accept(r.result); };
+    r.onload = function () { accept(r.result, 'file'); };
     r.onerror = function () { say('ファイルを開けませんでした。'); };
     r.readAsText(file);
   }
 
-  function accept(text) {
+  function accept(text, source) {
     try {
       st.data = validate(JSON.parse(text));
     } catch (err) {
       st.data = null;
-      say('読めませんでした: ' + err.message);
+      say((source === 'auto' ? 'この頁のデータが読めません: ' : '読めませんでした: ')
+        + err.message);
       blank();
       return false;
     }
+    st.source = source || 'file';
     var d = st.data;
     say('判断日 ' + d.as_of
       + ' / 買い ' + d.counts.buy + '件・様子見 ' + d.counts.watch + '件・厳禁 ' + d.counts.avoid + '件'
@@ -419,9 +434,25 @@
     drawL3();
   }
 
+  /* 同梱データを取りに行く。無くても壊れない ── public な配備や
+     単体で開いたときは 404 になるので、その場合は黙って諦める。 */
+  function autoLoad() {
+    if (!window.fetch) return;
+    fetch(BUNDLED, { cache: 'no-cache' })
+      .then(function (r) {
+        if (!r.ok) throw new Error(String(r.status));
+        return r.text();
+      })
+      .then(function (t) { accept(t, 'auto'); })
+      .catch(function () {
+        say('未読込（下からファイルを選んでください）');
+      });
+  }
+
   function init() {
     buildLoad();
     blank();
+    autoLoad();
   }
 
   if (document.readyState === 'loading') {

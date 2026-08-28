@@ -648,20 +648,30 @@
          「市場データを持っていません」は事実に反するので、同梱している
          ことと、その中身に銘柄コードが無いことを書く。
          flow.html と demand.html は本当に何も持っていない。 */
-    var bundled = here() === 'share.html';
-    if (here() === 'flow.html' || here() === 'demand.html' || bundled) {
-      host.appendChild(col(en ? 'This page' : 'この頁について', [
-        el('p', null, bundled
-          ? (en
-            ? 'This page ships with aggregated data — sector shares and related figures, with no stock codes and no yen amounts. If you load a file of your own instead, it stays in your browser and is never uploaded.'
-            : 'この頁には集計済みのデータを同梱しています ── 業種の構成比などで、'
-              + '銘柄コードも金額も含みません。'
-              + '別のファイルを読み込んだ場合、それは閲覧者のブラウザから外に出ません。')
-          : (en
-            ? 'This page ships with no market data. Whatever you load stays in your own browser and is never uploaded.'
-            : 'この頁は市場データを持っていません。'
-              + '読み込んだファイルは閲覧者のブラウザから外に出ません。'))
-      ]));
+    var note = null;
+    if (here() === 'share.html') {
+      /* 集計済み。銘柄コードも金額も入っていない */
+      note = en
+        ? 'This page ships with aggregated data — sector shares and related figures, with no stock codes and no yen amounts. If you load a file of your own instead, it stays in your browser and is never uploaded.'
+        : 'この頁には集計済みのデータを同梱しています ── 業種の構成比などで、'
+          + '銘柄コードも金額も含みません。'
+          + '別のファイルを読み込んだ場合、それは閲覧者のブラウザから外に出ません。';
+    } else if (here() === 'demand.html') {
+      /* ★ こちらは銘柄コードと株価を含む。share と同じ言い方にしない ──
+         「銘柄コードも金額も含みません」は、この頁では嘘になる。 */
+      note = en
+        ? 'This page ships with the latest screening result, which includes stock codes, prices and price bands. It is a calculation output, not investment advice. If you load a file of your own instead, it stays in your browser and is never uploaded.'
+        : 'この頁には最新の判定結果を同梱しています ── '
+          + '銘柄コード・株価・価格帯を含みます。計算の出力であって投資助言ではありません。'
+          + '別のファイルを読み込んだ場合、それは閲覧者のブラウザから外に出ません。';
+    } else if (here() === 'flow.html') {
+      note = en
+        ? 'This page ships with no market data. Whatever you load stays in your own browser and is never uploaded.'
+        : 'この頁は市場データを持っていません。'
+          + '読み込んだファイルは閲覧者のブラウザから外に出ません。';
+    }
+    if (note) {
+      host.appendChild(col(en ? 'This page' : 'この頁について', [el('p', null, note)]));
     }
 
   }
