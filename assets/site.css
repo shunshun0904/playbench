@@ -765,6 +765,14 @@ a { color: inherit; }
   font-size: 1rem; line-height: 1.95; color: var(--ink-mid);
 }
 .lead strong { color: var(--ink); font-weight: 600; }
+/* 本文の中の URL。他の押せるものと同じ見え方にする。
+   長い URL でも行から飛び出さないよう、どこでも折り返させる */
+.lead__a {
+  color: var(--indigo);
+  text-decoration-color: var(--rule); text-underline-offset: .2em;
+  overflow-wrap: anywhere;
+}
+.lead__a:hover { color: var(--vermilion); }
 
 /* ------------------------------------------------------------ トップ */
 .hello { padding-block: var(--s5) var(--s4); }

@@ -706,6 +706,24 @@
   }
 
   /* ═══════════════════════════════════════════════════ 自己紹介・職務経歴 */
+
+  /* 自己紹介の1段落。文中に URL があれば、そこだけ押せるようにする。
+     文字列は data/profile.js のものをそのまま置くだけで、HTML は解釈しない */
+  function lead(s) {
+    var p = el('p', 'lead');
+    var re = /https?:\/\/[^\s、。）」]+/g;
+    var at = 0, m;
+    while ((m = re.exec(s))) {
+      if (m.index > at) p.appendChild(document.createTextNode(s.slice(at, m.index)));
+      var a = el('a', 'lead__a', m[0]);
+      a.href = m[0]; a.rel = 'noopener';
+      p.appendChild(a);
+      at = re.lastIndex;
+    }
+    if (at < s.length) p.appendChild(document.createTextNode(s.slice(at)));
+    return p;
+  }
+
   function notYet() {
     return el('p', 'blank', lang === 'en'
       ? 'Not written yet. It lives in data/profile.js.'
@@ -724,7 +742,7 @@
     var paras = (pr.intro && pr.intro.fill)
       ? ((lang === 'en' && pr.intro.en && pr.intro.en.length) ? pr.intro.en : pr.intro.ja)
       : null;
-    if (paras && paras.length) paras.forEach(function (s) { intro.appendChild(el('p', 'lead', s)); });
+    if (paras && paras.length) paras.forEach(function (s) { intro.appendChild(lead(s)); });
     else intro.appendChild(notYet());
 
     /* url の入っていない行は出さない。押せないリンクは置かない */
