@@ -49,7 +49,7 @@ window.PB.PROFILE = {
       + '散歩、読書、株式投資',
 
       '欧州サッカーも好きなので、こんなサービスを個人で開発&運用してます。'
-      + '→http://www.japan-football-data.com/',
+      + '→http://japan-football-data.com/',
 
       'ここには、自主研究用のボードゲームアプリと投資判断に使ってる経済指標を並べています。'
     ],
@@ -60,7 +60,7 @@ window.PB.PROFILE = {
       + 'walking, reading, and investing in equities.',
 
       'European football as well — enough that I build and run this service for it myself: '
-      + 'http://www.japan-football-data.com/',
+      + 'http://japan-football-data.com/',
 
       'What is here: the board game apps I build to study them, and the economic indicators '
       + 'I watch when deciding what to buy.'
