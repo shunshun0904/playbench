@@ -48,7 +48,7 @@ window.PB.PROFILE = {
       '趣味：ボードゲーム（特にテラフォーミングマーズ、エルグランデ、トロワ が好きです）、'
       + '散歩、読書、株式投資',
 
-      '欧州サッカーも好きなので、こんなサービスを個人で開発&運用してます。'
+      '欧州サッカーも好きで、ちょっとしたデータサイトを個人で開発&運営してます。'
       + '→http://japan-football-data.com/',
 
       'ここには、自主研究用のボードゲームアプリと投資判断に使ってる経済指標を並べています。'
@@ -59,7 +59,7 @@ window.PB.PROFILE = {
       'Off the clock: board games (Terraforming Mars, El Grande and Troyes above all), '
       + 'walking, reading, and investing in equities.',
 
-      'European football as well — enough that I build and run this service for it myself: '
+      'European football as well — I build and run a small data site of my own for it: '
       + 'http://japan-football-data.com/',
 
       'What is here: the board game apps I build to study them, and the economic indicators '
