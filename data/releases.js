@@ -20,12 +20,11 @@ window.PB = window.PB || {};
 
 window.PB.RELEASES = {
   /* いつ読み直したか。画面の脚注に出ます */
-  asOf: '2026-10-29',
+  asOf: '2026-10-30',
   /* どこから読んだか */
   from: 'Google カレンダー', fromEn: 'Google Calendar',
   byId: {
     fedfunds: [
-      { on: '2026-10-29', note: '2026年10月会合' },
       { on: '2026-12-10', note: '2026年12月会合' }
     ],
     cpi: [
