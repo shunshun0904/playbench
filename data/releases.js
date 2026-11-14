@@ -20,7 +20,7 @@ window.PB = window.PB || {};
 
 window.PB.RELEASES = {
   /* いつ読み直したか。画面の脚注に出ます */
-  asOf: '2026-11-13',
+  asOf: '2026-11-14',
   /* どこから読んだか */
   from: 'Google カレンダー', fromEn: 'Google Calendar',
   byId: {
@@ -37,7 +37,6 @@ window.PB.RELEASES = {
 
     ],
     umich: [
-      { on: '2026-11-13', note: '2026年11月 速報値' },
       { on: '2026-11-25', note: '2026年11月 確報値' },
       { on: '2026-12-11', note: '2026年12月 速報値' },
       { on: '2026-12-23', note: '2026年12月 確報値' }
